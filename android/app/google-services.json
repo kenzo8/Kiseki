@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "413677641769",
+    "project_id": "kiseki-34cd7",
+    "storage_bucket": "kiseki-34cd7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:413677641769:android:76e7776c289296848abc38",
+        "android_client_info": {
+          "package_name": "com.example.kiseki"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBw1cY3Ly9GG6JsbtnFxhP102_4i_5EsYw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
