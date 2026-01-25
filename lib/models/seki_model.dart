@@ -62,7 +62,7 @@ class Seki {
   // Get year range display string
   String get yearRange {
     if (endYear == null) {
-      return '$startYear – 至今';
+      return '$startYear – Present';
     }
     return '$startYear – $endYear';
   }

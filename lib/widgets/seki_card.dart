@@ -229,7 +229,7 @@ class SekiCard extends StatelessWidget {
   });
 
   String get _yearRangeText =>
-      seki.endYear == null ? '${seki.startYear} – 至今' : '${seki.startYear} – ${seki.endYear}';
+      seki.endYear == null ? '${seki.startYear} – Present' : '${seki.startYear} – ${seki.endYear}';
 
   @override
   Widget build(BuildContext context) {

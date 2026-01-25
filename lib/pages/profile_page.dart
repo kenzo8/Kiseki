@@ -145,9 +145,9 @@ class _ProfilePageState extends State<ProfilePage> {
     final scaffoldBg = isDark ? const Color(0xFF02081A) : const Color(0xFFF5F5F5);
 
     if (widget.user == null) {
-      return Container(
-        color: scaffoldBg,
-        child: Center(
+      return Scaffold(
+        backgroundColor: scaffoldBg,
+        body: Center(
           child: Text(
             'Please sign in to view profile',
             style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.7)),
@@ -156,9 +156,9 @@ class _ProfilePageState extends State<ProfilePage> {
       );
     }
 
-    return Container(
-      color: scaffoldBg,
-      child: SafeArea(
+    return Scaffold(
+      backgroundColor: scaffoldBg,
+      body: SafeArea(
         child: Column(
           children: [
             Padding(

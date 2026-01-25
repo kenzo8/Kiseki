@@ -21,7 +21,7 @@ class TimelineSekiItem extends StatelessWidget {
 
   String get _yearRangeText {
     if (seki.endYear == null) {
-      return '${seki.startYear} - 至今';
+      return '${seki.startYear} - Present';
     }
     return '${seki.startYear} - ${seki.endYear}';
   }
