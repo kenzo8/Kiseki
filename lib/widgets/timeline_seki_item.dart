@@ -19,14 +19,18 @@ class TimelineSekiItem extends StatelessWidget {
     this.onTap,
   });
 
-  String get _yearRangeText =>
-      seki.endYear == null ? '${seki.startYear} - Present' : '${seki.startYear} - ${seki.endYear}';
+  String get _yearRangeText {
+    if (seki.endYear == null) {
+      return '${seki.startYear} - 至今';
+    }
+    return '${seki.startYear} - ${seki.endYear}';
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final timelineColor = Colors.grey.withOpacity(0.3);
-    final yearColor = theme.colorScheme.onSurface.withOpacity(0.5);
+    final yearColor = Colors.grey[500]!;
     final deviceIconColor = theme.colorScheme.onSurface.withOpacity(0.7);
 
     return IntrinsicHeight(
@@ -37,7 +41,25 @@ class TimelineSekiItem extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Left side: Timeline (Width 40)
+              // Left side: Start Year (Fixed width for 4-digit year)
+              SizedBox(
+                width: 50,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 0),
+                  child: Text(
+                    '${seki.startYear}',
+                    style: TextStyle(
+                      color: yearColor,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                      letterSpacing: 0.5,
+                    ),
+                    textAlign: TextAlign.right,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              // Middle: Timeline (Width 40)
               SizedBox(
                 width: 40,
                 child: Stack(
@@ -86,12 +108,12 @@ class TimelineSekiItem extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Year text (grey, small font)
+                      // Full duration text (grey, small font)
                       Text(
                         _yearRangeText,
                         style: TextStyle(
                           color: yearColor,
-                          fontSize: 13,
+                          fontSize: 12,
                           fontWeight: FontWeight.w400,
                           letterSpacing: 0.5,
                         ),
