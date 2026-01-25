@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import '../models/seki_model.dart';
 import '../pages/settings_page.dart';
 import '../widgets/timeline_seki_item.dart';
+import '../widgets/seki_card.dart';
+import '../widgets/device_icon_selector.dart';
 
 class ProfilePage extends StatefulWidget {
   final User? user;
@@ -17,17 +19,17 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
 
-  /// Gets all active device names from a list of Sekis.
+  /// Gets all active devices from a list of Sekis.
   /// An active device is one where endYear is null.
-  /// Returns a comma-separated string of device names, or null if none found.
-  String? _getActiveDeviceNames(List<Seki> sekis) {
+  /// Returns a list of active Sekis, or empty list if none found.
+  List<Seki> _getActiveDevices(List<Seki> sekis) {
     final activeSekis = sekis.where((seki) => seki.endYear == null).toList();
     if (activeSekis.isEmpty) {
-      return null;
+      return [];
     }
     // Sort by startYear descending to get the latest first
     activeSekis.sort((a, b) => b.startYear.compareTo(a.startYear));
-    return activeSekis.map((seki) => seki.deviceName).join(', ');
+    return activeSekis;
   }
 
   void _showEditSekiBottomSheet(Seki seki) {
@@ -211,12 +213,12 @@ class _ProfilePageState extends State<ProfilePage> {
                         .where('uid', isEqualTo: FirebaseAuth.instance.currentUser?.uid ?? '')
                         .snapshots(),
                     builder: (context, sekiSnapshot) {
-                      String? activeDeviceNames;
+                      List<Seki> activeDevices = [];
                       if (sekiSnapshot.hasData && sekiSnapshot.data!.docs.isNotEmpty) {
                         final sekis = sekiSnapshot.data!.docs
                             .map((doc) => Seki.fromFirestore(doc))
                             .toList();
-                        activeDeviceNames = _getActiveDeviceNames(sekis);
+                        activeDevices = _getActiveDevices(sekis);
                       }
 
                       return Padding(
@@ -294,29 +296,48 @@ class _ProfilePageState extends State<ProfilePage> {
                                     ],
                                   ),
                                 ],
-                                if (activeDeviceNames != null && activeDeviceNames.isNotEmpty) ...[
+                                if (activeDevices.isNotEmpty) ...[
                                   const SizedBox(height: 12),
-                                  Text.rich(
-                                    TextSpan(
-                                      children: [
-                                        TextSpan(
-                                          text: '正在使用：',
-                                          style: TextStyle(
-                                            color: theme.colorScheme.primary.withOpacity(0.8),
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w500,
-                                          ),
+                                  Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        '正在使用：',
+                                        style: TextStyle(
+                                          color: theme.colorScheme.primary.withOpacity(0.8),
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w500,
                                         ),
-                                        TextSpan(
-                                          text: activeDeviceNames,
-                                          style: TextStyle(
-                                            color: theme.colorScheme.onSurface.withOpacity(0.8),
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w400,
-                                          ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Wrap(
+                                          spacing: 8,
+                                          runSpacing: 6,
+                                          children: activeDevices.map((seki) {
+                                            return Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Icon(
+                                                  getIconByDeviceName(seki.deviceName),
+                                                  size: 16,
+                                                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                                                ),
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  seki.deviceName,
+                                                  style: TextStyle(
+                                                    color: theme.colorScheme.onSurface.withOpacity(0.8),
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.w400,
+                                                  ),
+                                                ),
+                                              ],
+                                            );
+                                          }).toList(),
                                         ),
-                                      ],
-                                    ),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ],
@@ -457,9 +478,22 @@ class _EditSekiBottomSheetState extends State<_EditSekiBottomSheet> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _deviceNameFocusNode.requestFocus();
     });
-    // Listen to text changes to update button state
-    widget.deviceNameController.addListener(_onTextChanged);
+    // Listen to text changes to update button state and suggest device type
+    widget.deviceNameController.addListener(_onDeviceNameChanged);
     widget.noteController.addListener(_onTextChanged);
+  }
+
+  void _onDeviceNameChanged() {
+    // Auto-suggest device type based on device name
+    final deviceName = widget.deviceNameController.text.trim();
+    if (deviceName.isNotEmpty) {
+      final suggestedType = suggestDeviceTypeFromName(deviceName);
+      if (suggestedType != widget.deviceType) {
+        widget.onDeviceTypeChanged(suggestedType);
+      }
+    }
+    // Update icon preview
+    setState(() {});
   }
 
   void _onTextChanged() {
@@ -468,7 +502,7 @@ class _EditSekiBottomSheetState extends State<_EditSekiBottomSheet> {
 
   @override
   void dispose() {
-    widget.deviceNameController.removeListener(_onTextChanged);
+    widget.deviceNameController.removeListener(_onDeviceNameChanged);
     widget.noteController.removeListener(_onTextChanged);
     _deviceNameFocusNode.dispose();
     super.dispose();
@@ -478,7 +512,6 @@ class _EditSekiBottomSheetState extends State<_EditSekiBottomSheet> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final deviceTypes = ['Mac', 'iPhone', 'iPad', 'iPod', 'Apple Watch', 'Vintage'];
     
     // Check if button should be enabled
     final isButtonEnabled = widget.deviceNameController.text.trim().isNotEmpty &&
@@ -575,65 +608,56 @@ class _EditSekiBottomSheetState extends State<_EditSekiBottomSheet> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                // Device Name
-                TextField(
-                  controller: widget.deviceNameController,
-                  focusNode: _deviceNameFocusNode,
-                  style: TextStyle(color: isDark ? Colors.white : theme.colorScheme.onSurface),
-                  decoration: InputDecoration(
-                    labelText: 'Device Name',
-                    labelStyle: TextStyle(
-                      color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.7),
+                // Device Name with Icon Preview
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: widget.deviceNameController,
+                        focusNode: _deviceNameFocusNode,
+                        style: TextStyle(color: isDark ? Colors.white : theme.colorScheme.onSurface),
+                        decoration: InputDecoration(
+                          labelText: 'Device Name',
+                          labelStyle: TextStyle(
+                            color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.7),
+                          ),
+                          hintText: 'e.g., MacBook Pro M1',
+                          hintStyle: TextStyle(
+                            color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.5),
+                          ),
+                          filled: true,
+                          fillColor: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 16,
+                          ),
+                        ),
+                      ),
                     ),
-                    hintText: 'e.g., MacBook Pro M1',
-                    hintStyle: TextStyle(
-                      color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.5),
+                    const SizedBox(width: 12),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 16),
+                      child: DeviceIconPreview(
+                        deviceName: widget.deviceNameController.text,
+                        isDark: isDark,
+                        size: 48,
+                      ),
                     ),
-                    filled: true,
-                    fillColor: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 16,
-                    ),
-                  ),
+                  ],
                 ),
-                const SizedBox(height: 20),
-                // Device Type
-                DropdownButtonFormField<String>(
-                  value: widget.deviceType,
-                  decoration: InputDecoration(
-                    labelText: 'Device Type',
-                    labelStyle: TextStyle(
-                      color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.7),
-                    ),
-                    filled: true,
-                    fillColor: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 16,
-                    ),
-                  ),
-                  dropdownColor: isDark ? const Color(0xFF1A1F35) : theme.colorScheme.surface,
-                  style: TextStyle(color: isDark ? Colors.white : theme.colorScheme.onSurface),
-                  items: deviceTypes.map((type) {
-                    return DropdownMenuItem<String>(
-                      value: type,
-                      child: Text(type),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    if (value != null) {
-                      widget.onDeviceTypeChanged(value);
-                    }
+                const SizedBox(height: 24),
+                // Device Category Selector
+                DeviceCategorySelector(
+                  selectedDeviceType: widget.deviceType,
+                  onCategorySelected: (deviceType) {
+                    widget.onDeviceTypeChanged(deviceType);
                   },
+                  isDark: isDark,
                 ),
                 const SizedBox(height: 20),
                 // Year Range Slider

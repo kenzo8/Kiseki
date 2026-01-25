@@ -11,6 +11,8 @@ import 'pages/inbox_page.dart';
 import 'pages/profile_page.dart';
 import 'services/auth_service.dart';
 import 'services/theme_preference_service.dart';
+import 'widgets/seki_card.dart';
+import 'widgets/device_icon_selector.dart';
 
 // Global theme state
 late final ValueNotifier<ThemeMode> themeModeNotifier;
@@ -434,9 +436,22 @@ class _SendSekiBottomSheetState extends State<_SendSekiBottomSheet> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _deviceNameFocusNode.requestFocus();
     });
-    // Listen to text changes to update button state
-    widget.deviceNameController.addListener(_onTextChanged);
+    // Listen to text changes to update button state and suggest device type
+    widget.deviceNameController.addListener(_onDeviceNameChanged);
     widget.noteController.addListener(_onTextChanged);
+  }
+
+  void _onDeviceNameChanged() {
+    // Auto-suggest device type based on device name
+    final deviceName = widget.deviceNameController.text.trim();
+    if (deviceName.isNotEmpty) {
+      final suggestedType = suggestDeviceTypeFromName(deviceName);
+      if (suggestedType != widget.deviceType) {
+        widget.onDeviceTypeChanged(suggestedType);
+      }
+    }
+    // Update icon preview
+    setState(() {});
   }
 
   void _onTextChanged() {
@@ -445,7 +460,7 @@ class _SendSekiBottomSheetState extends State<_SendSekiBottomSheet> {
 
   @override
   void dispose() {
-    widget.deviceNameController.removeListener(_onTextChanged);
+    widget.deviceNameController.removeListener(_onDeviceNameChanged);
     widget.noteController.removeListener(_onTextChanged);
     _deviceNameFocusNode.dispose();
     super.dispose();
@@ -455,7 +470,6 @@ class _SendSekiBottomSheetState extends State<_SendSekiBottomSheet> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final deviceTypes = ['Mac', 'iPhone', 'iPad', 'iPod', 'Apple Watch', 'Vintage'];
     
     // Check if button should be enabled
     final isButtonEnabled = widget.deviceNameController.text.trim().isNotEmpty &&
@@ -540,65 +554,56 @@ class _SendSekiBottomSheetState extends State<_SendSekiBottomSheet> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                // Device Name
-                TextField(
-                  controller: widget.deviceNameController,
-                  focusNode: _deviceNameFocusNode,
-                  style: TextStyle(color: isDark ? Colors.white : theme.colorScheme.onSurface),
-                  decoration: InputDecoration(
-                    labelText: 'Device Name',
-                    labelStyle: TextStyle(
-                      color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.7),
+                // Device Name with Icon Preview
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: widget.deviceNameController,
+                        focusNode: _deviceNameFocusNode,
+                        style: TextStyle(color: isDark ? Colors.white : theme.colorScheme.onSurface),
+                        decoration: InputDecoration(
+                          labelText: 'Device Name',
+                          labelStyle: TextStyle(
+                            color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.7),
+                          ),
+                          hintText: 'e.g., MacBook Pro M1',
+                          hintStyle: TextStyle(
+                            color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.5),
+                          ),
+                          filled: true,
+                          fillColor: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 16,
+                          ),
+                        ),
+                      ),
                     ),
-                    hintText: 'e.g., MacBook Pro M1',
-                    hintStyle: TextStyle(
-                      color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.5),
+                    const SizedBox(width: 12),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 16),
+                      child: DeviceIconPreview(
+                        deviceName: widget.deviceNameController.text,
+                        isDark: isDark,
+                        size: 48,
+                      ),
                     ),
-                    filled: true,
-                    fillColor: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 16,
-                    ),
-                  ),
+                  ],
                 ),
-                const SizedBox(height: 20),
-                // Device Type
-                DropdownButtonFormField<String>(
-                  value: widget.deviceType,
-                  decoration: InputDecoration(
-                    labelText: 'Device Type',
-                    labelStyle: TextStyle(
-                      color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.7),
-                    ),
-                    filled: true,
-                    fillColor: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 16,
-                    ),
-                  ),
-                  dropdownColor: isDark ? const Color(0xFF1A1F35) : theme.colorScheme.surface,
-                  style: TextStyle(color: isDark ? Colors.white : theme.colorScheme.onSurface),
-                  items: deviceTypes.map((type) {
-                    return DropdownMenuItem<String>(
-                      value: type,
-                      child: Text(type),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    if (value != null) {
-                      widget.onDeviceTypeChanged(value);
-                    }
+                const SizedBox(height: 24),
+                // Device Category Selector
+                DeviceCategorySelector(
+                  selectedDeviceType: widget.deviceType,
+                  onCategorySelected: (deviceType) {
+                    widget.onDeviceTypeChanged(deviceType);
                   },
+                  isDark: isDark,
                 ),
                 const SizedBox(height: 20),
                 // Year Range Slider

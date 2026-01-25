@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
+import '../widgets/seki_card.dart';
+import '../widgets/device_icon_selector.dart';
 
 class AddPage extends StatefulWidget {
   final User? user;
@@ -307,9 +309,33 @@ class _SekiFormBottomSheet extends StatefulWidget {
 
 class _SekiFormBottomSheetState extends State<_SekiFormBottomSheet> {
   @override
-  Widget build(BuildContext context) {
-    final deviceTypes = ['Mac', 'iPhone', 'iPad', 'iPod', 'Apple Watch', 'Vintage'];
+  void initState() {
+    super.initState();
+    // Listen to device name changes to auto-suggest device type
+    widget.deviceNameController.addListener(_onDeviceNameChanged);
+  }
 
+  void _onDeviceNameChanged() {
+    // Auto-suggest device type based on device name
+    final deviceName = widget.deviceNameController.text.trim();
+    if (deviceName.isNotEmpty) {
+      final suggestedType = suggestDeviceTypeFromName(deviceName);
+      if (suggestedType != widget.deviceType) {
+        widget.onDeviceTypeChanged(suggestedType);
+      }
+    }
+    // Update icon preview
+    setState(() {});
+  }
+
+  @override
+  void dispose() {
+    widget.deviceNameController.removeListener(_onDeviceNameChanged);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
         color: Color(0xFF1A1F35),
@@ -348,58 +374,51 @@ class _SekiFormBottomSheetState extends State<_SekiFormBottomSheet> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                // Device Name
-                TextField(
-                  controller: widget.deviceNameController,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: InputDecoration(
-                    labelText: 'Device Name',
-                    labelStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
-                    hintText: 'e.g., MacBook Pro M1',
-                    hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
-                    filled: true,
-                    fillColor: Colors.white.withOpacity(0.1),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
+                // Device Name with Icon Preview
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: widget.deviceNameController,
+                        style: const TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                          labelText: 'Device Name',
+                          labelStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
+                          hintText: 'e.g., MacBook Pro M1',
+                          hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
+                          filled: true,
+                          fillColor: Colors.white.withOpacity(0.1),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 16,
+                          ),
+                        ),
+                      ),
                     ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 16,
+                    const SizedBox(width: 12),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 16),
+                      child: DeviceIconPreview(
+                        deviceName: widget.deviceNameController.text,
+                        isDark: true,
+                        size: 48,
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-                const SizedBox(height: 20),
-                // Device Type
-                DropdownButtonFormField<String>(
-                  value: widget.deviceType,
-                  decoration: InputDecoration(
-                    labelText: 'Device Type',
-                    labelStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
-                    filled: true,
-                    fillColor: Colors.white.withOpacity(0.1),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 16,
-                    ),
-                  ),
-                  dropdownColor: const Color(0xFF1A1F35),
-                  style: const TextStyle(color: Colors.white),
-                  items: deviceTypes.map((type) {
-                    return DropdownMenuItem<String>(
-                      value: type,
-                      child: Text(type),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    if (value != null) {
-                      widget.onDeviceTypeChanged(value);
-                    }
+                const SizedBox(height: 24),
+                // Device Category Selector
+                DeviceCategorySelector(
+                  selectedDeviceType: widget.deviceType,
+                  onCategorySelected: (deviceType) {
+                    widget.onDeviceTypeChanged(deviceType);
                   },
+                  isDark: true,
                 ),
                 const SizedBox(height: 20),
                 // Year Range Slider

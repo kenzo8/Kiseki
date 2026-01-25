@@ -3,23 +3,24 @@ import 'package:flutter/material.dart';
 
 import '../models/seki_model.dart';
 import '../widgets/timeline_seki_item.dart';
+import '../widgets/seki_card.dart';
 
 class OtherUserProfilePage extends StatelessWidget {
   final String publisherId;
 
   const OtherUserProfilePage({super.key, required this.publisherId});
 
-  /// Gets all active device names from a list of Sekis.
+  /// Gets all active devices from a list of Sekis.
   /// An active device is one where endYear is null.
-  /// Returns a comma-separated string of device names, or null if none found.
-  String? _getActiveDeviceNames(List<Seki> sekis) {
+  /// Returns a list of active Sekis, or empty list if none found.
+  List<Seki> _getActiveDevices(List<Seki> sekis) {
     final activeSekis = sekis.where((seki) => seki.endYear == null).toList();
     if (activeSekis.isEmpty) {
-      return null;
+      return [];
     }
     // Sort by startYear descending to get the latest first
     activeSekis.sort((a, b) => b.startYear.compareTo(a.startYear));
-    return activeSekis.map((seki) => seki.deviceName).join(', ');
+    return activeSekis;
   }
 
   @override
@@ -83,12 +84,12 @@ class OtherUserProfilePage extends StatelessWidget {
                         .where('publisherId', isEqualTo: publisherId)
                         .snapshots(),
                     builder: (context, sekiSnapshot) {
-                      String? activeDeviceNames;
+                      List<Seki> activeDevices = [];
                       if (sekiSnapshot.hasData && sekiSnapshot.data!.docs.isNotEmpty) {
                         final sekis = sekiSnapshot.data!.docs
                             .map((doc) => Seki.fromFirestore(doc))
                             .toList();
-                        activeDeviceNames = _getActiveDeviceNames(sekis);
+                        activeDevices = _getActiveDevices(sekis);
                       } else if (sekiSnapshot.hasData && sekiSnapshot.data!.docs.isEmpty) {
                         // Fallback to uid query
                         return StreamBuilder<QuerySnapshot>(
@@ -97,18 +98,18 @@ class OtherUserProfilePage extends StatelessWidget {
                               .where('uid', isEqualTo: publisherId)
                               .snapshots(),
                           builder: (context, fallbackSekiSnapshot) {
-                            String? fallbackActiveDeviceNames;
+                            List<Seki> fallbackActiveDevices = [];
                             if (fallbackSekiSnapshot.hasData && fallbackSekiSnapshot.data!.docs.isNotEmpty) {
                               final sekis = fallbackSekiSnapshot.data!.docs
                                   .map((doc) => Seki.fromFirestore(doc))
                                   .toList();
-                              fallbackActiveDeviceNames = _getActiveDeviceNames(sekis);
+                              fallbackActiveDevices = _getActiveDevices(sekis);
                             }
                             return _buildUserInfoCard(
                               username: username,
                               email: email,
                               bio: bio,
-                              activeDeviceNames: fallbackActiveDeviceNames,
+                              activeDevices: fallbackActiveDevices,
                               theme: theme,
                             );
                           },
@@ -119,7 +120,7 @@ class OtherUserProfilePage extends StatelessWidget {
                         username: username,
                         email: email,
                         bio: bio,
-                        activeDeviceNames: activeDeviceNames,
+                        activeDevices: activeDevices,
                         theme: theme,
                       );
                     },
@@ -237,7 +238,7 @@ class OtherUserProfilePage extends StatelessWidget {
     required String username,
     required String email,
     required String bio,
-    String? activeDeviceNames,
+    List<Seki> activeDevices = const [],
     required ThemeData theme,
   }) {
     return Padding(
@@ -317,29 +318,48 @@ class OtherUserProfilePage extends StatelessWidget {
                   ],
                 ),
               ],
-              if (activeDeviceNames != null && activeDeviceNames.isNotEmpty) ...[
+              if (activeDevices.isNotEmpty) ...[
                 const SizedBox(height: 12),
-                Text.rich(
-                  TextSpan(
-                    children: [
-                      TextSpan(
-                        text: '正在使用：',
-                        style: TextStyle(
-                          color: theme.colorScheme.primary.withOpacity(0.8),
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '正在使用：',
+                      style: TextStyle(
+                        color: theme.colorScheme.primary.withOpacity(0.8),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
                       ),
-                      TextSpan(
-                        text: activeDeviceNames,
-                        style: TextStyle(
-                          color: theme.colorScheme.onSurface.withOpacity(0.8),
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400,
-                        ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 6,
+                        children: activeDevices.map((seki) {
+                          return Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                getIconByDeviceName(seki.deviceName),
+                                size: 16,
+                                color: theme.colorScheme.onSurface.withOpacity(0.7),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                seki.deviceName,
+                                style: TextStyle(
+                                  color: theme.colorScheme.onSurface.withOpacity(0.8),
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                            ],
+                          );
+                        }).toList(),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ],
             ],

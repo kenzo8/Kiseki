@@ -41,7 +41,7 @@ class _ExplorePageState extends State<ExplorePage> {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 7.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -49,15 +49,15 @@ class _ExplorePageState extends State<ExplorePage> {
                     'Explore',
                     style: TextStyle(
                       color: theme.colorScheme.onSurface,
-                      fontSize: 32,
+                      fontSize: 24,
                       fontWeight: FontWeight.w600,
-                      letterSpacing: 6,
+                      letterSpacing: 4,
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 4),
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
                 stream: FirebaseFirestore.instance

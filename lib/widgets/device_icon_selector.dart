@@ -1,0 +1,175 @@
+import 'package:flutter/material.dart';
+import 'seki_card.dart';
+
+/// Device category with icon and label
+class DeviceCategory {
+  final IconData icon;
+  final String label;
+  final String deviceType;
+
+  const DeviceCategory({
+    required this.icon,
+    required this.label,
+    required this.deviceType,
+  });
+}
+
+/// All available device categories
+const List<DeviceCategory> deviceCategories = [
+  DeviceCategory(icon: Icons.smartphone, label: 'Mobile', deviceType: 'iPhone'),
+  DeviceCategory(icon: Icons.tablet_mac, label: 'Tablet', deviceType: 'iPad'),
+  DeviceCategory(icon: Icons.laptop, label: 'Laptop', deviceType: 'Mac'),
+  DeviceCategory(icon: Icons.desktop_windows, label: 'Desktop', deviceType: 'Mac'),
+  DeviceCategory(icon: Icons.watch, label: 'Watch', deviceType: 'Apple Watch'),
+  DeviceCategory(icon: Icons.hearing, label: 'Earbuds', deviceType: 'iPod'),
+  DeviceCategory(icon: Icons.headphones, label: 'Headphones', deviceType: 'Vintage'),
+  DeviceCategory(icon: Icons.photo_camera, label: 'Camera', deviceType: 'Vintage'),
+  DeviceCategory(icon: Icons.videogame_asset, label: 'Gaming', deviceType: 'Vintage'),
+  DeviceCategory(icon: Icons.keyboard, label: 'Accessory', deviceType: 'Vintage'),
+];
+
+/// Widget that displays a live icon preview based on device name
+class DeviceIconPreview extends StatelessWidget {
+  final String deviceName;
+  final bool isDark;
+  final double size;
+
+  const DeviceIconPreview({
+    super.key,
+    required this.deviceName,
+    required this.isDark,
+    this.size = 32,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final icon = deviceName.trim().isEmpty
+        ? Icons.devices
+        : getIconByDeviceName(deviceName);
+    
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: (isDark ? Colors.white : Colors.grey.shade200)
+            .withOpacity(isDark ? 0.15 : 1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Icon(
+        icon,
+        size: size * 0.7,
+        color: isDark
+            ? Theme.of(context).colorScheme.onSurface.withOpacity(0.8)
+            : Colors.grey.shade700,
+      ),
+    );
+  }
+}
+
+/// Horizontal scrolling icon grid for device category selection
+class DeviceCategorySelector extends StatelessWidget {
+  final String selectedDeviceType;
+  final ValueChanged<String> onCategorySelected;
+  final bool isDark;
+
+  const DeviceCategorySelector({
+    super.key,
+    required this.selectedDeviceType,
+    required this.onCategorySelected,
+    required this.isDark,
+  });
+
+  IconData _getIconForDeviceType(String deviceType) {
+    // Map device type to icon
+    for (final category in deviceCategories) {
+      if (category.deviceType == deviceType) {
+        return category.icon;
+      }
+    }
+    return Icons.devices; // Default fallback
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final selectedIcon = _getIconForDeviceType(selectedDeviceType);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Device Category',
+          style: TextStyle(
+            color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.9),
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 80,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: deviceCategories.length,
+            itemBuilder: (context, index) {
+              final category = deviceCategories[index];
+              final isSelected = category.icon == selectedIcon;
+
+              return Padding(
+                padding: EdgeInsets.only(
+                  right: index < deviceCategories.length - 1 ? 12 : 0,
+                ),
+                child: GestureDetector(
+                  onTap: () {
+                    onCategorySelected(category.deviceType);
+                  },
+                  child: Container(
+                    width: 70,
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? (isDark ? Colors.white : theme.colorScheme.primary).withOpacity(0.2)
+                          : (isDark ? Colors.white : Colors.black).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isSelected
+                            ? (isDark ? Colors.white : theme.colorScheme.primary).withOpacity(0.5)
+                            : Colors.transparent,
+                        width: 2,
+                      ),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          category.icon,
+                          size: 28,
+                          color: isSelected
+                              ? (isDark ? Colors.white : theme.colorScheme.primary)
+                              : (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.7),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          category.label,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: isSelected
+                                ? (isDark ? Colors.white : theme.colorScheme.primary)
+                                : (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.6),
+                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                          ),
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}
