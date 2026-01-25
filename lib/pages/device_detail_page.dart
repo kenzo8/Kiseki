@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import '../models/seki_model.dart';
 import '../widgets/seki_card.dart';
 import 'add_device_page.dart';
+import 'profile_page.dart';
+import 'other_user_profile_page.dart';
 
 class DeviceDetailPage extends StatefulWidget {
   final Seki seki;
@@ -166,7 +168,7 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
                           color: theme.colorScheme.onSurface.withOpacity(0.1),
                         ),
                         const SizedBox(height: 20),
-                        _buildInfoRow('OWNER', seki.username, labelColor, valueColor),
+                        _buildOwnerRow(seki, labelColor, valueColor, theme),
                       ],
                     ),
                   ),
@@ -241,6 +243,86 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildOwnerRow(
+    Seki seki,
+    Color labelColor,
+    Color valueColor,
+    ThemeData theme,
+  ) {
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+    final ownerId = seki.uid; // This is the publisherId
+    final isCurrentUser = currentUserId != null && currentUserId == ownerId;
+    
+    // Use primary color to indicate clickability
+    final usernameColor = theme.colorScheme.primary;
+
+    return InkWell(
+      onTap: () {
+        if (isCurrentUser) {
+          // Navigate to own profile
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => ProfilePage(
+                user: FirebaseAuth.instance.currentUser,
+              ),
+            ),
+          );
+        } else {
+          // Navigate to other user's profile
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => OtherUserProfilePage(
+                publisherId: ownerId,
+              ),
+            ),
+          );
+        }
+      },
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        constraints: const BoxConstraints(minHeight: 44),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(
+              'OWNER',
+              style: TextStyle(
+                color: labelColor,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 1.2,
+              ),
+            ),
+            Expanded(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Text(
+                    seki.username,
+                    textAlign: TextAlign.right,
+                    style: TextStyle(
+                      color: usernameColor,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(
+                    Icons.chevron_right,
+                    size: 20,
+                    color: usernameColor.withOpacity(0.7),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -7,18 +7,53 @@ class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
 
   Future<void> _handleLogout(BuildContext context) async {
-    final authService = AuthService();
-    try {
-      await authService.signOut();
-      // Navigation will be handled by auth state listener in main.dart
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to sign out: $e'),
-            backgroundColor: Colors.red,
+    // Show confirmation dialog
+    final shouldLogout = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Logout'),
+        content: const Text('Are you sure you want to logout?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
           ),
-        );
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Logout'),
+          ),
+        ],
+      ),
+    );
+
+    // If user confirmed logout
+    if (shouldLogout == true && context.mounted) {
+      final authService = AuthService();
+      try {
+        // Clear authentication tokens/sessions
+        await authService.signOut();
+        
+        // Navigate to MainNavigationScreen and remove all previous routes from stack
+        // MainNavigationScreen will automatically show LoginPage based on auth state
+        if (context.mounted) {
+          Navigator.of(context).pushAndRemoveUntil(
+            PageRouteBuilder(
+              pageBuilder: (context, animation, secondaryAnimation) => const MainNavigationScreen(),
+              transitionDuration: Duration.zero,
+              reverseTransitionDuration: Duration.zero,
+            ),
+            (route) => false,
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to sign out: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     }
   }
