@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../models/seki_model.dart';
 import '../pages/settings_page.dart';
-import '../widgets/seki_card.dart';
+import '../widgets/timeline_seki_item.dart';
 
 class ProfilePage extends StatefulWidget {
   final User? user;
@@ -16,6 +16,19 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
+
+  /// Gets all active device names from a list of Sekis.
+  /// An active device is one where endYear is null.
+  /// Returns a comma-separated string of device names, or null if none found.
+  String? _getActiveDeviceNames(List<Seki> sekis) {
+    final activeSekis = sekis.where((seki) => seki.endYear == null).toList();
+    if (activeSekis.isEmpty) {
+      return null;
+    }
+    // Sort by startYear descending to get the latest first
+    activeSekis.sort((a, b) => b.startYear.compareTo(a.startYear));
+    return activeSekis.map((seki) => seki.deviceName).join(', ');
+  }
 
   void _showEditSekiBottomSheet(Seki seki) {
     final TextEditingController deviceNameController = TextEditingController(text: seki.deviceName);
@@ -149,8 +162,21 @@ class _ProfilePageState extends State<ProfilePage> {
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  // Back button (only show if we can pop)
+                  if (Navigator.canPop(context))
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back),
+                      color: theme.colorScheme.onSurface.withOpacity(0.7),
+                      tooltip: 'Back',
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                    )
+                  else
+                    const SizedBox(width: 48), // Spacer to maintain alignment
+                  // Settings button
                   IconButton(
                     icon: const Icon(Icons.settings),
                     color: theme.colorScheme.onSurface.withOpacity(0.7),
@@ -177,62 +203,128 @@ class _ProfilePageState extends State<ProfilePage> {
                   final userData = userSnapshot.data!.data() as Map<String, dynamic>;
                   final username = userData['username'] as String? ?? 'Unknown';
                   final email = userData['email'] as String? ?? widget.user?.email ?? 'Unknown';
+                  final bio = userData['bio'] as String? ?? '';
 
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                    child: Card(
-                      color: theme.colorScheme.surface.withOpacity(0.1),
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
+                  return StreamBuilder<QuerySnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection('seki')
+                        .where('uid', isEqualTo: FirebaseAuth.instance.currentUser?.uid ?? '')
+                        .snapshots(),
+                    builder: (context, sekiSnapshot) {
+                      String? activeDeviceNames;
+                      if (sekiSnapshot.hasData && sekiSnapshot.data!.docs.isNotEmpty) {
+                        final sekis = sekiSnapshot.data!.docs
+                            .map((doc) => Seki.fromFirestore(doc))
+                            .toList();
+                        activeDeviceNames = _getActiveDeviceNames(sekis);
+                      }
+
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                        child: Card(
+                          color: theme.colorScheme.surface.withOpacity(0.1),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Icon(
-                                  Icons.person,
-                                  size: 20,
-                                  color: theme.colorScheme.onSurface.withOpacity(0.7),
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  username,
-                                  style: TextStyle(
-                                    color: theme.colorScheme.onSurface,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.email,
-                                  size: 16,
-                                  color: theme.colorScheme.onSurface.withOpacity(0.6),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    email,
-                                    style: TextStyle(
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.person,
+                                      size: 20,
                                       color: theme.colorScheme.onSurface.withOpacity(0.7),
-                                      fontSize: 14,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      username,
+                                      style: TextStyle(
+                                        color: theme.colorScheme.onSurface,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.email,
+                                      size: 16,
+                                      color: theme.colorScheme.onSurface.withOpacity(0.6),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        email,
+                                        style: TextStyle(
+                                          color: theme.colorScheme.onSurface.withOpacity(0.7),
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                if (bio.isNotEmpty) ...[
+                                  const SizedBox(height: 12),
+                                  Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Icon(
+                                        Icons.info_outline,
+                                        size: 16,
+                                        color: theme.colorScheme.onSurface.withOpacity(0.6),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          bio,
+                                          style: TextStyle(
+                                            color: theme.colorScheme.onSurface.withOpacity(0.7),
+                                            fontSize: 14,
+                                            height: 1.5,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                                if (activeDeviceNames != null && activeDeviceNames.isNotEmpty) ...[
+                                  const SizedBox(height: 12),
+                                  Text.rich(
+                                    TextSpan(
+                                      children: [
+                                        TextSpan(
+                                          text: '正在使用：',
+                                          style: TextStyle(
+                                            color: theme.colorScheme.primary.withOpacity(0.8),
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                        TextSpan(
+                                          text: activeDeviceNames,
+                                          style: TextStyle(
+                                            color: theme.colorScheme.onSurface.withOpacity(0.8),
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w400,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                ),
+                                ],
                               ],
                             ),
-                          ],
+                          ),
                         ),
-                      ),
-                    ),
+                      );
+                    },
                   );
                 }
                 return const SizedBox.shrink();
@@ -266,7 +358,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                     return Center(
                       child: Text(
-                        'No Seki entries yet. Create your first one!',
+                        'No memories yet.',
                         style: TextStyle(
                           color: theme.colorScheme.onSurface.withOpacity(0.6),
                           fontSize: 16,
@@ -288,7 +380,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   if (docs.isEmpty) {
                     return Center(
                       child: Text(
-                        'No Seki entries yet. Create your first one!',
+                        'No memories yet.',
                         style: TextStyle(
                           color: theme.colorScheme.onSurface.withOpacity(0.6),
                           fontSize: 16,
@@ -298,18 +390,17 @@ class _ProfilePageState extends State<ProfilePage> {
                   }
 
                   return ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                     itemCount: docs.length,
                     itemBuilder: (context, index) {
                       final doc = docs[index];
                       final seki = Seki.fromFirestore(doc);
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: SekiCard(
-                          seki: seki,
-                          isDark: isDark,
-                          onTap: () => _showEditSekiBottomSheet(seki),
-                        ),
+                      final isLast = index == docs.length - 1;
+                      return TimelineSekiItem(
+                        seki: seki,
+                        isDark: isDark,
+                        isLast: isLast,
+                        onTap: () => _showEditSekiBottomSheet(seki),
                       );
                     },
                   );
