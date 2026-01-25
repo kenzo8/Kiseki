@@ -302,7 +302,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        '正在使用：',
+                                        'In Use:',
                                         style: TextStyle(
                                           color: theme.colorScheme.primary.withOpacity(0.8),
                                           fontSize: 14,
@@ -726,7 +726,7 @@ class _EditSekiBottomSheetState extends State<_EditSekiBottomSheet> {
                     Switch(
                       value: widget.stillUsing,
                       onChanged: widget.onStillUsingChanged,
-                      activeColor: isDark ? Colors.white : theme.colorScheme.primary,
+                      activeThumbColor: isDark ? Colors.white : theme.colorScheme.primary,
                     ),
                   ],
                 ),

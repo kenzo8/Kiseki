@@ -324,7 +324,7 @@ class OtherUserProfilePage extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '正在使用：',
+                      'In Use:',
                       style: TextStyle(
                         color: theme.colorScheme.primary.withOpacity(0.8),
                         fontSize: 14,
