@@ -167,7 +167,7 @@ class _AddPageState extends State<AddPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Seki sent successfully!'),
+            content: Text('Device added successfully!'),
             backgroundColor: Colors.green,
             duration: Duration(seconds: 2),
           ),
@@ -180,7 +180,7 @@ class _AddPageState extends State<AddPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to send Seki: $e'),
+            content: Text('Failed to add device: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -221,7 +221,7 @@ class _AddPageState extends State<AddPage> {
         ),
         child: Center(
           child: Text(
-            'Please sign in to send Seki',
+            'Please sign in to add device',
             style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.7)),
           ),
         ),
@@ -245,7 +245,7 @@ class _AddPageState extends State<AddPage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    'Send Seki',
+                    'Add Device',
                     style: TextStyle(
                       color: theme.colorScheme.onSurface,
                       fontSize: 32,
@@ -261,8 +261,8 @@ class _AddPageState extends State<AddPage> {
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: FilledButton.icon(
                 onPressed: _showSekiForm,
-                icon: const Icon(Icons.send),
-                label: const Text('Send Seki'),
+                icon: const Icon(Icons.add),
+                label: const Text('Add Device'),
                 style: FilledButton.styleFrom(
                   backgroundColor: isDark ? Colors.white : theme.colorScheme.primary,
                   foregroundColor: isDark ? const Color(0xFF02081A) : Colors.white,
@@ -366,7 +366,7 @@ class _SekiFormBottomSheetState extends State<_SekiFormBottomSheet> {
                   ),
                 ),
                 const Text(
-                  'Send Seki',
+                  'Add Device',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 24,
@@ -519,9 +519,9 @@ class _SekiFormBottomSheetState extends State<_SekiFormBottomSheet> {
                 // Send Button
                 FilledButton.icon(
                   onPressed: widget.onSend,
-                  icon: const Icon(Icons.send),
+                  icon: const Icon(Icons.add),
                   label: const Text(
-                    'Send',
+                    'Add',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,

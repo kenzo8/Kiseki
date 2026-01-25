@@ -233,7 +233,7 @@ class _MainNavigationContentState extends State<_MainNavigationContent> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Seki sent successfully!'),
+            content: Text('Device added successfully!'),
             backgroundColor: Colors.green,
             duration: Duration(seconds: 2),
           ),
@@ -244,7 +244,7 @@ class _MainNavigationContentState extends State<_MainNavigationContent> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to send Seki: $e'),
+            content: Text('Failed to add device: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -515,7 +515,7 @@ class _SendSekiBottomSheetState extends State<_SendSekiBottomSheet> {
                         // Title (centered)
                         Expanded(
                           child: Text(
-                            'Send Seki',
+                            'Add Device',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: isDark ? Colors.white : theme.colorScheme.onSurface,
@@ -528,7 +528,7 @@ class _SendSekiBottomSheetState extends State<_SendSekiBottomSheet> {
                         TextButton(
                           onPressed: isButtonEnabled ? widget.onSend : null,
                           child: Text(
-                            'Send',
+                            'Add',
                             style: TextStyle(
                               color: isButtonEnabled
                                   ? (isDark ? Colors.white : theme.colorScheme.primary)
