@@ -216,16 +216,21 @@ IconData deviceTypeToIcon(String deviceType) {
 
 /// Reusable Seki card with device icon, title, subtitle, note, and footer.
 /// Used in Explore feed and Profile timeline for consistent styling.
+/// Supports split tap areas: body area (icon + device name) and bottom bar (username).
 class SekiCard extends StatelessWidget {
   final Seki seki;
   final bool isDark;
-  final VoidCallback? onTap;
+  final VoidCallback? onTap; // Legacy callback for backward compatibility
+  final VoidCallback? onBodyTap; // Taps on body area (icon + device name + note)
+  final VoidCallback? onBottomBarTap; // Taps on bottom bar (username area)
 
   const SekiCard({
     super.key,
     required this.seki,
     required this.isDark,
     this.onTap,
+    this.onBodyTap,
+    this.onBottomBarTap,
   });
 
   String get _yearRangeText =>
@@ -241,99 +246,128 @@ class SekiCard extends StatelessWidget {
         ? theme.colorScheme.surface.withOpacity(0.5)
         : Colors.white;
 
+    // Determine which callbacks to use (prefer new split callbacks, fallback to legacy)
+    final bodyTapCallback = onBodyTap ?? onTap;
+    final bottomBarTapCallback = onBottomBarTap ?? onTap;
+
     return Card(
       color: cardColor,
       elevation: isDark ? 0 : 2,
       shadowColor: Colors.black.withOpacity(0.08),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Left: device icon
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: (isDark ? Colors.white : Colors.grey.shade200)
-                      .withOpacity(isDark ? 0.15 : 1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(
-                  getIconByDeviceName(seki.deviceName),
-                  size: 24,
-                  color: isDark
-                      ? theme.colorScheme.onSurface.withOpacity(0.8)
-                      : Colors.grey.shade700,
-                ),
-              ),
-              const SizedBox(width: 14),
-              // Right: title, subtitle, note, footer
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Title: bold device name
-                    Text(
-                      seki.deviceName,
-                      style: TextStyle(
-                        color: theme.colorScheme.onSurface,
-                        fontSize: 17,
-                        fontWeight: FontWeight.bold,
-                        height: 1.3,
+      child: Column(
+        children: [
+          // Body Area: Icon + Device Name + Year Range + Note
+          InkWell(
+            onTap: bodyTapCallback,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(12),
+              topRight: Radius.circular(12),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Left: device icon with Hero animation
+                  Hero(
+                    tag: 'device_icon_${seki.id}',
+                    child: Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: (isDark ? Colors.white : Colors.grey.shade200)
+                            .withOpacity(isDark ? 0.15 : 1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(
+                        getIconByDeviceName(seki.deviceName),
+                        size: 24,
+                        color: isDark
+                            ? theme.colorScheme.onSurface.withOpacity(0.8)
+                            : Colors.grey.shade700,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    // Subtitle: year range (grey)
-                    Text(
-                      _yearRangeText,
-                      style: TextStyle(
-                        color: greyColor,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                    // Note: wrapped in quotation marks
-                    if (seki.note.isNotEmpty) ...[
-                      const SizedBox(height: 10),
-                      Text(
-                        '"${seki.note}"',
-                        style: TextStyle(
-                          color: theme.colorScheme.onSurface.withOpacity(0.85),
-                          fontSize: 15,
-                          height: 1.45,
+                  ),
+                  const SizedBox(width: 14),
+                  // Right: title, subtitle, note
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Title: bold device name
+                        Text(
+                          seki.deviceName,
+                          style: TextStyle(
+                            color: theme.colorScheme.onSurface,
+                            fontSize: 17,
+                            fontWeight: FontWeight.bold,
+                            height: 1.3,
+                          ),
                         ),
-                        maxLines: 4,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                    const SizedBox(height: 12),
-                    // Divider
-                    Divider(
-                      height: 1,
-                      thickness: 1,
-                      color: theme.colorScheme.onSurface.withOpacity(0.1),
+                        const SizedBox(height: 4),
+                        // Subtitle: year range (grey)
+                        Text(
+                          _yearRangeText,
+                          style: TextStyle(
+                            color: greyColor,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                        // Note: wrapped in quotation marks
+                        if (seki.note.isNotEmpty) ...[
+                          const SizedBox(height: 10),
+                          Text(
+                            '"${seki.note}"',
+                            style: TextStyle(
+                              color: theme.colorScheme.onSurface.withOpacity(0.85),
+                              fontSize: 15,
+                              height: 1.45,
+                            ),
+                            maxLines: 4,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ],
                     ),
-                    const SizedBox(height: 10),
-                    // Footer: by [username]
-                    Text(
-                      'by ${seki.username}',
-                      style: TextStyle(
-                        color: greyColor,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
+          // Divider for visual separation
+          Divider(
+            height: 1,
+            thickness: 1,
+            color: theme.colorScheme.onSurface.withOpacity(0.1),
+            indent: 0,
+            endIndent: 0,
+          ),
+          // Bottom Bar: Username area
+          InkWell(
+            onTap: bottomBarTapCallback,
+            borderRadius: const BorderRadius.only(
+              bottomLeft: Radius.circular(12),
+              bottomRight: Radius.circular(12),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              child: Row(
+                children: [
+                  Text(
+                    'by ${seki.username}',
+                    style: TextStyle(
+                      color: greyColor,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

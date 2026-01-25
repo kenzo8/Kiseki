@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../models/seki_model.dart';
 import '../pages/profile_page.dart';
 import '../pages/other_user_profile_page.dart';
+import '../pages/device_detail_page.dart';
 import '../widgets/seki_card.dart';
 
 class ExplorePage extends StatefulWidget {
@@ -108,7 +109,16 @@ class _ExplorePageState extends State<ExplorePage> {
                         child: SekiCard(
                           seki: seki,
                           isDark: isDark,
-                          onTap: () {
+                          onBodyTap: () {
+                            // Navigate to DeviceDetailPage with the device object
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => DeviceDetailPage(seki: seki),
+                              ),
+                            );
+                          },
+                          onBottomBarTap: () {
+                            // Navigate to ProfilePage based on owner
                             if (publisherId == currentUserId) {
                               Navigator.of(context).push(
                                 MaterialPageRoute(
