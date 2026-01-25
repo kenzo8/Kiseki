@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import '../services/auth_service.dart';
 
 class AddPage extends StatefulWidget {
   final User? user;
@@ -93,7 +94,10 @@ class _AddPageState extends State<AddPage> {
     int? endYear,
     required String note,
   }) async {
-    if (widget.user == null) {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    final uid = currentUser?.uid;
+    
+    if (uid == null) {
       print('ERROR: User is null, cannot send Seki');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -104,12 +108,50 @@ class _AddPageState extends State<AddPage> {
     }
 
     try {
+      // Step 1: Fetch user profile to get username
+      String username;
+      final authService = AuthService();
+      
+      try {
+        final userProfile = await authService.getUserProfile(uid);
+        if (userProfile != null && userProfile['username'] != null) {
+          username = userProfile['username'] as String;
+          print('DEBUG: Username fetched from user profile: $username');
+        } else {
+          // Step 2: Fallback - generate username from email
+          final userEmail = currentUser?.email;
+          if (userEmail != null) {
+            username = authService.generateDefaultUsername(userEmail);
+            print('DEBUG: User profile not found, generated username from email: $username');
+          } else {
+            // Last resort fallback
+            username = 'user${uid.substring(0, 4)}';
+            print('DEBUG: No email available, using UID prefix: $username');
+          }
+        }
+      } catch (e) {
+        // Step 3: If fetching fails, use email fallback
+        print('DEBUG: Error fetching user profile: $e, using email fallback');
+        final userEmail = currentUser?.email;
+        if (userEmail != null) {
+          username = authService.generateDefaultUsername(userEmail);
+          print('DEBUG: Generated username from email (fallback): $username');
+        } else {
+          // Last resort fallback
+          username = 'user${uid.substring(0, 4)}';
+          print('DEBUG: No email available, using UID prefix (fallback): $username');
+        }
+      }
+
       print('DEBUG: Sending Seki to seki collection');
       print('DEBUG: Device: $deviceName, Type: $deviceType');
       print('DEBUG: Years: $startYear - ${endYear ?? "Present"}');
+      print('DEBUG: Final Username: $username');
 
       await FirebaseFirestore.instance.collection('seki').add({
-        'uid': widget.user!.uid,
+        'uid': uid,
+        'publisherId': uid, // Store publisherId explicitly
+        'username': username,
         'deviceName': deviceName.trim(),
         'deviceType': deviceType,
         'startYear': startYear,
@@ -154,36 +196,42 @@ class _AddPageState extends State<AddPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final gradientColors = isDark
+        ? [
+            const Color(0xFF02081A),
+            const Color(0xFF04102C),
+          ]
+        : [
+            Colors.grey.shade100,
+            Colors.grey.shade200,
+          ];
+
     if (widget.user == null) {
       return Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFF02081A),
-              Color(0xFF04102C),
-            ],
+            colors: gradientColors,
           ),
         ),
-        child: const Center(
+        child: Center(
           child: Text(
             'Please sign in to send Seki',
-            style: TextStyle(color: Colors.white70),
+            style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.7)),
           ),
         ),
       );
     }
 
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [
-            Color(0xFF02081A),
-            Color(0xFF04102C),
-          ],
+          colors: gradientColors,
         ),
       ),
       child: SafeArea(
@@ -194,10 +242,10 @@ class _AddPageState extends State<AddPage> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text(
+                  Text(
                     'Send Seki',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: theme.colorScheme.onSurface,
                       fontSize: 32,
                       fontWeight: FontWeight.w600,
                       letterSpacing: 6,
@@ -214,8 +262,8 @@ class _AddPageState extends State<AddPage> {
                 icon: const Icon(Icons.send),
                 label: const Text('Send Seki'),
                 style: FilledButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: const Color(0xFF02081A),
+                  backgroundColor: isDark ? Colors.white : theme.colorScheme.primary,
+                  foregroundColor: isDark ? const Color(0xFF02081A) : Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),

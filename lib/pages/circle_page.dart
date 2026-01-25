@@ -5,15 +5,24 @@ class CirclePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final gradientColors = isDark
+        ? [
+            const Color(0xFF02081A),
+            const Color(0xFF04102C),
+          ]
+        : [
+            Colors.grey.shade100,
+            Colors.grey.shade200,
+          ];
+
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [
-            Color(0xFF02081A),
-            Color(0xFF04102C),
-          ],
+          colors: gradientColors,
         ),
       ),
       child: SafeArea(
@@ -24,13 +33,13 @@ class CirclePage extends StatelessWidget {
               Icon(
                 Icons.people,
                 size: 64,
-                color: Colors.white.withOpacity(0.5),
+                color: theme.colorScheme.onSurface.withOpacity(0.5),
               ),
               const SizedBox(height: 16),
               Text(
                 'Circle',
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.7),
+                  color: theme.colorScheme.onSurface.withOpacity(0.7),
                   fontSize: 24,
                   fontWeight: FontWeight.w600,
                 ),
@@ -39,7 +48,7 @@ class CirclePage extends StatelessWidget {
               Text(
                 'Your circle of connections',
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.5),
+                  color: theme.colorScheme.onSurface.withOpacity(0.5),
                   fontSize: 16,
                 ),
               ),

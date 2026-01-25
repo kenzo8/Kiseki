@@ -40,6 +40,9 @@ dependencies:
   firebase_auth: ^6.1.4
   cloud_firestore: ^6.1.2
 
+  # Local Storage
+  shared_preferences: ^2.3.3
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
