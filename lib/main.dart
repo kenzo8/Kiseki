@@ -431,10 +431,14 @@ class _SendSekiBottomSheetState extends State<_SendSekiBottomSheet> {
   final FocusNode _noteFocusNode = FocusNode();
   bool _showCategoryPicker = false;
   bool _isManualCategorySelection = false;
+  // Track the selected icon directly to avoid ambiguity when multiple categories share deviceType
+  late IconData _selectedIcon;
 
   @override
   void initState() {
     super.initState();
+    // Initialize selected icon from current deviceType
+    _selectedIcon = _getIconForDeviceType(widget.deviceType);
     // Auto-focus the device name field when the bottom sheet opens
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _deviceNameFocusNode.requestFocus();
@@ -452,6 +456,10 @@ class _SendSekiBottomSheetState extends State<_SendSekiBottomSheet> {
         final suggestedType = suggestDeviceTypeFromName(deviceName);
         if (suggestedType != widget.deviceType) {
           widget.onDeviceTypeChanged(suggestedType);
+          // Update selected icon to match the new deviceType
+          setState(() {
+            _selectedIcon = _getIconForDeviceType(suggestedType);
+          });
         }
       }
     }
@@ -479,6 +487,16 @@ class _SendSekiBottomSheetState extends State<_SendSekiBottomSheet> {
       }
     }
     return Icons.devices; // Default fallback
+  }
+
+  String _getDeviceTypeForIcon(IconData icon) {
+    // Map icon to device type using deviceCategories
+    for (final category in deviceCategories) {
+      if (category.icon == icon) {
+        return category.deviceType;
+      }
+    }
+    return 'Mac'; // Default fallback
   }
 
   void _handleAddButtonPressed() {
@@ -649,7 +667,7 @@ class _SendSekiBottomSheetState extends State<_SendSekiBottomSheet> {
                           child: Padding(
                             padding: const EdgeInsets.all(12),
                             child: Icon(
-                              _getIconForDeviceType(widget.deviceType),
+                              _selectedIcon,
                               size: 24,
                               color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.8),
                             ),
@@ -660,14 +678,18 @@ class _SendSekiBottomSheetState extends State<_SendSekiBottomSheet> {
                     if (_showCategoryPicker) ...[
                       const SizedBox(height: 12),
                       _CategoryPickerStrip(
-                        selectedDeviceType: widget.deviceType,
+                        selectedIcon: _selectedIcon,
                         isDark: isDark,
                         primaryColor: theme.colorScheme.primary,
-                        onCategorySelected: (deviceType) {
+                        onCategorySelected: (selectedIcon) {
                           setState(() {
                             _isManualCategorySelection = true;
                             _showCategoryPicker = false;
+                            // Store the selected icon directly
+                            _selectedIcon = selectedIcon;
                           });
+                          // Convert icon to deviceType for parent
+                          final deviceType = _getDeviceTypeForIcon(selectedIcon);
                           widget.onDeviceTypeChanged(deviceType);
                         },
                       ),
@@ -750,10 +772,13 @@ class _SendSekiBottomSheetState extends State<_SendSekiBottomSheet> {
                 TextField(
                   controller: widget.noteController,
                   focusNode: _noteFocusNode,
+                  textInputAction: TextInputAction.done,
+                  onSubmitted: (_) => FocusScope.of(context).unfocus(),
                   style: TextStyle(color: isDark ? Colors.white : theme.colorScheme.onSurface),
                   maxLines: 5,
                   decoration: InputDecoration(
                     hintText: "What makes this device special to you?",
+                    hintMaxLines: 5,
                     hintStyle: TextStyle(
                       color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.5),
                     ),
@@ -791,13 +816,13 @@ class _SendSekiBottomSheetState extends State<_SendSekiBottomSheet> {
 
 /// Minimalist Wrap of category icons (black/white/grey). Single-select only.
 class _CategoryPickerStrip extends StatelessWidget {
-  final String selectedDeviceType;
+  final IconData selectedIcon;
   final bool isDark;
   final Color primaryColor;
-  final ValueChanged<String> onCategorySelected;
+  final ValueChanged<IconData> onCategorySelected;
 
   const _CategoryPickerStrip({
-    required this.selectedDeviceType,
+    required this.selectedIcon,
     required this.isDark,
     required this.primaryColor,
     required this.onCategorySelected,
@@ -813,14 +838,18 @@ class _CategoryPickerStrip extends StatelessWidget {
     return Wrap(
       spacing: _spacing,
       runSpacing: _spacing,
-      children: deviceCategories.map<Widget>((c) {
-        final selected = c.deviceType == selectedDeviceType;
+      children: deviceCategories.map<Widget>((category) {
+        // Use icon as unique identifier for exclusive selection
+        final selected = category.icon == selectedIcon;
+        // Capture the specific category icon in a local variable to avoid closure issues
+        final categoryIcon = category.icon;
         return Material(
           color: Colors.transparent,
           child: InkWell(
             onTap: () {
-              // Single-select: tapping updates selection, deselecting previous
-              onCategorySelected(c.deviceType);
+              // Single-select: tapping updates selection with the specific icon
+              // Each icon has its own closure with its own categoryIcon value
+              onCategorySelected(categoryIcon);
             },
             borderRadius: BorderRadius.circular(_chipSize / 2),
             child: AnimatedContainer(
@@ -848,7 +877,7 @@ class _CategoryPickerStrip extends StatelessWidget {
               ),
               alignment: Alignment.center,
               child: Icon(
-                c.icon,
+                category.icon,
                 size: _iconSize,
                 color: selected
                     ? primaryColor
