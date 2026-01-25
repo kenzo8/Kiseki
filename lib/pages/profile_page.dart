@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../models/seki_model.dart';
 import '../pages/settings_page.dart';
+import '../pages/device_detail_page.dart';
 import '../widgets/timeline_seki_item.dart';
 import '../widgets/seki_card.dart';
 import '../widgets/device_icon_selector.dart';
@@ -421,7 +422,13 @@ class _ProfilePageState extends State<ProfilePage> {
                         seki: seki,
                         isDark: isDark,
                         isLast: isLast,
-                        onTap: () => _showEditSekiBottomSheet(seki),
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => DeviceDetailPage(seki: seki),
+                            ),
+                          );
+                        },
                       );
                     },
                   );

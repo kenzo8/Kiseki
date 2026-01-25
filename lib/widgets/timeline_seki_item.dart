@@ -78,21 +78,24 @@ class TimelineSekiItem extends StatelessWidget {
                     Positioned(
                       left: 8, // (40 - 24) / 2 = 8
                       top: 0,
-                      child: Container(
-                        width: 24,
-                        height: 24,
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.surface,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: deviceIconColor,
-                            width: 2,
+                      child: Hero(
+                        tag: 'device_icon_${seki.id}',
+                        child: Container(
+                          width: 24,
+                          height: 24,
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.surface,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: deviceIconColor,
+                              width: 2,
+                            ),
                           ),
-                        ),
-                        child: Icon(
-                          getIconByDeviceName(seki.deviceName),
-                          size: 14,
-                          color: deviceIconColor,
+                          child: Icon(
+                            getIconByDeviceName(seki.deviceName),
+                            size: 14,
+                            color: deviceIconColor,
+                          ),
                         ),
                       ),
                     ),
