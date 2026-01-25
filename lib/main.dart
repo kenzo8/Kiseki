@@ -428,6 +428,7 @@ class _SendSekiBottomSheet extends StatefulWidget {
 
 class _SendSekiBottomSheetState extends State<_SendSekiBottomSheet> {
   final FocusNode _deviceNameFocusNode = FocusNode();
+  final FocusNode _noteFocusNode = FocusNode();
 
   @override
   void initState() {
@@ -463,7 +464,40 @@ class _SendSekiBottomSheetState extends State<_SendSekiBottomSheet> {
     widget.deviceNameController.removeListener(_onDeviceNameChanged);
     widget.noteController.removeListener(_onTextChanged);
     _deviceNameFocusNode.dispose();
+    _noteFocusNode.dispose();
     super.dispose();
+  }
+
+  IconData _getIconForDeviceType(String deviceType) {
+    // Map device type to icon using deviceCategories
+    for (final category in deviceCategories) {
+      if (category.deviceType == deviceType) {
+        return category.icon;
+      }
+    }
+    return Icons.devices; // Default fallback
+  }
+
+  void _handleAddButtonPressed() {
+    // Smart validation with focus management
+    if (widget.deviceNameController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please name your device')),
+      );
+      _deviceNameFocusNode.requestFocus();
+      return;
+    }
+    
+    if (widget.noteController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Tell us a bit more in the notes')),
+      );
+      _noteFocusNode.requestFocus();
+      return;
+    }
+    
+    // If validation passes, call the parent's onSend
+    widget.onSend();
   }
 
   @override
@@ -540,9 +574,9 @@ class _SendSekiBottomSheetState extends State<_SendSekiBottomSheet> {
                             ],
                           ),
                         ),
-                        // Send button
+                        // Send button (always enabled for validation)
                         TextButton(
-                          onPressed: isButtonEnabled ? widget.onSend : null,
+                          onPressed: _handleAddButtonPressed,
                           child: Text(
                             'Add',
                             style: TextStyle(
@@ -613,13 +647,41 @@ class _SendSekiBottomSheetState extends State<_SendSekiBottomSheet> {
                   ],
                 ),
                 const SizedBox(height: 24),
-                // Device Category Selector
-                DeviceCategorySelector(
-                  selectedDeviceType: widget.deviceType,
-                  onCategorySelected: (deviceType) {
-                    widget.onDeviceTypeChanged(deviceType);
-                  },
-                  isDark: isDark,
+                // Device Category Selector in ExpansionTile
+                ExpansionTile(
+                  initiallyExpanded: false,
+                  title: Row(
+                    children: [
+                      Text(
+                        'Device Category',
+                        style: TextStyle(
+                          color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.9),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Icon(
+                        _getIconForDeviceType(widget.deviceType),
+                        color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.9),
+                        size: 20,
+                      ),
+                    ],
+                  ),
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: DeviceCategorySelector(
+                        selectedDeviceType: widget.deviceType,
+                        onCategorySelected: (deviceType) {
+                          widget.onDeviceTypeChanged(deviceType);
+                        },
+                        isDark: isDark,
+                      ),
+                    ),
+                  ],
+                  iconColor: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.7),
+                  collapsedIconColor: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.7),
                 ),
                 const SizedBox(height: 20),
                 // Year Range Slider
@@ -696,14 +758,15 @@ class _SendSekiBottomSheetState extends State<_SendSekiBottomSheet> {
                 // Note
                 TextField(
                   controller: widget.noteController,
+                  focusNode: _noteFocusNode,
                   style: TextStyle(color: isDark ? Colors.white : theme.colorScheme.onSurface),
-                  maxLines: 4,
+                  maxLines: 5,
                   decoration: InputDecoration(
                     labelText: 'Note',
                     labelStyle: TextStyle(
                       color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.7),
                     ),
-                    hintText: 'Share your experience...',
+                    hintText: "What's the story of this device? (e.g., first gift, saved for 3 months...)",
                     hintStyle: TextStyle(
                       color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.5),
                     ),
