@@ -429,6 +429,8 @@ class _SendSekiBottomSheet extends StatefulWidget {
 class _SendSekiBottomSheetState extends State<_SendSekiBottomSheet> {
   final FocusNode _deviceNameFocusNode = FocusNode();
   final FocusNode _noteFocusNode = FocusNode();
+  bool _showCategoryPicker = false;
+  bool _isManualCategorySelection = false;
 
   @override
   void initState() {
@@ -443,15 +445,16 @@ class _SendSekiBottomSheetState extends State<_SendSekiBottomSheet> {
   }
 
   void _onDeviceNameChanged() {
-    // Auto-suggest device type based on device name
-    final deviceName = widget.deviceNameController.text.trim();
-    if (deviceName.isNotEmpty) {
-      final suggestedType = suggestDeviceTypeFromName(deviceName);
-      if (suggestedType != widget.deviceType) {
-        widget.onDeviceTypeChanged(suggestedType);
+    // Auto-suggest device type only when user has NOT manually picked a category
+    if (!_isManualCategorySelection) {
+      final deviceName = widget.deviceNameController.text.trim();
+      if (deviceName.isNotEmpty) {
+        final suggestedType = suggestDeviceTypeFromName(deviceName);
+        if (suggestedType != widget.deviceType) {
+          widget.onDeviceTypeChanged(suggestedType);
+        }
       }
     }
-    // Update icon preview
     setState(() {});
   }
 
@@ -550,24 +553,28 @@ class _SendSekiBottomSheetState extends State<_SendSekiBottomSheet> {
                         Expanded(
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              Text(
-                                'Add Device',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: isDark ? Colors.white : theme.colorScheme.onSurface,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w600,
+                              Center(
+                                child: Text(
+                                  'Add Device',
+                                  style: TextStyle(
+                                    color: isDark ? Colors.white : theme.colorScheme.onSurface,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                               ),
                               Padding(
                                 padding: const EdgeInsets.only(top: 2),
-                                child: Text(
-                                  'Visible to everyone on Explore',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    color: Colors.grey,
-                                    fontSize: 10,
+                                child: Center(
+                                  child: Text(
+                                    'Visible to everyone on Explore',
+                                    style: TextStyle(
+                                      color: Colors.grey,
+                                      fontSize: 10,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -598,83 +605,67 @@ class _SendSekiBottomSheetState extends State<_SendSekiBottomSheet> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                // Device Name with Icon Preview
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                // Device Name with integrated category suffixIcon
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Expanded(
-                      child: TextField(
-                        controller: widget.deviceNameController,
-                        focusNode: _deviceNameFocusNode,
-                        style: TextStyle(color: isDark ? Colors.white : theme.colorScheme.onSurface),
-                        decoration: InputDecoration(
-                          labelText: 'Device Name',
-                          labelStyle: TextStyle(
-                            color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.7),
-                          ),
-                          hintText: 'e.g., MacBook Pro M1',
-                          hintStyle: TextStyle(
-                            color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.5),
-                          ),
-                          filled: true,
-                          fillColor: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide.none,
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 16,
+                    TextField(
+                      controller: widget.deviceNameController,
+                      focusNode: _deviceNameFocusNode,
+                      style: TextStyle(color: isDark ? Colors.white : theme.colorScheme.onSurface),
+                      decoration: InputDecoration(
+                        labelText: 'Device Name',
+                        labelStyle: TextStyle(
+                          color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.7),
+                        ),
+                        hintText: 'e.g., MacBook Pro M1',
+                        hintStyle: TextStyle(
+                          color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.5),
+                        ),
+                        filled: true,
+                        fillColor: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 16,
+                        ),
+                        suffixIcon: InkWell(
+                          onTap: () {
+                            setState(() => _showCategoryPicker = !_showCategoryPicker);
+                          },
+                          borderRadius: BorderRadius.circular(24),
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Icon(
+                              _getIconForDeviceType(widget.deviceType),
+                              size: 24,
+                              color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.8),
+                            ),
                           ),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 16),
-                      child: DeviceIconPreview(
-                        deviceName: widget.deviceNameController.text,
+                    if (_showCategoryPicker) ...[
+                      const SizedBox(height: 12),
+                      _CategoryPickerStrip(
+                        selectedDeviceType: widget.deviceType,
                         isDark: isDark,
-                        size: 48,
+                        onCategorySelected: (deviceType) {
+                          setState(() {
+                            _isManualCategorySelection = true;
+                            _showCategoryPicker = false;
+                          });
+                          widget.onDeviceTypeChanged(deviceType);
+                        },
                       ),
-                    ),
+                    ],
                   ],
                 ),
                 const SizedBox(height: 24),
-                // Device Category Selector in ExpansionTile
-                ExpansionTile(
-                  initiallyExpanded: false,
-                  title: Row(
-                    children: [
-                      Text(
-                        'Device Category',
-                        style: TextStyle(
-                          color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.9),
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Icon(
-                        _getIconForDeviceType(widget.deviceType),
-                        color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.9),
-                        size: 20,
-                      ),
-                    ],
-                  ),
-                  children: [
-                    DeviceCategorySelector(
-                      selectedDeviceType: widget.deviceType,
-                      onCategorySelected: (deviceType) {
-                        widget.onDeviceTypeChanged(deviceType);
-                      },
-                      isDark: isDark,
-                    ),
-                  ],
-                  iconColor: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.7),
-                  collapsedIconColor: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.7),
-                ),
-                const SizedBox(height: 20),
                 // Year Range Slider
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -782,6 +773,73 @@ class _SendSekiBottomSheetState extends State<_SendSekiBottomSheet> {
           );
         },
       ),
+    );
+  }
+}
+
+/// Minimalist Wrap of category icons (black/white/grey). Single-select only.
+class _CategoryPickerStrip extends StatelessWidget {
+  final String selectedDeviceType;
+  final bool isDark;
+  final ValueChanged<String> onCategorySelected;
+
+  const _CategoryPickerStrip({
+    required this.selectedDeviceType,
+    required this.isDark,
+    required this.onCategorySelected,
+  });
+
+  static const double _iconSize = 24;
+  static const double _chipSize = 44;
+  static const double _spacing = 8;
+
+  @override
+  Widget build(BuildContext context) {
+    final base = isDark ? Colors.white : Colors.black;
+    return Wrap(
+      spacing: _spacing,
+      runSpacing: _spacing,
+      children: deviceCategories.map<Widget>((c) {
+        final selected = c.deviceType == selectedDeviceType;
+        return Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {
+              // Single-select: tapping updates selection, deselecting previous
+              onCategorySelected(c.deviceType);
+            },
+            borderRadius: BorderRadius.circular(_chipSize / 2),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              width: _chipSize,
+              height: _chipSize,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: base.withOpacity(selected ? 0.2 : 0.06),
+                border: Border.all(
+                  color: selected ? base.withOpacity(0.7) : Colors.transparent,
+                  width: 2,
+                ),
+                boxShadow: selected
+                    ? [
+                        BoxShadow(
+                          color: base.withOpacity(0.15),
+                          blurRadius: 6,
+                          spreadRadius: 0,
+                        ),
+                      ]
+                    : null,
+              ),
+              alignment: Alignment.center,
+              child: Icon(
+                c.icon,
+                size: _iconSize,
+                color: base.withOpacity(selected ? 0.95 : 0.5),
+              ),
+            ),
+          ),
+        );
+      }).toList(),
     );
   }
 }
