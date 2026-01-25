@@ -514,14 +514,30 @@ class _SendSekiBottomSheetState extends State<_SendSekiBottomSheet> {
                         ),
                         // Title (centered)
                         Expanded(
-                          child: Text(
-                            'Add Device',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: isDark ? Colors.white : theme.colorScheme.onSurface,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                            ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'Add Device',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: isDark ? Colors.white : theme.colorScheme.onSurface,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.only(top: 4, bottom: 10),
+                                child: Text(
+                                  'Visible to everyone on Explore',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: Colors.grey,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                         // Send button

@@ -488,7 +488,7 @@ class _SekiFormBottomSheetState extends State<_SekiFormBottomSheet> {
                     Switch(
                       value: widget.stillUsing,
                       onChanged: widget.onStillUsingChanged,
-                      activeColor: Colors.white,
+                      activeThumbColor: Colors.white,
                     ),
                   ],
                 ),
@@ -521,7 +521,7 @@ class _SekiFormBottomSheetState extends State<_SekiFormBottomSheet> {
                   onPressed: widget.onSend,
                   icon: const Icon(Icons.add),
                   label: const Text(
-                    'Add',
+                    'Add & Share to Explore',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
