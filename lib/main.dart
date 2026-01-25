@@ -562,7 +562,7 @@ class _SendSekiBottomSheetState extends State<_SendSekiBottomSheet> {
                                   style: TextStyle(
                                     color: isDark ? Colors.white : theme.colorScheme.onSurface,
                                     fontSize: 18,
-                                    fontWeight: FontWeight.w600,
+                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
                               ),
@@ -571,9 +571,11 @@ class _SendSekiBottomSheetState extends State<_SendSekiBottomSheet> {
                                 child: Center(
                                   child: Text(
                                     'Visible to everyone on Explore',
+                                    textAlign: TextAlign.center,
                                     style: TextStyle(
                                       color: Colors.grey,
                                       fontSize: 10,
+                                      fontWeight: FontWeight.w400,
                                     ),
                                   ),
                                 ),
@@ -623,11 +625,17 @@ class _SendSekiBottomSheetState extends State<_SendSekiBottomSheet> {
                         hintStyle: TextStyle(
                           color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.5),
                         ),
-                        filled: true,
-                        fillColor: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
+                        alignLabelWithHint: true,
+                        enabledBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(
+                            color: (isDark ? Colors.grey[600]! : Colors.grey[300]!),
+                          ),
+                        ),
+                        focusedBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(
+                            color: theme.colorScheme.primary,
+                            width: 1.5,
+                          ),
                         ),
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 16,
@@ -654,6 +662,7 @@ class _SendSekiBottomSheetState extends State<_SendSekiBottomSheet> {
                       _CategoryPickerStrip(
                         selectedDeviceType: widget.deviceType,
                         isDark: isDark,
+                        primaryColor: theme.colorScheme.primary,
                         onCategorySelected: (deviceType) {
                           setState(() {
                             _isManualCategorySelection = true;
@@ -665,7 +674,7 @@ class _SendSekiBottomSheetState extends State<_SendSekiBottomSheet> {
                     ],
                   ],
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 36),
                 // Year Range Slider
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -744,19 +753,22 @@ class _SendSekiBottomSheetState extends State<_SendSekiBottomSheet> {
                   style: TextStyle(color: isDark ? Colors.white : theme.colorScheme.onSurface),
                   maxLines: 5,
                   decoration: InputDecoration(
-                    labelText: 'Note',
-                    labelStyle: TextStyle(
-                      color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.7),
-                    ),
                     hintText: "What makes this device special to you?",
                     hintStyle: TextStyle(
                       color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.5),
                     ),
                     filled: true,
-                    fillColor: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
+                    fillColor: (isDark ? Colors.white : Colors.black).withOpacity(0.06),
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(
+                        color: (isDark ? Colors.grey[600]! : Colors.grey[300]!),
+                      ),
+                    ),
+                    focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(
+                        color: theme.colorScheme.primary,
+                        width: 1.5,
+                      ),
                     ),
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 16,
@@ -781,11 +793,13 @@ class _SendSekiBottomSheetState extends State<_SendSekiBottomSheet> {
 class _CategoryPickerStrip extends StatelessWidget {
   final String selectedDeviceType;
   final bool isDark;
+  final Color primaryColor;
   final ValueChanged<String> onCategorySelected;
 
   const _CategoryPickerStrip({
     required this.selectedDeviceType,
     required this.isDark,
+    required this.primaryColor,
     required this.onCategorySelected,
   });
 
@@ -815,15 +829,17 @@ class _CategoryPickerStrip extends StatelessWidget {
               height: _chipSize,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: base.withOpacity(selected ? 0.2 : 0.06),
+                color: selected
+                    ? primaryColor.withOpacity(0.15)
+                    : base.withOpacity(0.06),
                 border: Border.all(
-                  color: selected ? base.withOpacity(0.7) : Colors.transparent,
-                  width: 2,
+                  color: selected ? primaryColor : Colors.transparent,
+                  width: selected ? 2.5 : 0,
                 ),
                 boxShadow: selected
                     ? [
                         BoxShadow(
-                          color: base.withOpacity(0.15),
+                          color: primaryColor.withOpacity(0.2),
                           blurRadius: 6,
                           spreadRadius: 0,
                         ),
@@ -834,7 +850,9 @@ class _CategoryPickerStrip extends StatelessWidget {
               child: Icon(
                 c.icon,
                 size: _iconSize,
-                color: base.withOpacity(selected ? 0.95 : 0.5),
+                color: selected
+                    ? primaryColor
+                    : base.withOpacity(0.5),
               ),
             ),
           ),
