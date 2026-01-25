@@ -482,7 +482,7 @@ class _SendSekiBottomSheetState extends State<_SendSekiBottomSheet> {
     // Smart validation with focus management
     if (widget.deviceNameController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please name your device')),
+        const SnackBar(content: Text('Please enter a name.')),
       );
       _deviceNameFocusNode.requestFocus();
       return;
@@ -490,7 +490,7 @@ class _SendSekiBottomSheetState extends State<_SendSekiBottomSheet> {
     
     if (widget.noteController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Tell us a bit more in the notes')),
+        const SnackBar(content: Text('Please add a short note.')),
       );
       _noteFocusNode.requestFocus();
       return;
@@ -561,20 +561,20 @@ class _SendSekiBottomSheetState extends State<_SendSekiBottomSheet> {
                                 ),
                               ),
                               Padding(
-                                padding: const EdgeInsets.only(top: 4, bottom: 10),
+                                padding: const EdgeInsets.only(top: 2),
                                 child: Text(
                                   'Visible to everyone on Explore',
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
                                     color: Colors.grey,
-                                    fontSize: 11,
+                                    fontSize: 10,
                                   ),
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        // Send button (always enabled for validation)
+                        // Add button (always clickable, validation handled in onPressed)
                         TextButton(
                           onPressed: _handleAddButtonPressed,
                           child: Text(
@@ -590,12 +590,6 @@ class _SendSekiBottomSheetState extends State<_SendSekiBottomSheet> {
                         ),
                       ],
                     ),
-                  ),
-                  // Divider
-                  Divider(
-                    height: 1,
-                    thickness: 1,
-                    color: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
                   ),
                   // Content
                   Padding(
@@ -669,15 +663,12 @@ class _SendSekiBottomSheetState extends State<_SendSekiBottomSheet> {
                     ],
                   ),
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: DeviceCategorySelector(
-                        selectedDeviceType: widget.deviceType,
-                        onCategorySelected: (deviceType) {
-                          widget.onDeviceTypeChanged(deviceType);
-                        },
-                        isDark: isDark,
-                      ),
+                    DeviceCategorySelector(
+                      selectedDeviceType: widget.deviceType,
+                      onCategorySelected: (deviceType) {
+                        widget.onDeviceTypeChanged(deviceType);
+                      },
+                      isDark: isDark,
                     ),
                   ],
                   iconColor: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.7),
@@ -766,7 +757,7 @@ class _SendSekiBottomSheetState extends State<_SendSekiBottomSheet> {
                     labelStyle: TextStyle(
                       color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.7),
                     ),
-                    hintText: "What's the story of this device? (e.g., first gift, saved for 3 months...)",
+                    hintText: "What makes this device special to you?",
                     hintStyle: TextStyle(
                       color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.5),
                     ),

@@ -94,19 +94,9 @@ class DeviceCategorySelector extends StatelessWidget {
     final theme = Theme.of(context);
     final selectedIcon = _getIconForDeviceType(selectedDeviceType);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Device Category',
-          style: TextStyle(
-            color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.9),
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 12),
-        SizedBox(
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      child: SizedBox(
           height: 80,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
@@ -169,7 +159,6 @@ class DeviceCategorySelector extends StatelessWidget {
             },
           ),
         ),
-      ],
     );
   }
 }
