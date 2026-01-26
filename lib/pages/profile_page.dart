@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../models/seki_model.dart';
+import '../models/want_model.dart';
 import '../services/system_ui_service.dart';
 import '../pages/settings_page.dart';
 import '../pages/device_detail_page.dart';
@@ -239,6 +240,62 @@ class _ProfilePageState extends State<ProfilePage> {
                                     ],
                                   ),
                                 ],
+                                // Want section
+                                const SizedBox(height: 12),
+                                StreamBuilder<QuerySnapshot>(
+                                  stream: FirebaseFirestore.instance
+                                      .collection('wants')
+                                      .where('uid', isEqualTo: FirebaseAuth.instance.currentUser?.uid ?? '')
+                                      .snapshots(),
+                                  builder: (context, wantSnapshot) {
+                                    final wantCount = wantSnapshot.hasData 
+                                        ? wantSnapshot.data!.docs.length 
+                                        : 0;
+                                    
+                                    return InkWell(
+                                      onTap: wantCount > 0 ? () => _showWantsBottomSheet(context, theme, isDark) : null,
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(vertical: 4),
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              Icons.star_outline,
+                                              size: 16,
+                                              color: theme.colorScheme.onSurface.withOpacity(0.6),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Text(
+                                              'Want:',
+                                              style: TextStyle(
+                                                color: theme.colorScheme.primary.withOpacity(0.8),
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Text(
+                                              '$wantCount',
+                                              style: TextStyle(
+                                                color: theme.colorScheme.onSurface.withOpacity(0.8),
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w400,
+                                              ),
+                                            ),
+                                            if (wantCount > 0) ...[
+                                              const Spacer(),
+                                              Icon(
+                                                Icons.chevron_right,
+                                                size: 16,
+                                                color: theme.colorScheme.onSurface.withOpacity(0.4),
+                                              ),
+                                            ],
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
                               ],
                             ),
                           ),
@@ -320,6 +377,198 @@ class _ProfilePageState extends State<ProfilePage> {
           ],
         ),
       ),
+    );
+  }
+
+  void _showWantsBottomSheet(BuildContext context, ThemeData theme, bool isDark) {
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+    if (currentUserId == null) return;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        final surfaceColor = isDark
+            ? theme.colorScheme.surface.withOpacity(0.95)
+            : Colors.white;
+
+        return Container(
+          decoration: BoxDecoration(
+            color: surfaceColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 8),
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.onSurface.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.star,
+                        color: theme.colorScheme.primary,
+                        size: 24,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Want List',
+                        style: TextStyle(
+                          color: theme.colorScheme.onSurface,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Flexible(
+                  child: StreamBuilder<QuerySnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection('wants')
+                        .where('uid', isEqualTo: currentUserId)
+                        .snapshots(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(32.0),
+                            child: CircularProgressIndicator(),
+                          ),
+                        );
+                      }
+
+                      if (snapshot.hasError) {
+                        return Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(32.0),
+                            child: Text(
+                              'Failed to load wants: ${snapshot.error}',
+                              style: TextStyle(
+                                color: theme.colorScheme.onSurface.withOpacity(0.7),
+                              ),
+                            ),
+                          ),
+                        );
+                      }
+
+                      if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                        return Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(32.0),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.star_outline,
+                                  size: 48,
+                                  color: theme.colorScheme.onSurface.withOpacity(0.3),
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'No wants yet',
+                                  style: TextStyle(
+                                    color: theme.colorScheme.onSurface.withOpacity(0.7),
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }
+
+                      final wants = snapshot.data!.docs
+                          .map((doc) => Want.fromFirestore(doc))
+                          .toList();
+
+                      return ListView.builder(
+                        shrinkWrap: true,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        itemCount: wants.length,
+                        itemBuilder: (context, index) {
+                          final want = wants[index];
+                          return ListTile(
+                            leading: Container(
+                              width: 48,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                color: isDark
+                                    ? Colors.white.withOpacity(0.08)
+                                    : Colors.grey.shade100,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Icon(
+                                getIconByDeviceName(want.deviceName),
+                                color: theme.colorScheme.onSurface.withOpacity(0.7),
+                                size: 24,
+                              ),
+                            ),
+                            title: Text(
+                              want.deviceName,
+                              style: TextStyle(
+                                color: theme.colorScheme.onSurface,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            subtitle: Text(
+                              want.deviceType,
+                              style: TextStyle(
+                                color: theme.colorScheme.onSurface.withOpacity(0.6),
+                                fontSize: 14,
+                              ),
+                            ),
+                            onTap: () {
+                              // Navigate to device detail page if we can find the seki
+                              Navigator.pop(context);
+                              // Try to find the seki by device name
+                              FirebaseFirestore.instance
+                                  .collection('seki')
+                                  .where('deviceName', isEqualTo: want.deviceName)
+                                  .limit(1)
+                                  .get()
+                                  .then((querySnapshot) {
+                                if (querySnapshot.docs.isNotEmpty) {
+                                  final seki = Seki.fromFirestore(querySnapshot.docs.first);
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (context) => DeviceDetailPage(seki: seki),
+                                    ),
+                                  );
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Device "${want.deviceName}" not found'),
+                                    ),
+                                  );
+                                }
+                              });
+                            },
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 

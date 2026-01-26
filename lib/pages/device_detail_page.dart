@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../models/seki_model.dart';
 import '../widgets/seki_card.dart';
 import '../services/system_ui_service.dart';
+import '../services/auth_service.dart';
 import 'add_device_page.dart';
 import 'profile_page.dart';
 import 'other_user_profile_page.dart';
@@ -73,13 +74,15 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
     }
 
     try {
-      final doc = await FirebaseFirestore.instance
+      final querySnapshot = await FirebaseFirestore.instance
           .collection('wants')
-          .doc('${currentUserId}_${widget.seki.id}')
+          .where('uid', isEqualTo: currentUserId)
+          .where('deviceName', isEqualTo: widget.seki.deviceName)
+          .limit(1)
           .get();
 
       if (mounted) {
-        setState(() => _isWantingDevice = doc.exists);
+        setState(() => _isWantingDevice = querySnapshot.docs.isNotEmpty);
       }
     } catch (e) {
       if (mounted) {
@@ -97,26 +100,88 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
       return;
     }
 
-    final wantDocId = '${currentUserId}_${widget.seki.id}';
-    final wantRef = FirebaseFirestore.instance
-        .collection('wants')
-        .doc(wantDocId);
-
     try {
       if (_isWantingDevice == true) {
-        // Remove from wants
-        await wantRef.delete();
+        // Show confirmation dialog before removing
+        final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Remove from wants?'),
+            content: const Text('This device will be removed from your wants list.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Text(
+                  'Cancel',
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                ),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.red,
+                ),
+                child: const Text('Remove'),
+              ),
+            ],
+          ),
+        );
+
+        if (confirmed != true) {
+          return; // User cancelled
+        }
+
+        // Find and delete the want document
+        final querySnapshot = await FirebaseFirestore.instance
+            .collection('wants')
+            .where('uid', isEqualTo: currentUserId)
+            .where('deviceName', isEqualTo: widget.seki.deviceName)
+            .limit(1)
+            .get();
+
+        if (querySnapshot.docs.isNotEmpty) {
+          await querySnapshot.docs.first.reference.delete();
+        }
+
         if (mounted) {
           setState(() => _isWantingDevice = false);
         }
       } else {
-        // Add to wants
-        await wantRef.set({
-          'userId': currentUserId,
-          'sekiId': widget.seki.id,
+        // Add to wants - get username first
+        String username;
+        final authService = AuthService();
+        try {
+          final userProfile = await authService.getUserProfile(currentUserId);
+          if (userProfile != null && userProfile['username'] != null) {
+            username = userProfile['username'] as String;
+          } else {
+            final currentUser = FirebaseAuth.instance.currentUser;
+            final userEmail = currentUser?.email;
+            if (userEmail != null) {
+              username = authService.generateDefaultUsername(userEmail);
+            } else {
+              username = 'user${currentUserId.substring(0, 4)}';
+            }
+          }
+        } catch (e) {
+          final currentUser = FirebaseAuth.instance.currentUser;
+          final userEmail = currentUser?.email;
+          if (userEmail != null) {
+            username = authService.generateDefaultUsername(userEmail);
+          } else {
+            username = 'user${currentUserId.substring(0, 4)}';
+          }
+        }
+
+        // Create want document
+        await FirebaseFirestore.instance.collection('wants').add({
+          'uid': currentUserId,
+          'username': username,
           'deviceName': widget.seki.deviceName,
+          'deviceType': widget.seki.deviceType,
           'createdAt': FieldValue.serverTimestamp(),
         });
+
         if (mounted) {
           setState(() => _isWantingDevice = true);
         }
@@ -137,12 +202,18 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
     if (currentUserId == null) return;
 
-    final wantDocId = '${currentUserId}_${widget.seki.id}';
     try {
-      await FirebaseFirestore.instance
+      final querySnapshot = await FirebaseFirestore.instance
           .collection('wants')
-          .doc(wantDocId)
-          .delete();
+          .where('uid', isEqualTo: currentUserId)
+          .where('deviceName', isEqualTo: widget.seki.deviceName)
+          .limit(1)
+          .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        await querySnapshot.docs.first.reference.delete();
+      }
+
       if (mounted && _isWantingDevice == true) {
         setState(() => _isWantingDevice = false);
       }
