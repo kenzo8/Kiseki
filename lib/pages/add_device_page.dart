@@ -9,8 +9,15 @@ import '../services/auth_service.dart';
 
 class AddDevicePage extends StatefulWidget {
   final Seki? seki;
+  final String? preFilledDeviceName;
+  final bool? preFilledStillUsing;
 
-  const AddDevicePage({super.key, this.seki});
+  const AddDevicePage({
+    super.key,
+    this.seki,
+    this.preFilledDeviceName,
+    this.preFilledStillUsing,
+  });
 
   @override
   State<AddDevicePage> createState() => _AddDevicePageState();
@@ -46,12 +53,12 @@ class _AddDevicePageState extends State<AddDevicePage> {
       );
       _stillUsing = widget.seki!.endYear == null;
     } else {
-      // Initialize with default values for add mode
-      _nameController = TextEditingController();
+      // Initialize with default values for add mode, or use pre-filled values
+      _nameController = TextEditingController(text: widget.preFilledDeviceName ?? '');
       _noteController = TextEditingController();
       _deviceType = 'Mac';
       _yearRange = const RangeValues(2010, 2026);
-      _stillUsing = false;
+      _stillUsing = widget.preFilledStillUsing ?? false;
     }
     
     // Initialize selected icon from current deviceType

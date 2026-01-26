@@ -20,6 +20,8 @@ class DeviceDetailPage extends StatefulWidget {
 
 class _DeviceDetailPageState extends State<DeviceDetailPage> {
   late Stream<DocumentSnapshot> _sekiStream;
+  bool? _hasUserAddedDevice;
+  bool? _isWantingDevice;
 
   @override
   void initState() {
@@ -29,6 +31,125 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
         .collection('seki')
         .doc(widget.seki.id)
         .snapshots();
+    
+    _checkUserDeviceStatus();
+    _checkWantStatus();
+  }
+
+  Future<void> _checkUserDeviceStatus() async {
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+    if (currentUserId == null) {
+      setState(() => _hasUserAddedDevice = false);
+      return;
+    }
+
+    try {
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('seki')
+          .where('uid', isEqualTo: currentUserId)
+          .where('deviceName', isEqualTo: widget.seki.deviceName)
+          .limit(1)
+          .get();
+
+      if (mounted) {
+        setState(() => _hasUserAddedDevice = querySnapshot.docs.isNotEmpty);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _hasUserAddedDevice = false);
+      }
+    }
+  }
+
+  Future<void> _checkWantStatus() async {
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+    if (currentUserId == null) {
+      setState(() => _isWantingDevice = false);
+      return;
+    }
+
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('wants')
+          .doc('${currentUserId}_${widget.seki.id}')
+          .get();
+
+      if (mounted) {
+        setState(() => _isWantingDevice = doc.exists);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isWantingDevice = false);
+      }
+    }
+  }
+
+  Future<void> _toggleWant() async {
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+    if (currentUserId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please sign in to use this feature')),
+      );
+      return;
+    }
+
+    final wantDocId = '${currentUserId}_${widget.seki.id}';
+    final wantRef = FirebaseFirestore.instance
+        .collection('wants')
+        .doc(wantDocId);
+
+    try {
+      if (_isWantingDevice == true) {
+        // Remove from wants
+        await wantRef.delete();
+        if (mounted) {
+          setState(() => _isWantingDevice = false);
+        }
+      } else {
+        // Add to wants
+        await wantRef.set({
+          'userId': currentUserId,
+          'sekiId': widget.seki.id,
+          'deviceName': widget.seki.deviceName,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+        if (mounted) {
+          setState(() => _isWantingDevice = true);
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to update want status: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  void _openAddDeviceSheet({required bool stillUsing}) {
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+    if (currentUserId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please sign in to add a device')),
+      );
+      return;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => AddDevicePage(
+        preFilledDeviceName: widget.seki.deviceName,
+        preFilledStillUsing: stillUsing,
+      ),
+    ).then((_) {
+      // Refresh device status after sheet closes
+      _checkUserDeviceStatus();
+    });
   }
 
   String _getStatus(Seki seki) => seki.endYear == null ? 'Active' : 'Vintage';
@@ -303,6 +424,9 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
                       ],
                     ),
                   ),
+                  // Usage Selector
+                  const SizedBox(height: 24),
+                  _buildUsageSelector(seki),
                   // Note Section (if available)
                   if (seki.note.isNotEmpty) ...[
                     const SizedBox(height: 32),
@@ -452,6 +576,132 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUsageSelector(Seki seki) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+    final isOwner = currentUserId != null && currentUserId == seki.uid;
+    
+    // Don't show selector for owner's own device
+    if (isOwner) {
+      return const SizedBox.shrink();
+    }
+
+    final hasAdded = _hasUserAddedDevice ?? false;
+    final isWanting = _isWantingDevice ?? false;
+
+    final buttonBg = isDark
+        ? theme.colorScheme.surface.withOpacity(0.3)
+        : Colors.white;
+    final buttonTextColor = theme.colorScheme.onSurface.withOpacity(0.8);
+    final buttonTextColorDisabled = theme.colorScheme.onSurface.withOpacity(0.3);
+    final buttonTextColorActive = theme.colorScheme.primary;
+    final buttonBorderColor = isDark
+        ? theme.colorScheme.onSurface.withOpacity(0.1)
+        : Colors.grey.shade200;
+
+    return Row(
+      children: [
+        // Used button
+        Expanded(
+          child: _UsageButton(
+            label: 'Used',
+            isActive: false,
+            isDisabled: hasAdded,
+            backgroundColor: buttonBg,
+            textColor: hasAdded ? buttonTextColorDisabled : buttonTextColor,
+            borderColor: buttonBorderColor,
+            onTap: hasAdded
+                ? null
+                : () => _openAddDeviceSheet(stillUsing: false),
+          ),
+        ),
+        const SizedBox(width: 12),
+        // Using button
+        Expanded(
+          child: _UsageButton(
+            label: 'Using',
+            isActive: false,
+            isDisabled: hasAdded,
+            backgroundColor: buttonBg,
+            textColor: hasAdded ? buttonTextColorDisabled : buttonTextColor,
+            borderColor: buttonBorderColor,
+            onTap: hasAdded
+                ? null
+                : () => _openAddDeviceSheet(stillUsing: true),
+          ),
+        ),
+        const SizedBox(width: 12),
+        // Want button
+        Expanded(
+          child: _UsageButton(
+            label: 'Want',
+            isActive: isWanting,
+            isDisabled: false,
+            backgroundColor: buttonBg,
+            textColor: isWanting ? buttonTextColorActive : buttonTextColor,
+            borderColor: isWanting
+                ? theme.colorScheme.primary.withOpacity(0.5)
+                : buttonBorderColor,
+            onTap: _toggleWant,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _UsageButton extends StatelessWidget {
+  final String label;
+  final bool isActive;
+  final bool isDisabled;
+  final Color backgroundColor;
+  final Color textColor;
+  final Color borderColor;
+  final VoidCallback? onTap;
+
+  const _UsageButton({
+    required this.label,
+    required this.isActive,
+    required this.isDisabled,
+    required this.backgroundColor,
+    required this.textColor,
+    required this.borderColor,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: isDisabled ? null : onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: isActive ? borderColor : borderColor,
+              width: isActive ? 1.5 : 1,
+            ),
+          ),
+          child: Center(
+            child: Text(
+              label,
+              style: TextStyle(
+                color: textColor,
+                fontSize: 14,
+                fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+              ),
+            ),
+          ),
         ),
       ),
     );
