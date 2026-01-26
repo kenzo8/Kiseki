@@ -6,6 +6,7 @@ import '../models/seki_model.dart';
 import '../services/system_ui_service.dart';
 import '../pages/settings_page.dart';
 import '../pages/device_detail_page.dart';
+import '../pages/add_device_page.dart';
 import '../widgets/timeline_seki_item.dart';
 import '../widgets/seki_card.dart';
 
@@ -275,15 +276,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   }
 
                   if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                    return Center(
-                      child: Text(
-                        'No memories yet.',
-                        style: TextStyle(
-                          color: theme.colorScheme.onSurface.withOpacity(0.6),
-                          fontSize: 16,
-                        ),
-                      ),
-                    );
+                    return _buildEmptyState(context, theme);
                   }
 
                   // Sort by startYear in ascending order
@@ -297,15 +290,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   });
 
                   if (docs.isEmpty) {
-                    return Center(
-                      child: Text(
-                        'No memories yet.',
-                        style: TextStyle(
-                          color: theme.colorScheme.onSurface.withOpacity(0.6),
-                          fontSize: 16,
-                        ),
-                      ),
-                    );
+                    return _buildEmptyState(context, theme);
                   }
 
                   return ListView.builder(
@@ -333,6 +318,77 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context, ThemeData theme) {
+    return Container(
+      width: double.infinity,
+      color: Colors.white,
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Top illustration
+              Opacity(
+                opacity: 0.4,
+                child: Icon(
+                  Icons.devices_outlined,
+                  size: 72,
+                  color: theme.colorScheme.onSurface.withOpacity(0.3),
+                ),
+              ),
+              const SizedBox(height: 24),
+              // Main text
+              Text(
+                "Add a device you've used",
+                style: TextStyle(
+                  fontSize: 19,
+                  fontWeight: FontWeight.w600,
+                  color: theme.colorScheme.onSurface,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+              // Action button
+              OutlinedButton(
+                onPressed: () {
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (context) => const AddDevicePage(),
+                  );
+                },
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 32,
+                    vertical: 12,
+                  ),
+                  minimumSize: const Size(0, 46),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  side: BorderSide(
+                    color: theme.colorScheme.onSurface.withOpacity(0.2),
+                    width: 1,
+                  ),
+                ),
+                child: Text(
+                  'Add',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

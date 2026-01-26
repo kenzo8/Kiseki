@@ -46,6 +46,133 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
     );
   }
 
+  Future<void> _deleteDevice(Seki seki) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete this device?'),
+        content: const Text('This device will be removed from your profile.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.red,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      try {
+        await FirebaseFirestore.instance
+            .collection('seki')
+            .doc(seki.id)
+            .delete();
+        
+        if (mounted) {
+          Navigator.of(context).pop();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Device deleted successfully'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to delete device: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  void _showMoreMenu(Seki seki) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        final theme = Theme.of(context);
+        final isDark = theme.brightness == Brightness.dark;
+        final surfaceColor = isDark
+            ? theme.colorScheme.surface.withOpacity(0.95)
+            : Colors.white;
+        
+        return Container(
+          decoration: BoxDecoration(
+            color: surfaceColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 8),
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.onSurface.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                ListTile(
+                  leading: Icon(
+                    Icons.edit_outlined,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                  title: Text(
+                    'Edit',
+                    style: TextStyle(color: theme.colorScheme.onSurface),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _showEditSekiBottomSheet(seki);
+                  },
+                ),
+                Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: theme.colorScheme.onSurface.withOpacity(0.1),
+                ),
+                ListTile(
+                  leading: Icon(
+                    Icons.delete_outline,
+                    color: Colors.red,
+                  ),
+                  title: const Text(
+                    'Delete',
+                    style: TextStyle(color: Colors.red),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _deleteDevice(seki);
+                  },
+                ),
+                const SizedBox(height: 8),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -89,10 +216,10 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
                 ? [
                     IconButton(
                       icon: Icon(
-                        Icons.edit_outlined,
+                        Icons.more_vert,
                         color: theme.colorScheme.onSurface,
                       ),
-                      onPressed: () => _showEditSekiBottomSheet(seki),
+                      onPressed: () => _showMoreMenu(seki),
                     ),
                   ]
                 : null,
