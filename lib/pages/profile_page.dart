@@ -215,24 +215,13 @@ class _ProfilePageState extends State<ProfilePage> {
                                           spacing: 8,
                                           runSpacing: 6,
                                           children: activeDevices.map((seki) {
-                                            return Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                Icon(
-                                                  getIconByDeviceName(seki.deviceName),
-                                                  size: 16,
-                                                  color: theme.colorScheme.onSurface.withOpacity(0.7),
-                                                ),
-                                                const SizedBox(width: 4),
-                                                Text(
-                                                  seki.deviceName,
-                                                  style: TextStyle(
-                                                    color: theme.colorScheme.onSurface.withOpacity(0.8),
-                                                    fontSize: 14,
-                                                    fontWeight: FontWeight.w400,
-                                                  ),
-                                                ),
-                                              ],
+                                            return Text(
+                                              seki.deviceName,
+                                              style: TextStyle(
+                                                color: theme.colorScheme.onSurface.withOpacity(0.8),
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w400,
+                                              ),
                                             );
                                           }).toList(),
                                         ),
@@ -240,6 +229,29 @@ class _ProfilePageState extends State<ProfilePage> {
                                     ],
                                   ),
                                 ],
+                                // Devices count section
+                                const SizedBox(height: 12),
+                                Row(
+                                  children: [
+                                    Text(
+                                      'Devices:',
+                                      style: TextStyle(
+                                        color: theme.colorScheme.primary.withOpacity(0.8),
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      '${sekiSnapshot.hasData ? sekiSnapshot.data!.docs.length : 0}',
+                                      style: TextStyle(
+                                        color: theme.colorScheme.onSurface.withOpacity(0.8),
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w400,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                                 // Want section
                                 const SizedBox(height: 12),
                                 StreamBuilder<QuerySnapshot>(
@@ -259,12 +271,6 @@ class _ProfilePageState extends State<ProfilePage> {
                                         padding: const EdgeInsets.symmetric(vertical: 4),
                                         child: Row(
                                           children: [
-                                            Icon(
-                                              Icons.star_outline,
-                                              size: 16,
-                                              color: theme.colorScheme.onSurface.withOpacity(0.6),
-                                            ),
-                                            const SizedBox(width: 8),
                                             Text(
                                               'Want:',
                                               style: TextStyle(
