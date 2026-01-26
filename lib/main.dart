@@ -132,13 +132,23 @@ class _MainNavigationContentState extends State<_MainNavigationContent> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     
-    // Set immersive status bar
-    SystemUIService.setImmersiveStatusBar(
-      context,
-      backgroundColor: isDark ? const Color(0xFF02081A) : theme.colorScheme.surface,
+    // Use the exact same color for both system navigation bar and bottom navigation bar
+    // Match the colors used in setDarkStatusBar() and setLightStatusBar()
+    final bottomBarColor = isDark ? const Color(0xFF02081A) : Colors.white;
+    
+    // Create system UI overlay style with matching bottom bar color
+    final systemUiOverlayStyle = SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+      statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+      systemNavigationBarColor: bottomBarColor,
+      systemNavigationBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+      systemNavigationBarDividerColor: Colors.transparent,
     );
     
-    return Scaffold(
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: systemUiOverlayStyle,
+      child: Scaffold(
       body: IndexedStack(
         index: _currentIndex,
         children: [
@@ -150,20 +160,14 @@ class _MainNavigationContentState extends State<_MainNavigationContent> {
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF02081A) : theme.colorScheme.surface,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.3),
-              blurRadius: 10,
-              offset: const Offset(0, -2),
-            ),
-          ],
+          color: bottomBarColor,
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             _buildNavItem(
               icon: Icons.explore,
+              iconOutlined: Icons.explore_outlined,
               label: 'Explore',
               index: 0,
               isSelected: _currentIndex == 0,
@@ -173,6 +177,7 @@ class _MainNavigationContentState extends State<_MainNavigationContent> {
             ),
             _buildNavItem(
               icon: Icons.people,
+              iconOutlined: Icons.people_outline,
               label: 'Circle',
               index: 1,
               isSelected: _currentIndex == 1,
@@ -183,6 +188,7 @@ class _MainNavigationContentState extends State<_MainNavigationContent> {
             _buildCenterButton(theme, isDark),
             _buildNavItem(
               icon: Icons.inbox,
+              iconOutlined: Icons.inbox_outlined,
               label: 'Inbox',
               index: 2,
               isSelected: _currentIndex == 2,
@@ -192,6 +198,7 @@ class _MainNavigationContentState extends State<_MainNavigationContent> {
             ),
             _buildNavItem(
               icon: Icons.person,
+              iconOutlined: Icons.person_outline,
               label: 'Profile',
               index: 3,
               isSelected: _currentIndex == 3,
@@ -202,11 +209,13 @@ class _MainNavigationContentState extends State<_MainNavigationContent> {
           ],
         ),
       ),
+      ),
     );
   }
 
   Widget _buildNavItem({
     required IconData icon,
+    required IconData iconOutlined,
     required String label,
     required int index,
     required bool isSelected,
@@ -223,21 +232,21 @@ class _MainNavigationContentState extends State<_MainNavigationContent> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
-                icon,
+                isSelected ? icon : iconOutlined,
                 color: isSelected
-                    ? (isDark ? Colors.white : theme.colorScheme.primary)
-                    : (isDark ? Colors.white.withOpacity(0.5) : theme.colorScheme.onSurface.withOpacity(0.6)),
+                    ? (isDark ? Colors.white : Colors.black)
+                    : (isDark ? Colors.white.withOpacity(0.6) : Colors.black.withOpacity(0.6)),
                 size: 24,
               ),
               const SizedBox(height: 4),
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w400,
                   color: isSelected
-                      ? (isDark ? Colors.white : theme.colorScheme.primary)
-                      : (isDark ? Colors.white.withOpacity(0.5) : theme.colorScheme.onSurface.withOpacity(0.6)),
+                      ? (isDark ? Colors.white : Colors.black)
+                      : (isDark ? Colors.white.withOpacity(0.6) : Colors.black.withOpacity(0.6)),
                 ),
               ),
             ],
