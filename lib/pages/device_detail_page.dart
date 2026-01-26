@@ -20,7 +20,7 @@ class DeviceDetailPage extends StatefulWidget {
 
 class _DeviceDetailPageState extends State<DeviceDetailPage> {
   late Stream<DocumentSnapshot> _sekiStream;
-  bool? _hasUserAddedDevice;
+  Seki? _userDeviceEntry; // Track the user's existing device entry
   bool? _isWantingDevice;
 
   @override
@@ -39,7 +39,7 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
   Future<void> _checkUserDeviceStatus() async {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
     if (currentUserId == null) {
-      setState(() => _hasUserAddedDevice = false);
+      setState(() => _userDeviceEntry = null);
       return;
     }
 
@@ -52,11 +52,15 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
           .get();
 
       if (mounted) {
-        setState(() => _hasUserAddedDevice = querySnapshot.docs.isNotEmpty);
+        if (querySnapshot.docs.isNotEmpty) {
+          setState(() => _userDeviceEntry = Seki.fromFirestore(querySnapshot.docs.first));
+        } else {
+          setState(() => _userDeviceEntry = null);
+        }
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _hasUserAddedDevice = false);
+        setState(() => _userDeviceEntry = null);
       }
     }
   }
@@ -129,7 +133,25 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
     }
   }
 
-  void _openAddDeviceSheet({required bool stillUsing}) {
+  Future<void> _clearWantState() async {
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+    if (currentUserId == null) return;
+
+    final wantDocId = '${currentUserId}_${widget.seki.id}';
+    try {
+      await FirebaseFirestore.instance
+          .collection('wants')
+          .doc(wantDocId)
+          .delete();
+      if (mounted && _isWantingDevice == true) {
+        setState(() => _isWantingDevice = false);
+      }
+    } catch (e) {
+      // Silently fail - not critical
+    }
+  }
+
+  void _openDeviceSheet({required bool stillUsing}) {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
     if (currentUserId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -138,17 +160,30 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
       return;
     }
 
+    // If user has existing device, open Edit sheet; otherwise open Add sheet
+    final existingDevice = _userDeviceEntry;
+    
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => AddDevicePage(
-        preFilledDeviceName: widget.seki.deviceName,
-        preFilledStillUsing: stillUsing,
-      ),
-    ).then((_) {
+      builder: (context) => existingDevice != null
+          ? AddDevicePage(
+              seki: existingDevice,
+              overrideStillUsing: stillUsing, // Override saved value based on button tapped
+            )
+          : AddDevicePage(
+              preFilledDeviceName: widget.seki.deviceName,
+              preFilledStillUsing: stillUsing,
+            ),
+    ).then((_) async {
       // Refresh device status after sheet closes
-      _checkUserDeviceStatus();
+      await _checkUserDeviceStatus();
+      
+      // If device was just added and Want was active, clear it
+      if (_userDeviceEntry != null && _isWantingDevice == true) {
+        await _clearWantState();
+      }
     });
   }
 
@@ -592,18 +627,22 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
       return const SizedBox.shrink();
     }
 
-    final hasAdded = _hasUserAddedDevice ?? false;
+    final userDevice = _userDeviceEntry;
     final isWanting = _isWantingDevice ?? false;
+    
+    // Determine active state: Used if endYear exists, Using if endYear is null
+    final bool isUsedActive = userDevice != null && userDevice.endYear != null;
+    final bool isUsingActive = userDevice != null && userDevice.endYear == null;
 
     final buttonBg = isDark
         ? theme.colorScheme.surface.withOpacity(0.3)
         : Colors.white;
     final buttonTextColor = theme.colorScheme.onSurface.withOpacity(0.8);
-    final buttonTextColorDisabled = theme.colorScheme.onSurface.withOpacity(0.3);
     final buttonTextColorActive = theme.colorScheme.primary;
     final buttonBorderColor = isDark
         ? theme.colorScheme.onSurface.withOpacity(0.1)
         : Colors.grey.shade200;
+    final buttonBorderColorActive = theme.colorScheme.primary.withOpacity(0.5);
 
     return Row(
       children: [
@@ -611,14 +650,12 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
         Expanded(
           child: _UsageButton(
             label: 'Used',
-            isActive: false,
-            isDisabled: hasAdded,
+            icon: Icons.history,
+            isActive: isUsedActive,
             backgroundColor: buttonBg,
-            textColor: hasAdded ? buttonTextColorDisabled : buttonTextColor,
-            borderColor: buttonBorderColor,
-            onTap: hasAdded
-                ? null
-                : () => _openAddDeviceSheet(stillUsing: false),
+            textColor: isUsedActive ? buttonTextColorActive : buttonTextColor,
+            borderColor: isUsedActive ? buttonBorderColorActive : buttonBorderColor,
+            onTap: () => _openDeviceSheet(stillUsing: false),
           ),
         ),
         const SizedBox(width: 12),
@@ -626,14 +663,12 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
         Expanded(
           child: _UsageButton(
             label: 'Using',
-            isActive: false,
-            isDisabled: hasAdded,
+            icon: Icons.circle,
+            isActive: isUsingActive,
             backgroundColor: buttonBg,
-            textColor: hasAdded ? buttonTextColorDisabled : buttonTextColor,
-            borderColor: buttonBorderColor,
-            onTap: hasAdded
-                ? null
-                : () => _openAddDeviceSheet(stillUsing: true),
+            textColor: isUsingActive ? buttonTextColorActive : buttonTextColor,
+            borderColor: isUsingActive ? buttonBorderColorActive : buttonBorderColor,
+            onTap: () => _openDeviceSheet(stillUsing: true),
           ),
         ),
         const SizedBox(width: 12),
@@ -641,13 +676,11 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
         Expanded(
           child: _UsageButton(
             label: 'Want',
+            icon: isWanting ? Icons.star : Icons.star_outline,
             isActive: isWanting,
-            isDisabled: false,
             backgroundColor: buttonBg,
             textColor: isWanting ? buttonTextColorActive : buttonTextColor,
-            borderColor: isWanting
-                ? theme.colorScheme.primary.withOpacity(0.5)
-                : buttonBorderColor,
+            borderColor: isWanting ? buttonBorderColorActive : buttonBorderColor,
             onTap: _toggleWant,
           ),
         ),
@@ -658,8 +691,8 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
 
 class _UsageButton extends StatelessWidget {
   final String label;
+  final IconData icon;
   final bool isActive;
-  final bool isDisabled;
   final Color backgroundColor;
   final Color textColor;
   final Color borderColor;
@@ -667,8 +700,8 @@ class _UsageButton extends StatelessWidget {
 
   const _UsageButton({
     required this.label,
+    required this.icon,
     required this.isActive,
-    required this.isDisabled,
     required this.backgroundColor,
     required this.textColor,
     required this.borderColor,
@@ -677,10 +710,14 @@ class _UsageButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final iconColor = isActive 
+        ? textColor 
+        : textColor.withOpacity(0.6);
+    
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: isDisabled ? null : onTap,
+        onTap: onTap,
         borderRadius: BorderRadius.circular(8),
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12),
@@ -688,18 +725,38 @@ class _UsageButton extends StatelessWidget {
             color: backgroundColor,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: isActive ? borderColor : borderColor,
+              color: borderColor,
               width: isActive ? 1.5 : 1,
             ),
           ),
           child: Center(
-            child: Text(
-              label,
-              style: TextStyle(
-                color: textColor,
-                fontSize: 14,
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-              ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  icon,
+                  size: 14,
+                  color: iconColor,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: textColor,
+                    fontSize: 14,
+                    fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                  ),
+                ),
+                if (isActive) ...[
+                  const SizedBox(width: 4),
+                  Icon(
+                    Icons.check,
+                    size: 16,
+                    color: textColor,
+                  ),
+                ],
+              ],
             ),
           ),
         ),

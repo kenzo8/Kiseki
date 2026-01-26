@@ -11,12 +11,14 @@ class AddDevicePage extends StatefulWidget {
   final Seki? seki;
   final String? preFilledDeviceName;
   final bool? preFilledStillUsing;
+  final bool? overrideStillUsing; // Overrides "Still using" even in Edit mode
 
   const AddDevicePage({
     super.key,
     this.seki,
     this.preFilledDeviceName,
     this.preFilledStillUsing,
+    this.overrideStillUsing,
   });
 
   @override
@@ -47,18 +49,21 @@ class _AddDevicePageState extends State<AddDevicePage> {
       _nameController = TextEditingController(text: widget.seki!.deviceName);
       _noteController = TextEditingController(text: widget.seki!.note);
       _deviceType = widget.seki!.deviceType;
+      // Use override if provided, otherwise use saved value
+      _stillUsing = widget.overrideStillUsing ?? (widget.seki!.endYear == null);
+      // Adjust year range based on stillUsing state
       _yearRange = RangeValues(
         widget.seki!.startYear.toDouble(),
-        widget.seki!.endYear?.toDouble() ?? 2026.0,
+        _stillUsing ? 2026.0 : (widget.seki!.endYear?.toDouble() ?? 2026.0),
       );
-      _stillUsing = widget.seki!.endYear == null;
     } else {
       // Initialize with default values for add mode, or use pre-filled values
       _nameController = TextEditingController(text: widget.preFilledDeviceName ?? '');
       _noteController = TextEditingController();
       _deviceType = 'Mac';
+      // Use override if provided, otherwise use pre-filled or default
+      _stillUsing = widget.overrideStillUsing ?? widget.preFilledStillUsing ?? false;
       _yearRange = const RangeValues(2010, 2026);
-      _stillUsing = widget.preFilledStillUsing ?? false;
     }
     
     // Initialize selected icon from current deviceType
