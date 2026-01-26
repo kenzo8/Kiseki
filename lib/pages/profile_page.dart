@@ -289,7 +289,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                               ),
                                             ),
                                             if (wantCount > 0) ...[
-                                              const Spacer(),
+                                              const SizedBox(width: 8),
                                               Icon(
                                                 Icons.chevron_right,
                                                 size: 16,
