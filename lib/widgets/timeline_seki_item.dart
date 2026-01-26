@@ -19,11 +19,30 @@ class TimelineSekiItem extends StatelessWidget {
     this.onTap,
   });
 
-  String get _yearRangeText {
+  String get _usageDurationText {
+    final currentYear = DateTime.now().year;
+    final endYear = seki.endYear ?? currentYear;
+    final duration = endYear - seki.startYear;
+    
     if (seki.endYear == null) {
-      return '${seki.startYear} - Present';
+      // Still active - use "Using for X years"
+      if (duration == 0) {
+        return 'Using for less than a year';
+      } else if (duration == 1) {
+        return 'Using for 1 year';
+      } else {
+        return 'Using for $duration years';
+      }
+    } else {
+      // Completed - use "Used for X years"
+      if (duration == 0) {
+        return 'Used for less than a year';
+      } else if (duration == 1) {
+        return 'Used for 1 year';
+      } else {
+        return 'Used for $duration years';
+      }
     }
-    return '${seki.startYear} - ${seki.endYear}';
   }
 
   @override
@@ -111,9 +130,9 @@ class TimelineSekiItem extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Full duration text (grey, small font)
+                      // Usage duration text (grey, small font)
                       Text(
-                        _yearRangeText,
+                        _usageDurationText,
                         style: TextStyle(
                           color: yearColor,
                           fontSize: 12,
