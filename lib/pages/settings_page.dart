@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../services/theme_preference_service.dart';
+import '../services/system_ui_service.dart';
 import '../main.dart';
 
 class SettingsPage extends StatelessWidget {
@@ -62,6 +63,21 @@ class SettingsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    
+    // Set immersive status bar
+    final gradientColors = isDark
+        ? [
+            const Color(0xFF02081A),
+            const Color(0xFF04102C),
+          ]
+        : [
+            Colors.grey.shade100,
+            Colors.grey.shade200,
+          ];
+    SystemUIService.setImmersiveStatusBar(
+      context,
+      backgroundColor: gradientColors.first,
+    );
 
     return Container(
       decoration: BoxDecoration(

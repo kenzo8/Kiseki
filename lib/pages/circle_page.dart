@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/system_ui_service.dart';
 
 class CirclePage extends StatelessWidget {
   const CirclePage({super.key});
@@ -16,6 +17,12 @@ class CirclePage extends StatelessWidget {
             Colors.grey.shade100,
             Colors.grey.shade200,
           ];
+    
+    // Set immersive status bar based on background color
+    SystemUIService.setImmersiveStatusBar(
+      context,
+      backgroundColor: gradientColors.first,
+    );
 
     return Container(
       decoration: BoxDecoration(

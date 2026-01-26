@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'firebase_options.dart';
 import 'pages/login_page.dart';
@@ -10,6 +11,7 @@ import 'pages/inbox_page.dart';
 import 'pages/profile_page.dart';
 import 'pages/add_device_page.dart';
 import 'services/theme_preference_service.dart';
+import 'services/system_ui_service.dart';
 
 // Global theme state
 late final ValueNotifier<ThemeMode> themeModeNotifier;
@@ -39,6 +41,16 @@ class KisekiApp extends StatelessWidget {
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: themeModeNotifier,
       builder: (context, themeMode, child) {
+        // Set initial status bar style based on theme
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          final isDark = themeMode == ThemeMode.dark;
+          if (isDark) {
+            SystemUIService.setDarkStatusBar();
+          } else {
+            SystemUIService.setLightStatusBar();
+          }
+        });
+        
         return MaterialApp(
           title: 'Kiseki',
           debugShowCheckedModeBanner: false,
@@ -119,6 +131,12 @@ class _MainNavigationContentState extends State<_MainNavigationContent> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    
+    // Set immersive status bar
+    SystemUIService.setImmersiveStatusBar(
+      context,
+      backgroundColor: isDark ? const Color(0xFF02081A) : theme.colorScheme.surface,
+    );
     
     return Scaffold(
       body: IndexedStack(

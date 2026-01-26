@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 import '../models/seki_model.dart';
+import '../services/system_ui_service.dart';
 import '../widgets/timeline_seki_item.dart';
 import '../widgets/seki_card.dart';
 
@@ -28,6 +29,9 @@ class OtherUserProfilePage extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final scaffoldBg = isDark ? const Color(0xFF02081A) : const Color(0xFFF5F5F5);
+    
+    // Set immersive status bar
+    SystemUIService.setImmersiveStatusBar(context, backgroundColor: scaffoldBg);
 
     return Scaffold(
       backgroundColor: scaffoldBg,

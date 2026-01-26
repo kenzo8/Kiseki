@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../models/seki_model.dart';
+import '../services/system_ui_service.dart';
 import '../pages/profile_page.dart';
 import '../pages/other_user_profile_page.dart';
 import '../pages/device_detail_page.dart';
@@ -23,6 +24,9 @@ class _ExplorePageState extends State<ExplorePage> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final scaffoldBg = isDark ? const Color(0xFF02081A) : const Color(0xFFF5F5F5);
+    
+    // Set immersive status bar
+    SystemUIService.setImmersiveStatusBar(context, backgroundColor: scaffoldBg);
 
     if (widget.user == null) {
       return Scaffold(

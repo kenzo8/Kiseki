@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
+import '../services/system_ui_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -73,6 +74,9 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Set immersive status bar for dark background
+    SystemUIService.setDarkStatusBar();
+    
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(

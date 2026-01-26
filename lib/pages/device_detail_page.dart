@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../models/seki_model.dart';
 import '../widgets/seki_card.dart';
+import '../services/system_ui_service.dart';
 import 'add_device_page.dart';
 import 'profile_page.dart';
 import 'other_user_profile_page.dart';
@@ -52,6 +53,9 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
     final scaffoldBg = isDark ? const Color(0xFF02081A) : const Color(0xFFF5F5F5);
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
     final isOwner = currentUserId != null && currentUserId == widget.seki.uid;
+    
+    // Set immersive status bar
+    SystemUIService.setImmersiveStatusBar(context, backgroundColor: scaffoldBg);
 
     return StreamBuilder<DocumentSnapshot>(
       stream: _sekiStream,
