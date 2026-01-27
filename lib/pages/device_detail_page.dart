@@ -356,6 +356,64 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
     }
   }
 
+  Future<void> _removeUserDevice() async {
+    final userDevice = _userDeviceEntry;
+    if (userDevice == null) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Remove from your devices?'),
+        content: const Text('This device will be removed from your profile.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.red,
+            ),
+            child: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      try {
+        await FirebaseFirestore.instance
+            .collection('seki')
+            .doc(userDevice.id)
+            .delete();
+        
+        if (mounted) {
+          await _checkUserDeviceStatus();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Device removed successfully'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to remove device: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -803,7 +861,7 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
         Expanded(
           child: isUsedActive
               ? ElevatedButton.icon(
-                  onPressed: () => _openDeviceSheet(stillUsing: false),
+                  onPressed: _removeUserDevice,
                   icon: const Icon(Icons.check_circle, size: 20),
                   label: const Text('Used'),
                   style: ElevatedButton.styleFrom(
@@ -834,7 +892,7 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
         Expanded(
           child: isUsingActive
               ? ElevatedButton.icon(
-                  onPressed: () => _openDeviceSheet(stillUsing: true),
+                  onPressed: _removeUserDevice,
                   icon: const Icon(Icons.check_circle, size: 20),
                   label: const Text('Using'),
                   style: ElevatedButton.styleFrom(
