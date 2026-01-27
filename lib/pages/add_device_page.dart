@@ -82,9 +82,9 @@ class _AddDevicePageState extends State<AddDevicePage> {
       _deviceType = 'Mac';
       // Use override if provided, otherwise use pre-filled or default
       _stillUsing = widget.overrideStillUsing ?? widget.preFilledStillUsing ?? false;
-      _yearRange = const RangeValues(2010, 2026);
-      _startDate = DateTime(2010, 1, 1);
-      _endDate = _stillUsing ? null : DateTime(2026, 12, 31);
+      _yearRange = const RangeValues(2020, 2026);
+      _startDate = DateTime(2020, 1, 1);
+      _endDate = _stillUsing ? null : DateTime(2026, 1, 1);
     }
     
     // Initialize selected icon from current deviceType
@@ -121,20 +121,17 @@ class _AddDevicePageState extends State<AddDevicePage> {
     setState(() {});
   }
 
-  static DateTime get _maxSelectableDate =>
-      DateTime(DateTime.now().year + 2, 12, 31);
-
   Future<void> _selectStartDate() async {
     final now = DateTime.now();
     final initial = _startDate ?? now;
-    final clamped = initial.isAfter(_maxSelectableDate)
-        ? _maxSelectableDate
+    final clamped = initial.isAfter(now)
+        ? now
         : (initial.isBefore(DateTime(2000)) ? DateTime(2000) : initial);
     final picked = await showDatePicker(
       context: context,
       initialDate: clamped,
       firstDate: DateTime(2000),
-      lastDate: _maxSelectableDate,
+      lastDate: now,
     );
     if (picked != null) {
       setState(() {
@@ -154,12 +151,12 @@ class _AddDevicePageState extends State<AddDevicePage> {
     final endDefault = _endDate ?? now;
     DateTime initial = endDefault;
     if (initial.isBefore(start)) initial = start;
-    if (initial.isAfter(_maxSelectableDate)) initial = _maxSelectableDate;
+    if (initial.isAfter(now)) initial = now;
     final picked = await showDatePicker(
       context: context,
       initialDate: initial,
       firstDate: start,
-      lastDate: _maxSelectableDate,
+      lastDate: now,
     );
     if (picked != null) {
       setState(() {
