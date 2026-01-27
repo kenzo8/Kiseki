@@ -795,13 +795,13 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
               Row(
                 children: [
                   Icon(
-                    Icons.folder_outlined,
+                    Icons.comment_outlined,
                     size: 16,
                     color: labelColor,
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'MEMORIES',
+                    'IMPRESSION',
                     style: TextStyle(
                       color: labelColor,
                       fontSize: 12,
