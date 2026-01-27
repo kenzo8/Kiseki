@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../models/seki_model.dart';
 import '../services/system_ui_service.dart';
@@ -200,6 +201,26 @@ class _ProfilePageState extends State<ProfilePage>
     return route?.isFirst ?? false;
   }
 
+  /// Share profile information
+  Future<void> _shareProfile(BuildContext context, String username, int deviceCount, int wantCount) async {
+    final shareText = 'Check out $username\'s profile on Kiseki!\n\n'
+        'Owned: $deviceCount devices\n'
+        'Wants: $wantCount items';
+    
+    try {
+      await Share.share(shareText);
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to share: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context); // Required for AutomaticKeepAliveClientMixin
@@ -287,6 +308,12 @@ class _ProfilePageState extends State<ProfilePage>
                           )
                         : const SizedBox.shrink(),
                     actions: [
+                      IconButton(
+                        icon: const Icon(Icons.share),
+                        color: theme.colorScheme.onSurface.withOpacity(0.7),
+                        tooltip: 'Share',
+                        onPressed: () => _shareProfile(context, username, deviceCount, wantCount),
+                      ),
                       IconButton(
                         icon: const Icon(Icons.settings),
                         color: theme.colorScheme.onSurface.withOpacity(0.7),
