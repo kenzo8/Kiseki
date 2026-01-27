@@ -512,12 +512,9 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
                       const SizedBox(height: 24),
                       _buildUsageSelector(seki),
                     ],
-                    // Action Buttons (for owners)
-                    if (isOwner) ...[
-                      const SizedBox(height: 24),
-                      _buildActionButtons(seki, theme),
-                    ],
-                    const SizedBox(height: 40),
+                    // Add bottom padding to avoid overlap with fixed buttons
+                    if (isOwner) const SizedBox(height: 100),
+                    if (!isOwner) const SizedBox(height: 40),
                       ],
                     ),
                   ),
@@ -555,6 +552,36 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
                       ),
                     ),
                   ),
+                  // Action Buttons (for owners) - 固定在底部
+                  if (isOwner)
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      child: Container(
+                        padding: EdgeInsets.only(
+                          top: 40,
+                          left: 24,
+                          right: 24,
+                          bottom: 24 + MediaQuery.of(context).padding.bottom,
+                        ),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              scaffoldBg.withOpacity(0.0),
+                              scaffoldBg.withOpacity(0.3),
+                              scaffoldBg.withOpacity(0.7),
+                              scaffoldBg.withOpacity(0.95),
+                              scaffoldBg,
+                            ],
+                            stops: const [0.0, 0.2, 0.5, 0.8, 1.0],
+                          ),
+                        ),
+                        child: _buildActionButtons(seki, theme),
+                      ),
+                    ),
                 ],
               ),
             ),
