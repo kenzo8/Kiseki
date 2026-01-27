@@ -121,191 +121,266 @@ class _ProfilePageState extends State<ProfilePage> {
                         activeDevices = _getActiveDevices(sekis);
                       }
 
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                        child: Card(
-                          color: theme.colorScheme.surface.withOpacity(0.1),
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.person,
-                                      size: 20,
-                                      color: theme.colorScheme.onSurface.withOpacity(0.7),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      username,
-                                      style: TextStyle(
-                                        color: theme.colorScheme.onSurface,
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
+                      // Get device count
+                      final deviceCount = sekiSnapshot.hasData ? sekiSnapshot.data!.docs.length : 0;
+                      
+                      // Get want count
+                      return StreamBuilder<QuerySnapshot>(
+                        stream: FirebaseFirestore.instance
+                            .collection('wants')
+                            .where('uid', isEqualTo: FirebaseAuth.instance.currentUser?.uid ?? '')
+                            .snapshots(),
+                        builder: (context, wantSnapshot) {
+                          final wantCount = wantSnapshot.hasData 
+                              ? wantSnapshot.data!.docs.length 
+                              : 0;
+                          
+                          return Column(
+                            children: [
+                              // Modern header with user information
+                              Container(
+                                width: double.infinity,
+                                decoration: BoxDecoration(
+                                  color: isDark
+                                      ? theme.colorScheme.surfaceContainerHighest.withOpacity(0.3)
+                                      : theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                                  borderRadius: const BorderRadius.vertical(
+                                    bottom: Radius.circular(24),
+                                  ),
                                 ),
-                                const SizedBox(height: 8),
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.email,
-                                      size: 16,
-                                      color: theme.colorScheme.onSurface.withOpacity(0.6),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Text(
-                                        email,
-                                        style: TextStyle(
-                                          color: theme.colorScheme.onSurface.withOpacity(0.7),
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                if (bio.isNotEmpty) ...[
-                                  const SizedBox(height: 12),
-                                  Row(
+                                child: Padding(
+                                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+                                  child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Icon(
-                                        Icons.info_outline,
-                                        size: 16,
-                                        color: theme.colorScheme.onSurface.withOpacity(0.6),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: Text(
-                                          bio,
-                                          style: TextStyle(
-                                            color: theme.colorScheme.onSurface.withOpacity(0.7),
-                                            fontSize: 14,
-                                            height: 1.5,
+                                      Row(
+                                        children: [
+                                          Icon(
+                                            Icons.person,
+                                            size: 24,
+                                            color: theme.colorScheme.primary,
                                           ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                                if (activeDevices.isNotEmpty) ...[
-                                  const SizedBox(height: 12),
-                                  Row(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'In Use:',
-                                        style: TextStyle(
-                                          color: theme.colorScheme.primary.withOpacity(0.8),
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: Wrap(
-                                          spacing: 8,
-                                          runSpacing: 6,
-                                          children: activeDevices.map((seki) {
-                                            return Text(
-                                              seki.deviceName,
-                                              style: TextStyle(
-                                                color: theme.colorScheme.onSurface.withOpacity(0.8),
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.w400,
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: Text(
+                                              username,
+                                              style: theme.textTheme.headlineSmall?.copyWith(
+                                                fontWeight: FontWeight.w600,
+                                                color: theme.colorScheme.onSurface,
+                                              ) ?? TextStyle(
+                                                color: theme.colorScheme.onSurface,
+                                                fontSize: 24,
+                                                fontWeight: FontWeight.w600,
                                               ),
-                                            );
-                                          }).toList(),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Row(
+                                        children: [
+                                          Icon(
+                                            Icons.email,
+                                            size: 18,
+                                            color: theme.colorScheme.onSurfaceVariant,
+                                          ),
+                                          const SizedBox(width: 10),
+                                          Expanded(
+                                            child: Text(
+                                              email,
+                                              style: theme.textTheme.bodyMedium?.copyWith(
+                                                color: theme.colorScheme.onSurfaceVariant,
+                                              ) ?? TextStyle(
+                                                color: theme.colorScheme.onSurfaceVariant,
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      if (bio.isNotEmpty) ...[
+                                        const SizedBox(height: 12),
+                                        Row(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Icon(
+                                              Icons.info_outline,
+                                              size: 18,
+                                              color: theme.colorScheme.onSurfaceVariant,
+                                            ),
+                                            const SizedBox(width: 10),
+                                            Expanded(
+                                              child: Text(
+                                                bio,
+                                                style: theme.textTheme.bodyMedium?.copyWith(
+                                                  color: theme.colorScheme.onSurfaceVariant,
+                                                  height: 1.5,
+                                                ) ?? TextStyle(
+                                                  color: theme.colorScheme.onSurfaceVariant,
+                                                  fontSize: 14,
+                                                  height: 1.5,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                                // Devices count section
-                                const SizedBox(height: 12),
-                                Row(
-                                  children: [
-                                    Text(
-                                      'Devices:',
-                                      style: TextStyle(
-                                        color: theme.colorScheme.primary.withOpacity(0.8),
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      '${sekiSnapshot.hasData ? sekiSnapshot.data!.docs.length : 0}',
-                                      style: TextStyle(
-                                        color: theme.colorScheme.onSurface.withOpacity(0.8),
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w400,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                // Want section
-                                const SizedBox(height: 12),
-                                StreamBuilder<QuerySnapshot>(
-                                  stream: FirebaseFirestore.instance
-                                      .collection('wants')
-                                      .where('uid', isEqualTo: FirebaseAuth.instance.currentUser?.uid ?? '')
-                                      .snapshots(),
-                                  builder: (context, wantSnapshot) {
-                                    final wantCount = wantSnapshot.hasData 
-                                        ? wantSnapshot.data!.docs.length 
-                                        : 0;
-                                    
-                                    return InkWell(
-                                      onTap: wantCount > 0 ? () => _showWantsBottomSheet(context, theme, isDark) : null,
-                                      borderRadius: BorderRadius.circular(8),
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(vertical: 4),
-                                        child: Row(
+                                      ],
+                                      if (activeDevices.isNotEmpty) ...[
+                                        const SizedBox(height: 16),
+                                        Row(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                              'Want:',
-                                              style: TextStyle(
-                                                color: theme.colorScheme.primary.withOpacity(0.8),
+                                              'In Use:',
+                                              style: theme.textTheme.bodyMedium?.copyWith(
+                                                color: theme.colorScheme.primary,
+                                                fontWeight: FontWeight.w500,
+                                              ) ?? TextStyle(
+                                                color: theme.colorScheme.primary,
                                                 fontSize: 14,
                                                 fontWeight: FontWeight.w500,
                                               ),
                                             ),
-                                            const SizedBox(width: 8),
-                                            Text(
-                                              '$wantCount',
-                                              style: TextStyle(
-                                                color: theme.colorScheme.onSurface.withOpacity(0.8),
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.w400,
+                                            const SizedBox(width: 10),
+                                            Expanded(
+                                              child: Wrap(
+                                                spacing: 8,
+                                                runSpacing: 6,
+                                                children: activeDevices.map((seki) {
+                                                  return Container(
+                                                    padding: const EdgeInsets.symmetric(
+                                                      horizontal: 10,
+                                                      vertical: 4,
+                                                    ),
+                                                    decoration: BoxDecoration(
+                                                      color: theme.colorScheme.primaryContainer,
+                                                      borderRadius: BorderRadius.circular(12),
+                                                    ),
+                                                    child: Row(
+                                                      mainAxisSize: MainAxisSize.min,
+                                                      children: [
+                                                        Icon(
+                                                          getIconByDeviceName(seki.deviceName),
+                                                          size: 16,
+                                                          color: theme.colorScheme.onPrimaryContainer,
+                                                        ),
+                                                        const SizedBox(width: 6),
+                                                        Text(
+                                                          seki.deviceName,
+                                                          style: theme.textTheme.labelMedium?.copyWith(
+                                                            color: theme.colorScheme.onPrimaryContainer,
+                                                            fontWeight: FontWeight.w500,
+                                                          ) ?? TextStyle(
+                                                            color: theme.colorScheme.onPrimaryContainer,
+                                                            fontSize: 12,
+                                                            fontWeight: FontWeight.w500,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  );
+                                                }).toList(),
                                               ),
                                             ),
-                                            if (wantCount > 0) ...[
-                                              const SizedBox(width: 8),
-                                              Icon(
-                                                Icons.chevron_right,
-                                                size: 16,
-                                                color: theme.colorScheme.onSurface.withOpacity(0.4),
-                                              ),
-                                            ],
                                           ],
                                         ),
-                                      ),
-                                    );
-                                  },
+                                      ],
+                                    ],
+                                  ),
                                 ),
-                              ],
-                            ),
-                          ),
-                        ),
+                              ),
+                              // Horizontal stats row
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                  children: [
+                                    // Devices stat
+                                    Expanded(
+                                      child: InkWell(
+                                        onTap: deviceCount > 0 ? () {
+                                          // Could navigate to devices list if needed
+                                        } : null,
+                                        borderRadius: BorderRadius.circular(16),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(vertical: 16),
+                                          child: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Text(
+                                                '$deviceCount',
+                                                style: theme.textTheme.displaySmall?.copyWith(
+                                                  fontWeight: FontWeight.bold,
+                                                  color: theme.colorScheme.onSurface,
+                                                ) ?? TextStyle(
+                                                  fontSize: 36,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: theme.colorScheme.onSurface,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                'Devices',
+                                                style: theme.textTheme.labelLarge?.copyWith(
+                                                  color: theme.colorScheme.onSurfaceVariant,
+                                                ) ?? TextStyle(
+                                                  fontSize: 14,
+                                                  color: theme.colorScheme.onSurfaceVariant,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    // Divider
+                                    Container(
+                                      width: 1,
+                                      height: 48,
+                                      color: theme.colorScheme.outlineVariant.withOpacity(0.3),
+                                    ),
+                                    // Want stat
+                                    Expanded(
+                                      child: InkWell(
+                                        onTap: wantCount > 0 ? () => _showWantsBottomSheet(context, theme, isDark) : null,
+                                        borderRadius: BorderRadius.circular(16),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(vertical: 16),
+                                          child: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Text(
+                                                '$wantCount',
+                                                style: theme.textTheme.displaySmall?.copyWith(
+                                                  fontWeight: FontWeight.bold,
+                                                  color: theme.colorScheme.onSurface,
+                                                ) ?? TextStyle(
+                                                  fontSize: 36,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: theme.colorScheme.onSurface,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                'Want',
+                                                style: theme.textTheme.labelLarge?.copyWith(
+                                                  color: theme.colorScheme.onSurfaceVariant,
+                                                ) ?? TextStyle(
+                                                  fontSize: 14,
+                                                  color: theme.colorScheme.onSurfaceVariant,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          );
+                        },
                       );
                     },
                   );
