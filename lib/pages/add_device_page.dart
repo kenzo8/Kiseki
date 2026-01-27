@@ -615,7 +615,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
                                 ),
                                 focusedBorder: UnderlineInputBorder(
                                   borderSide: BorderSide(
-                                    color: theme.colorScheme.primary,
+                                    color: getCategoryColor(_deviceType),
                                     width: 1.5,
                                   ),
                                 ),
@@ -633,7 +633,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
                                     child: Icon(
                                       _selectedIcon,
                                       size: 24,
-                                      color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.8),
+                                      color: (isDark ? Colors.white : getCategoryColor(_deviceType)).withOpacity(0.8),
                                     ),
                                   ),
                                 ),
