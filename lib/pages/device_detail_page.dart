@@ -393,9 +393,7 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
 
         return Scaffold(
           backgroundColor: scaffoldBg,
-          bottomNavigationBar: isOwner
-              ? _buildGlassmorphismBottomBar(context, seki, theme, scaffoldBg, isDark)
-              : null,
+          bottomNavigationBar: _buildGlassmorphismBottomBar(context, seki, theme, scaffoldBg, isDark, isOwner),
           body: Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -514,16 +512,10 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
                     const SizedBox(height: 24),
                     _buildNoteCard(seki.note, categoryColor, theme, isDark),
                     // Add spacing between Impression card and action buttons
-                    if (isOwner) const SizedBox(height: 20),
-                    // Usage Selector (for non-owners)
-                    if (!isOwner) ...[
-                      const SizedBox(height: 24),
-                      _buildUsageSelector(seki),
-                    ],
+                    const SizedBox(height: 20),
                     // Add bottom padding to avoid overlap with fixed buttons
                     // Increased padding to ensure IMPRESSION text isn't cut off
-                    if (isOwner) const SizedBox(height: 120),
-                    if (!isOwner) const SizedBox(height: 40),
+                    const SizedBox(height: 120),
                       ],
                     ),
                   ),
@@ -719,6 +711,7 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
     ThemeData theme,
     Color scaffoldBg,
     bool isDark,
+    bool isOwner,
   ) {
     return ClipRRect(
       child: BackdropFilter(
@@ -743,7 +736,9 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
           ),
           child: SafeArea(
             top: false,
-            child: _buildActionButtons(seki, theme),
+            child: isOwner
+                ? _buildActionButtons(seki, theme)
+                : _buildUsageActionButtons(seki, theme),
           ),
         ),
       ),
@@ -778,6 +773,109 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
             style: OutlinedButton.styleFrom(
               foregroundColor: Colors.red,
               side: const BorderSide(color: Colors.red, width: 1.5),
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildUsageActionButtons(Seki seki, ThemeData theme) {
+    final userDevice = _userDeviceEntry;
+    final isWanting = _isWantingDevice ?? false;
+    
+    // Determine active state: Used if endYear/endTime exists, Using if endYear/endTime is null
+    final bool isUsedActive = userDevice != null && 
+        (userDevice.isPreciseMode 
+            ? (userDevice.endTime != null) 
+            : (userDevice.endYear != null));
+    final bool isUsingActive = userDevice != null && 
+        (userDevice.isPreciseMode 
+            ? (userDevice.endTime == null) 
+            : (userDevice.endYear == null));
+
+    return Row(
+      children: [
+        Expanded(
+          child: isUsedActive
+              ? ElevatedButton.icon(
+                  onPressed: () => _openDeviceSheet(stillUsing: false),
+                  icon: const Icon(Icons.check_circle, size: 20),
+                  label: const Text('Used'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1A1A1B),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    elevation: 0,
+                  ),
+                )
+              : OutlinedButton.icon(
+                  onPressed: () => _openDeviceSheet(stillUsing: false),
+                  icon: const Icon(Icons.history, size: 20),
+                  label: const Text('Used'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.grey,
+                    side: const BorderSide(color: Colors.grey, width: 1.5),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                  ),
+                ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: isUsingActive
+              ? ElevatedButton.icon(
+                  onPressed: () => _openDeviceSheet(stillUsing: true),
+                  icon: const Icon(Icons.check_circle, size: 20),
+                  label: const Text('Using'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1A1A1B),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    elevation: 0,
+                  ),
+                )
+              : OutlinedButton.icon(
+                  onPressed: () => _openDeviceSheet(stillUsing: true),
+                  icon: const Icon(Icons.circle, size: 20),
+                  label: const Text('Using'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.grey,
+                    side: const BorderSide(color: Colors.grey, width: 1.5),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                  ),
+                ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: _toggleWant,
+            icon: Icon(
+              isWanting ? Icons.star : Icons.star_outline,
+              size: 20,
+            ),
+            label: const Text('Want'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: isWanting ? Colors.orange : Colors.grey,
+              side: BorderSide(
+                color: isWanting ? Colors.orange : Colors.grey,
+                width: 1.5,
+              ),
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(24),
@@ -895,161 +993,6 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
             ],
           ),
         ],
-      ),
-    );
-  }
-
-
-  Widget _buildUsageSelector(Seki seki) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
-    final isOwner = currentUserId != null && currentUserId == seki.uid;
-    
-    // Don't show selector for owner's own device
-    if (isOwner) {
-      return const SizedBox.shrink();
-    }
-
-    final userDevice = _userDeviceEntry;
-    final isWanting = _isWantingDevice ?? false;
-    
-    // Determine active state: Used if endYear/endTime exists, Using if endYear/endTime is null
-    final bool isUsedActive = userDevice != null && 
-        (userDevice.isPreciseMode 
-            ? (userDevice.endTime != null) 
-            : (userDevice.endYear != null));
-    final bool isUsingActive = userDevice != null && 
-        (userDevice.isPreciseMode 
-            ? (userDevice.endTime == null) 
-            : (userDevice.endYear == null));
-
-    final buttonBg = isDark
-        ? theme.colorScheme.surface.withOpacity(0.3)
-        : Colors.white;
-    final buttonTextColor = theme.colorScheme.onSurface.withOpacity(0.8);
-    final buttonTextColorActive = theme.colorScheme.primary;
-    final buttonBorderColor = isDark
-        ? theme.colorScheme.onSurface.withOpacity(0.1)
-        : Colors.grey.shade200;
-    final buttonBorderColorActive = theme.colorScheme.primary.withOpacity(0.5);
-
-    return Row(
-      children: [
-        // Used button
-        Expanded(
-          child: _UsageButton(
-            label: 'Used',
-            icon: Icons.history,
-            isActive: isUsedActive,
-            backgroundColor: buttonBg,
-            textColor: isUsedActive ? buttonTextColorActive : buttonTextColor,
-            borderColor: isUsedActive ? buttonBorderColorActive : buttonBorderColor,
-            onTap: () => _openDeviceSheet(stillUsing: false),
-          ),
-        ),
-        const SizedBox(width: 12),
-        // Using button
-        Expanded(
-          child: _UsageButton(
-            label: 'Using',
-            icon: Icons.circle,
-            isActive: isUsingActive,
-            backgroundColor: buttonBg,
-            textColor: isUsingActive ? buttonTextColorActive : buttonTextColor,
-            borderColor: isUsingActive ? buttonBorderColorActive : buttonBorderColor,
-            onTap: () => _openDeviceSheet(stillUsing: true),
-          ),
-        ),
-        const SizedBox(width: 12),
-        // Want button
-        Expanded(
-          child: _UsageButton(
-            label: 'Want',
-            icon: isWanting ? Icons.star : Icons.star_outline,
-            isActive: isWanting,
-            backgroundColor: buttonBg,
-            textColor: isWanting ? buttonTextColorActive : buttonTextColor,
-            borderColor: isWanting ? buttonBorderColorActive : buttonBorderColor,
-            onTap: _toggleWant,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _UsageButton extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final bool isActive;
-  final Color backgroundColor;
-  final Color textColor;
-  final Color borderColor;
-  final VoidCallback? onTap;
-
-  const _UsageButton({
-    required this.label,
-    required this.icon,
-    required this.isActive,
-    required this.backgroundColor,
-    required this.textColor,
-    required this.borderColor,
-    this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final iconColor = isActive 
-        ? textColor 
-        : textColor.withOpacity(0.6);
-    
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            color: backgroundColor,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: borderColor,
-              width: isActive ? 1.5 : 1,
-            ),
-          ),
-          child: Center(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  icon,
-                  size: 14,
-                  color: iconColor,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  label,
-                  style: TextStyle(
-                    color: textColor,
-                    fontSize: 14,
-                    fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-                  ),
-                ),
-                if (isActive) ...[
-                  const SizedBox(width: 4),
-                  Icon(
-                    Icons.check,
-                    size: 16,
-                    color: textColor,
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }
