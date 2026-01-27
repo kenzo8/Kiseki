@@ -940,6 +940,7 @@ class _CategoryPickerStrip extends StatelessWidget {
   static const double _iconSize = 24;
   static const double _chipSize = 44;
   static const double _spacing = 8;
+  static const double _labelFontSize = 10;
 
   /// Max height for the icon strip when scrollable (>10 categories).
   static const double _maxHeight = 140;
@@ -948,10 +949,19 @@ class _CategoryPickerStrip extends StatelessWidget {
   Widget build(BuildContext context) {
     final base = isDark ? Colors.white : Colors.black;
     final useScroll = deviceCategories.length > 10;
-    final wrap = Wrap(
-      spacing: _spacing,
-      runSpacing: _spacing,
-      children: deviceCategories.map<Widget>((category) {
+    
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Calculate width for 6 icons per row
+        // 6 icons + 5 spacings between them
+        final availableWidth = constraints.maxWidth;
+        final totalSpacing = 5 * _spacing; // 5 spacings for 6 items
+        final itemWidth = ((availableWidth - totalSpacing) / 6).clamp(_chipSize * 0.8, double.infinity);
+        
+        final wrap = Wrap(
+          spacing: _spacing,
+          runSpacing: _spacing,
+          children: deviceCategories.map<Widget>((category) {
         // Use icon as unique identifier for exclusive selection
         final selected = category.icon == selectedIcon;
         // Get category-specific color from map
@@ -969,10 +979,12 @@ class _CategoryPickerStrip extends StatelessWidget {
             borderRadius: BorderRadius.circular(_chipSize / 2),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 150),
-              width: _chipSize,
-              height: _chipSize,
+              width: itemWidth,
+              height: _chipSize + 28, // Fixed height: icon (24) + spacing (4) + 2 lines of text (~20)
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
               decoration: BoxDecoration(
-                shape: BoxShape.circle,
+                shape: BoxShape.rectangle,
+                borderRadius: BorderRadius.circular(12),
                 color: selected
                     ? categoryColor.withOpacity(0.15)
                     : base.withOpacity(0.06),
@@ -991,26 +1003,51 @@ class _CategoryPickerStrip extends StatelessWidget {
                     : null,
               ),
               alignment: Alignment.center,
-              child: Icon(
-                category.icon,
-                size: _iconSize,
-                color: selected
-                    ? categoryColor
-                    : base.withOpacity(0.5),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    category.icon,
+                    size: _iconSize,
+                    color: selected
+                        ? categoryColor
+                        : base.withOpacity(0.5),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    category.label,
+                    style: TextStyle(
+                      fontSize: _labelFontSize,
+                      color: selected
+                          ? categoryColor
+                          : base.withOpacity(0.6),
+                      fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                      height: 1.2,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    softWrap: true,
+                    overflow: TextOverflow.visible,
+                  ),
+                ],
               ),
             ),
           ),
         );
       }).toList(),
     );
-    if (useScroll) {
-      return ConstrainedBox(
-        constraints: const BoxConstraints(maxHeight: _maxHeight),
-        child: SingleChildScrollView(
-          child: wrap,
-        ),
-      );
-    }
-    return wrap;
+    
+        if (useScroll) {
+          return ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: _maxHeight),
+            child: SingleChildScrollView(
+              child: wrap,
+            ),
+          );
+        }
+        return wrap;
+      },
+    );
   }
 }

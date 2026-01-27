@@ -186,7 +186,7 @@ class DeviceCategorySelector extends StatelessWidget {
                         Text(
                           category.label,
                           style: TextStyle(
-                            fontSize: 11,
+                            fontSize: 10,
                             color: isSelected
                                 ? (isDark ? Colors.white : theme.colorScheme.primary)
                                 : (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.6),
