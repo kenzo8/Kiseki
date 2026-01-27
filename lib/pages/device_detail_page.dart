@@ -258,11 +258,28 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
     });
   }
 
-  String _getStatus(Seki seki) => seki.endYear == null ? 'Active' : 'Vintage';
+  String _getStatus(Seki seki) {
+    final isActive = seki.isPreciseMode 
+        ? (seki.endTime == null) 
+        : (seki.endYear == null);
+    return isActive ? 'Active' : 'Vintage';
+  }
   
-  String _getPeriod(Seki seki) => seki.endYear == null
-      ? '${seki.startYear} – Present'
-      : '${seki.startYear} – ${seki.endYear}';
+  String _getPeriod(Seki seki) {
+    if (seki.isPreciseMode && seki.startTime != null) {
+      final startDate = seki.startTime!.toDate();
+      if (seki.endTime == null) {
+        return '${startDate.year}/${startDate.month}/${startDate.day} – Present';
+      } else {
+        final endDate = seki.endTime!.toDate();
+        return '${startDate.year}/${startDate.month}/${startDate.day} – ${endDate.year}/${endDate.month}/${endDate.day}';
+      }
+    } else {
+      return seki.endYear == null
+          ? '${seki.startYear} – Present'
+          : '${seki.startYear} – ${seki.endYear}';
+    }
+  }
 
   void _showEditSekiBottomSheet(Seki seki) {
     showModalBottomSheet(
@@ -701,9 +718,15 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
     final userDevice = _userDeviceEntry;
     final isWanting = _isWantingDevice ?? false;
     
-    // Determine active state: Used if endYear exists, Using if endYear is null
-    final bool isUsedActive = userDevice != null && userDevice.endYear != null;
-    final bool isUsingActive = userDevice != null && userDevice.endYear == null;
+    // Determine active state: Used if endYear/endTime exists, Using if endYear/endTime is null
+    final bool isUsedActive = userDevice != null && 
+        (userDevice.isPreciseMode 
+            ? (userDevice.endTime != null) 
+            : (userDevice.endYear != null));
+    final bool isUsingActive = userDevice != null && 
+        (userDevice.isPreciseMode 
+            ? (userDevice.endTime == null) 
+            : (userDevice.endYear == null));
 
     final buttonBg = isDark
         ? theme.colorScheme.surface.withOpacity(0.3)

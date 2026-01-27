@@ -20,27 +20,65 @@ class TimelineSekiItem extends StatelessWidget {
   });
 
   String get _usageDurationText {
-    final currentYear = DateTime.now().year;
-    final endYear = seki.endYear ?? currentYear;
-    final duration = endYear - seki.startYear;
+    final now = DateTime.now();
+    DateTime startDate;
+    DateTime? endDate;
     
-    if (seki.endYear == null) {
-      // Still active - use "Using for X years"
-      if (duration == 0) {
-        return 'Using for less than a year';
-      } else if (duration == 1) {
-        return 'Using for 1 year';
+    if (seki.isPreciseMode && seki.startTime != null) {
+      startDate = seki.startTime!.toDate();
+      endDate = seki.endTime?.toDate();
+    } else {
+      startDate = DateTime(seki.startYear, 1, 1);
+      endDate = seki.endYear != null ? DateTime(seki.endYear!, 12, 31) : null;
+    }
+    
+    final endDateTime = endDate ?? now;
+    final duration = endDateTime.difference(startDate);
+    final years = duration.inDays ~/ 365;
+    final months = (duration.inDays % 365) ~/ 30;
+    
+    final isActive = endDate == null;
+    
+    if (seki.isPreciseMode && seki.startTime != null) {
+      // Precise mode: show more detailed duration
+      if (years == 0 && months == 0) {
+        return isActive ? 'Using for less than a month' : 'Used for less than a month';
+      } else if (years == 0) {
+        return isActive 
+            ? 'Using for $months ${months == 1 ? 'month' : 'months'}'
+            : 'Used for $months ${months == 1 ? 'month' : 'months'}';
+      } else if (months == 0) {
+        return isActive
+            ? 'Using for $years ${years == 1 ? 'year' : 'years'}'
+            : 'Used for $years ${years == 1 ? 'year' : 'years'}';
       } else {
-        return 'Using for $duration years';
+        return isActive
+            ? 'Using for $years ${years == 1 ? 'year' : 'years'} $months ${months == 1 ? 'month' : 'months'}'
+            : 'Used for $years ${years == 1 ? 'year' : 'years'} $months ${months == 1 ? 'month' : 'months'}';
       }
     } else {
-      // Completed - use "Used for X years"
-      if (duration == 0) {
-        return 'Used for less than a year';
-      } else if (duration == 1) {
-        return 'Used for 1 year';
+      // Year mode: show years only
+      final endYear = seki.endYear ?? now.year;
+      final durationYears = endYear - seki.startYear;
+      
+      if (isActive) {
+        // Still active - use "Using for X years"
+        if (durationYears == 0) {
+          return 'Using for less than a year';
+        } else if (durationYears == 1) {
+          return 'Using for 1 year';
+        } else {
+          return 'Using for $durationYears years';
+        }
       } else {
-        return 'Used for $duration years';
+        // Completed - use "Used for X years"
+        if (durationYears == 0) {
+          return 'Used for less than a year';
+        } else if (durationYears == 1) {
+          return 'Used for 1 year';
+        } else {
+          return 'Used for $durationYears years';
+        }
       }
     }
   }
@@ -60,13 +98,15 @@ class TimelineSekiItem extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Left side: Start Year (Fixed width for 4-digit year)
+              // Left side: Start Year/Date (Fixed width for 4-digit year or date)
               SizedBox(
                 width: 50,
                 child: Padding(
                   padding: const EdgeInsets.only(top: 0),
                   child: Text(
-                    '${seki.startYear}',
+                    seki.isPreciseMode && seki.startTime != null
+                        ? '${seki.startTime!.toDate().year}'
+                        : '${seki.startYear}',
                     style: TextStyle(
                       color: yearColor,
                       fontSize: 12,

@@ -31,6 +31,9 @@ class _AddDevicePageState extends State<AddDevicePage> {
   late String _deviceType;
   late RangeValues _yearRange;
   late bool _stillUsing;
+  bool _isPreciseMode = false;
+  DateTime? _startDate;
+  DateTime? _endDate;
   bool _isLoading = false;
   bool _showCategoryPicker = false;
   bool _isManualCategorySelection = false;
@@ -49,13 +52,29 @@ class _AddDevicePageState extends State<AddDevicePage> {
       _nameController = TextEditingController(text: widget.seki!.deviceName);
       _noteController = TextEditingController(text: widget.seki!.note);
       _deviceType = widget.seki!.deviceType;
+      _isPreciseMode = widget.seki!.isPreciseMode;
       // Use override if provided, otherwise use saved value
-      _stillUsing = widget.overrideStillUsing ?? (widget.seki!.endYear == null);
-      // Adjust year range based on stillUsing state
-      _yearRange = RangeValues(
-        widget.seki!.startYear.toDouble(),
-        _stillUsing ? 2026.0 : (widget.seki!.endYear?.toDouble() ?? 2026.0),
-      );
+      _stillUsing = widget.overrideStillUsing ?? (widget.seki!.endYear == null && widget.seki!.endTime == null);
+      
+      if (_isPreciseMode && widget.seki!.startTime != null) {
+        // Load precise dates
+        _startDate = widget.seki!.startTime!.toDate();
+        _endDate = widget.seki!.endTime?.toDate();
+        // Also set year range for fallback display
+        _yearRange = RangeValues(
+          widget.seki!.startYear.toDouble(),
+          _stillUsing ? DateTime.now().year.toDouble() : (widget.seki!.endYear?.toDouble() ?? DateTime.now().year.toDouble()),
+        );
+      } else {
+        // Load year range
+        _yearRange = RangeValues(
+          widget.seki!.startYear.toDouble(),
+          _stillUsing ? DateTime.now().year.toDouble() : (widget.seki!.endYear?.toDouble() ?? DateTime.now().year.toDouble()),
+        );
+        // Initialize dates from years for precise mode switch
+        _startDate = DateTime(widget.seki!.startYear, 1, 1);
+        _endDate = widget.seki!.endYear != null ? DateTime(widget.seki!.endYear!, 12, 31) : null;
+      }
     } else {
       // Initialize with default values for add mode, or use pre-filled values
       _nameController = TextEditingController(text: widget.preFilledDeviceName ?? '');
@@ -64,6 +83,8 @@ class _AddDevicePageState extends State<AddDevicePage> {
       // Use override if provided, otherwise use pre-filled or default
       _stillUsing = widget.overrideStillUsing ?? widget.preFilledStillUsing ?? false;
       _yearRange = const RangeValues(2010, 2026);
+      _startDate = DateTime(2010, 1, 1);
+      _endDate = _stillUsing ? null : DateTime(2026, 12, 31);
     }
     
     // Initialize selected icon from current deviceType
@@ -98,6 +119,58 @@ class _AddDevicePageState extends State<AddDevicePage> {
 
   void _onTextChanged() {
     setState(() {});
+  }
+
+  static DateTime get _maxSelectableDate =>
+      DateTime(DateTime.now().year + 2, 12, 31);
+
+  Future<void> _selectStartDate() async {
+    final now = DateTime.now();
+    final initial = _startDate ?? now;
+    final clamped = initial.isAfter(_maxSelectableDate)
+        ? _maxSelectableDate
+        : (initial.isBefore(DateTime(2000)) ? DateTime(2000) : initial);
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: clamped,
+      firstDate: DateTime(2000),
+      lastDate: _maxSelectableDate,
+    );
+    if (picked != null) {
+      setState(() {
+        _startDate = picked;
+        // Update year range for consistency
+        _yearRange = RangeValues(
+          picked.year.toDouble(),
+          _stillUsing ? DateTime.now().year.toDouble() : (_endDate?.year.toDouble() ?? picked.year.toDouble()),
+        );
+      });
+    }
+  }
+
+  Future<void> _selectEndDate() async {
+    final now = DateTime.now();
+    final start = _startDate ?? DateTime(2000);
+    final endDefault = _endDate ?? now;
+    DateTime initial = endDefault;
+    if (initial.isBefore(start)) initial = start;
+    if (initial.isAfter(_maxSelectableDate)) initial = _maxSelectableDate;
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: start,
+      lastDate: _maxSelectableDate,
+    );
+    if (picked != null) {
+      setState(() {
+        _endDate = picked;
+        // Update year range for consistency
+        _yearRange = RangeValues(
+          _startDate?.year.toDouble() ?? 2010,
+          picked.year.toDouble(),
+        );
+      });
+    }
   }
 
   @override
@@ -202,16 +275,42 @@ class _AddDevicePageState extends State<AddDevicePage> {
         }
       }
 
-      await FirebaseFirestore.instance.collection('seki').add({
+      final Map<String, dynamic> deviceData = {
         'uid': uid,
         'username': username,
         'deviceName': _nameController.text.trim(),
         'deviceType': _deviceType,
-        'startYear': _yearRange.start.toInt(),
-        'endYear': _stillUsing ? null : _yearRange.end.toInt(),
+        'isPreciseMode': _isPreciseMode,
         'createdAt': FieldValue.serverTimestamp(),
         'note': _noteController.text.trim(),
-      });
+      };
+
+      if (_isPreciseMode) {
+        // Save timestamps for precise mode
+        deviceData['startTime'] = Timestamp.fromDate(_startDate ?? DateTime.now());
+        if (!_stillUsing && _endDate != null) {
+          deviceData['endTime'] = Timestamp.fromDate(_endDate!);
+        } else {
+          deviceData['endTime'] = null;
+        }
+        // Also save years for backward compatibility
+        deviceData['startYear'] = (_startDate ?? DateTime.now()).year;
+        if (!_stillUsing && _endDate != null) {
+          deviceData['endYear'] = _endDate!.year;
+        } else {
+          deviceData['endYear'] = null;
+        }
+      } else {
+        // Save years for non-precise mode
+        deviceData['startYear'] = _yearRange.start.toInt();
+        if (!_stillUsing) {
+          deviceData['endYear'] = _yearRange.end.toInt();
+        } else {
+          deviceData['endYear'] = null;
+        }
+      }
+
+      await FirebaseFirestore.instance.collection('seki').add(deviceData);
       
       if (mounted) {
         setState(() {
@@ -249,13 +348,39 @@ class _AddDevicePageState extends State<AddDevicePage> {
     });
 
     try {
-      await FirebaseFirestore.instance.collection('seki').doc(widget.seki!.id).update({
+      final Map<String, dynamic> updateData = {
         'deviceName': _nameController.text.trim(),
         'deviceType': _deviceType,
-        'startYear': _yearRange.start.toInt(),
-        'endYear': _stillUsing ? null : _yearRange.end.toInt(),
+        'isPreciseMode': _isPreciseMode,
         'note': _noteController.text.trim(),
-      });
+      };
+
+      if (_isPreciseMode) {
+        // Update timestamps for precise mode
+        updateData['startTime'] = Timestamp.fromDate(_startDate ?? DateTime.now());
+        if (!_stillUsing && _endDate != null) {
+          updateData['endTime'] = Timestamp.fromDate(_endDate!);
+        } else {
+          updateData['endTime'] = null;
+        }
+        // Also update years for backward compatibility
+        updateData['startYear'] = (_startDate ?? DateTime.now()).year;
+        if (!_stillUsing && _endDate != null) {
+          updateData['endYear'] = _endDate!.year;
+        } else {
+          updateData['endYear'] = null;
+        }
+      } else {
+        // Update years for non-precise mode
+        updateData['startYear'] = _yearRange.start.toInt();
+        if (!_stillUsing) {
+          updateData['endYear'] = _yearRange.end.toInt();
+        } else {
+          updateData['endYear'] = null;
+        }
+      }
+
+      await FirebaseFirestore.instance.collection('seki').doc(widget.seki!.id).update(updateData);
       
       if (mounted) {
         setState(() {
@@ -480,60 +605,175 @@ class _AddDevicePageState extends State<AddDevicePage> {
                           ],
                         ),
                         const SizedBox(height: 36),
-                        // Year Range Slider
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        // Precise Mode Toggle
+                        Row(
                           children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  'Year Range',
-                                  style: TextStyle(
-                                    color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.9),
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
-                                  ),
+                            Expanded(
+                              child: Text(
+                                'Precise Mode',
+                                style: TextStyle(
+                                  color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.9),
+                                  fontSize: 16,
                                 ),
-                                Text(
-                                  _stillUsing
-                                      ? '${_yearRange.start.toInt()} - Present'
-                                      : '${_yearRange.start.toInt()} - ${_yearRange.end.toInt()}',
-                                  style: TextStyle(
-                                    color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.7),
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            RangeSlider(
-                              values: _yearRange,
-                              min: 2010,
-                              max: 2026,
-                              divisions: 16,
-                              labels: RangeLabels(
-                                _yearRange.start.toInt().toString(),
-                                _stillUsing
-                                    ? 'Present'
-                                    : _yearRange.end.toInt().toString(),
                               ),
-                              activeColor: isDark ? Colors.white : theme.colorScheme.primary,
-                              inactiveColor: (isDark ? Colors.white : theme.colorScheme.primary).withOpacity(0.3),
-                              onChanged: _stillUsing
-                                  ? (range) {
-                                      setState(() {
-                                        _yearRange = RangeValues(range.start, 2026);
-                                      });
+                            ),
+                            Switch(
+                              value: _isPreciseMode,
+                              onChanged: (value) {
+                                setState(() {
+                                  _isPreciseMode = value;
+                                  if (value) {
+                                    // When enabling precise mode, initialize dates from year range
+                                    if (_startDate == null) {
+                                      _startDate = DateTime(_yearRange.start.toInt(), 1, 1);
                                     }
-                                  : (range) {
-                                      setState(() {
-                                        _yearRange = range;
-                                      });
-                                    },
+                                    if (!_stillUsing && _endDate == null) {
+                                      _endDate = DateTime(_yearRange.end.toInt(), 12, 31);
+                                    }
+                                  } else {
+                                    // When disabling precise mode, sync year range from dates
+                                    if (_startDate != null) {
+                                      _yearRange = RangeValues(
+                                        _startDate!.year.toDouble(),
+                                        _stillUsing ? DateTime.now().year.toDouble() : (_endDate?.year.toDouble() ?? DateTime.now().year.toDouble()),
+                                      );
+                                    }
+                                  }
+                                });
+                              },
+                              activeColor: isDark ? Colors.white : theme.colorScheme.primary,
                             ),
                           ],
                         ),
+                        const SizedBox(height: 20),
+                        // Conditional Input: Year Range Slider or Date Pickers
+                        if (!_isPreciseMode) ...[
+                          // Year Range Slider
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Year Range',
+                                    style: TextStyle(
+                                      color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.9),
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  Text(
+                                    _stillUsing
+                                        ? '${_yearRange.start.toInt()} - Present'
+                                        : '${_yearRange.start.toInt()} - ${_yearRange.end.toInt()}',
+                                    style: TextStyle(
+                                      color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.7),
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              RangeSlider(
+                                values: _yearRange,
+                                min: 2010,
+                                max: DateTime.now().year.toDouble(),
+                                divisions: DateTime.now().year - 2010,
+                                labels: RangeLabels(
+                                  _yearRange.start.toInt().toString(),
+                                  _stillUsing
+                                      ? 'Present'
+                                      : _yearRange.end.toInt().toString(),
+                                ),
+                                activeColor: isDark ? Colors.white : theme.colorScheme.primary,
+                                inactiveColor: (isDark ? Colors.white : theme.colorScheme.primary).withOpacity(0.3),
+                                onChanged: _stillUsing
+                                    ? (range) {
+                                        setState(() {
+                                          _yearRange = RangeValues(range.start, DateTime.now().year.toDouble());
+                                        });
+                                      }
+                                    : (range) {
+                                        setState(() {
+                                          _yearRange = range;
+                                        });
+                                      },
+                              ),
+                            ],
+                          ),
+                        ] else ...[
+                          // Date Pickers
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Date Range',
+                                style: TextStyle(
+                                  color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.9),
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              // Start Date Button
+                              OutlinedButton.icon(
+                                onPressed: _selectStartDate,
+                                icon: Icon(
+                                  Icons.calendar_today,
+                                  size: 18,
+                                  color: (isDark ? Colors.white : theme.colorScheme.primary),
+                                ),
+                                label: Text(
+                                  _startDate != null
+                                      ? '${_startDate!.year}/${_startDate!.month}/${_startDate!.day}'
+                                      : 'Select Start Date',
+                                  style: TextStyle(
+                                    color: (isDark ? Colors.white : theme.colorScheme.onSurface),
+                                  ),
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                  side: BorderSide(
+                                    color: (isDark ? Colors.white : theme.colorScheme.primary).withOpacity(0.5),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              // End Date Button
+                              OutlinedButton.icon(
+                                onPressed: _stillUsing ? null : _selectEndDate,
+                                icon: Icon(
+                                  Icons.calendar_today,
+                                  size: 18,
+                                  color: _stillUsing
+                                      ? (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.3)
+                                      : (isDark ? Colors.white : theme.colorScheme.primary),
+                                ),
+                                label: Text(
+                                  _stillUsing
+                                      ? 'Present'
+                                      : (_endDate != null
+                                          ? '${_endDate!.year}/${_endDate!.month}/${_endDate!.day}'
+                                          : 'Select End Date'),
+                                  style: TextStyle(
+                                    color: _stillUsing
+                                        ? (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.3)
+                                        : (isDark ? Colors.white : theme.colorScheme.onSurface),
+                                  ),
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                  side: BorderSide(
+                                    color: _stillUsing
+                                        ? (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.2)
+                                        : (isDark ? Colors.white : theme.colorScheme.primary).withOpacity(0.5),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                         const SizedBox(height: 20),
                         // Still Using Toggle
                         Row(
@@ -553,7 +793,15 @@ class _AddDevicePageState extends State<AddDevicePage> {
                                 setState(() {
                                   _stillUsing = value;
                                   if (value) {
-                                    _yearRange = RangeValues(_yearRange.start, 2026);
+                                    if (_isPreciseMode) {
+                                      _endDate = null;
+                                    } else {
+                                      _yearRange = RangeValues(_yearRange.start, DateTime.now().year.toDouble());
+                                    }
+                                  } else {
+                                    if (_isPreciseMode && _endDate == null) {
+                                      _endDate = DateTime.now();
+                                    }
                                   }
                                 });
                               },

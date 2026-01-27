@@ -70,10 +70,12 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> with Single
   }
 
   /// Gets all active devices from a list of Sekis.
-  /// An active device is one where endYear is null.
+  /// An active device is one where endYear/endTime is null.
   /// Returns a list of active Sekis, or empty list if none found.
   List<Seki> _getActiveDevices(List<Seki> sekis) {
-    final activeSekis = sekis.where((seki) => seki.endYear == null).toList();
+    final activeSekis = sekis.where((seki) => 
+      seki.isPreciseMode ? (seki.endTime == null) : (seki.endYear == null)
+    ).toList();
     if (activeSekis.isEmpty) {
       return [];
     }
@@ -687,12 +689,29 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> with Single
     ThemeData theme,
     bool isDark,
   ) {
-    // Sort by startYear in ascending order
+    // Sort by startYear/startTime in ascending order
     docs.sort((a, b) {
       final aData = a.data() as Map<String, dynamic>;
       final bData = b.data() as Map<String, dynamic>;
-      final aStartYear = aData['startYear'] as int? ?? 0;
-      final bStartYear = bData['startYear'] as int? ?? 0;
+      
+      // Handle both old (startYear) and new (startTime) formats
+      int aStartYear;
+      int bStartYear;
+      
+      if (aData['isPreciseMode'] == true && aData['startTime'] != null) {
+        final aStartTime = aData['startTime'] as Timestamp;
+        aStartYear = aStartTime.toDate().year;
+      } else {
+        aStartYear = aData['startYear'] as int? ?? 0;
+      }
+      
+      if (bData['isPreciseMode'] == true && bData['startTime'] != null) {
+        final bStartTime = bData['startTime'] as Timestamp;
+        bStartYear = bStartTime.toDate().year;
+      } else {
+        bStartYear = bData['startYear'] as int? ?? 0;
+      }
+      
       return aStartYear.compareTo(bStartYear); // Ascending order
     });
 

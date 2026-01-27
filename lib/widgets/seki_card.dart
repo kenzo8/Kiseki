@@ -233,8 +233,21 @@ class SekiCard extends StatelessWidget {
     this.onBottomBarTap,
   });
 
-  String get _yearRangeText =>
-      seki.endYear == null ? '${seki.startYear} – Present' : '${seki.startYear} – ${seki.endYear}';
+  String get _yearRangeText {
+    if (seki.isPreciseMode && seki.startTime != null) {
+      // Precise mode: show dates
+      final startDate = seki.startTime!.toDate();
+      if (seki.endTime == null) {
+        return '${startDate.year}/${startDate.month}/${startDate.day} – Present';
+      } else {
+        final endDate = seki.endTime!.toDate();
+        return '${startDate.year}/${startDate.month}/${startDate.day} – ${endDate.year}/${endDate.month}/${endDate.day}';
+      }
+    } else {
+      // Year mode: show years
+      return seki.endYear == null ? '${seki.startYear} – Present' : '${seki.startYear} – ${seki.endYear}';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
