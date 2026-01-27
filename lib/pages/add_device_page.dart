@@ -43,6 +43,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
   final FocusNode _deviceNameFocusNode = FocusNode();
   final FocusNode _noteFocusNode = FocusNode();
   final GlobalKey _noteFieldKey = GlobalKey();
+  String _previousNoteText = '';
   
   // Track category color for bottom glow effect
   Color get _categoryColor => getCategoryColor(_deviceType);
@@ -57,6 +58,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
     if (isEditMode && widget.seki != null) {
       _nameController = TextEditingController(text: widget.seki!.deviceName);
       _noteController = TextEditingController(text: widget.seki!.note);
+      _previousNoteText = widget.seki!.note;
       _deviceType = widget.seki!.deviceType;
       _isPreciseMode = widget.seki!.isPreciseMode;
       // Use override if provided, otherwise use saved value
@@ -85,6 +87,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
       // Initialize with default values for add mode, or use pre-filled values
       _nameController = TextEditingController(text: widget.preFilledDeviceName ?? '');
       _noteController = TextEditingController();
+      _previousNoteText = '';
       _deviceType = 'Laptop';
       // Use override if provided, otherwise use pre-filled or default
       _stillUsing = widget.overrideStillUsing ?? widget.preFilledStillUsing ?? false;
@@ -124,6 +127,16 @@ class _AddDevicePageState extends State<AddDevicePage> {
   }
 
   void _onTextChanged() {
+    final currentText = _noteController.text;
+    // Check if a newline was added
+    if (currentText.length > _previousNoteText.length) {
+      final addedText = currentText.substring(_previousNoteText.length);
+      if (addedText.contains('\n')) {
+        // Newline detected, dismiss keyboard
+        FocusScope.of(context).unfocus();
+      }
+    }
+    _previousNoteText = currentText;
     setState(() {});
   }
 
@@ -1041,11 +1054,8 @@ class _AddDevicePageState extends State<AddDevicePage> {
                                         key: _noteFieldKey,
                                         controller: _noteController,
                                         focusNode: _noteFocusNode,
-                                        textInputAction: TextInputAction.done,
-                                        onSubmitted: (_) => FocusScope.of(context).unfocus(),
-                                        inputFormatters: [
-                                          FilteringTextInputFormatter.deny(RegExp(r'\n')),
-                                        ],
+                                        textInputAction: TextInputAction.newline,
+                                        keyboardType: TextInputType.multiline,
                                         style: TextStyle(
                                           color: isDark ? Colors.white : theme.colorScheme.onSurface,
                                           fontSize: 15,
@@ -1053,6 +1063,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
                                           fontWeight: FontWeight.w400,
                                         ),
                                         maxLines: 5,
+                                        minLines: 1,
                                         decoration: InputDecoration(
                                           hintText: "What makes this device special to you?",
                                           hintMaxLines: 5,
