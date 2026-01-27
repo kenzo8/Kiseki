@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../models/seki_model.dart';
-import '../widgets/seki_card.dart';
+import '../widgets/device_icon_selector.dart';
 import '../services/system_ui_service.dart';
 import '../services/auth_service.dart';
 import 'add_device_page.dart';
@@ -281,6 +281,16 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
     }
   }
 
+  IconData _getIconForDeviceType(String deviceType) {
+    // Map device type to icon using deviceCategories
+    for (final category in deviceCategories) {
+      if (category.deviceType == deviceType) {
+        return category.icon;
+      }
+    }
+    return Icons.devices; // Default fallback
+  }
+
   void _showEditSekiBottomSheet(Seki seki) {
     showModalBottomSheet(
       context: context,
@@ -486,7 +496,7 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
                         borderRadius: BorderRadius.circular(24),
                       ),
                       child: Icon(
-                        getIconByDeviceName(seki.deviceName),
+                        _getIconForDeviceType(seki.deviceType),
                         size: 80,
                         color: isDark
                             ? theme.colorScheme.onSurface.withOpacity(0.8)
@@ -528,6 +538,14 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
                     child: Column(
                       children: [
                         _buildInfoRow('STATUS', _getStatus(seki), labelColor, valueColor),
+                        const SizedBox(height: 20),
+                        Divider(
+                          height: 1,
+                          thickness: 1,
+                          color: theme.colorScheme.onSurface.withOpacity(0.1),
+                        ),
+                        const SizedBox(height: 20),
+                        _buildInfoRow('DEVICE TYPE', seki.deviceType, labelColor, valueColor),
                         const SizedBox(height: 20),
                         Divider(
                           height: 1,
