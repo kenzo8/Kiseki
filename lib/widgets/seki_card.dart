@@ -409,9 +409,6 @@ class SekiCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final greyColor = isDark
-        ? theme.colorScheme.onSurface.withOpacity(0.6)
-        : Colors.grey.shade600;
     final cardColor = isDark
         ? theme.colorScheme.surface.withOpacity(0.5)
         : Colors.white;
@@ -420,23 +417,27 @@ class SekiCard extends StatelessWidget {
     final bodyTapCallback = onBodyTap ?? onTap;
     final bottomBarTapCallback = onBottomBarTap ?? onTap;
 
+    final secondaryGreyColor = isDark
+        ? theme.colorScheme.onSurface.withOpacity(0.5)
+        : Colors.grey.shade500;
+    final lightGreyColor = isDark
+        ? theme.colorScheme.onSurface.withOpacity(0.4)
+        : Colors.grey.shade400;
+
     return Card(
       color: cardColor,
-      elevation: isDark ? 0 : 2,
+      elevation: isDark ? 0 : 3,
       shadowColor: Colors.black.withOpacity(0.08),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Column(
-        children: [
-          // Body Area: Icon + Device Name + Year Range + Note
-          InkWell(
-            onTap: bodyTapCallback,
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(12),
-              topRight: Radius.circular(12),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(14),
-              child: Row(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: InkWell(
+        onTap: bodyTapCallback,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Left: device icon with Hero animation
@@ -465,23 +466,23 @@ class SekiCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Title: bold device name
+                        // Title: device name with w600 weight and larger font
                         Text(
                           seki.deviceName,
                           style: TextStyle(
                             color: theme.colorScheme.onSurface,
-                            fontSize: 17,
-                            fontWeight: FontWeight.bold,
+                            fontSize: 19,
+                            fontWeight: FontWeight.w600,
                             height: 1.3,
                           ),
                         ),
                         const SizedBox(height: 4),
-                        // Subtitle: year range (grey)
+                        // Subtitle: year range (secondary grey, smaller font)
                         Text(
                           _yearRangeText,
                           style: TextStyle(
-                            color: greyColor,
-                            fontSize: 14,
+                            color: secondaryGreyColor,
+                            fontSize: 12,
                             fontWeight: FontWeight.w400,
                           ),
                         ),
@@ -504,40 +505,40 @@ class SekiCard extends StatelessWidget {
                   ),
                 ],
               ),
-            ),
-          ),
-          // Divider for visual separation
-          Divider(
-            height: 1,
-            thickness: 1,
-            color: theme.colorScheme.onSurface.withOpacity(0.1),
-            indent: 0,
-            endIndent: 0,
-          ),
-          // Bottom Bar: Username area
-          InkWell(
-            onTap: bottomBarTapCallback,
-            borderRadius: const BorderRadius.only(
-              bottomLeft: Radius.circular(12),
-              bottomRight: Radius.circular(12),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              child: Row(
-                children: [
-                  Text(
-                    'by ${seki.username}',
-                    style: TextStyle(
-                      color: greyColor,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
+              // Username area at bottom right
+              const SizedBox(height: 12),
+              Align(
+                alignment: Alignment.centerRight,
+                child: InkWell(
+                  onTap: bottomBarTapCallback,
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.account_circle,
+                          size: 14,
+                          color: lightGreyColor,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'by ${seki.username}',
+                          style: TextStyle(
+                            color: lightGreyColor,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

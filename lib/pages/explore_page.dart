@@ -123,7 +123,7 @@ class _ExplorePageState extends State<ExplorePage> {
                       final publisherId = seki.publisherId;
 
                       return Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.only(bottom: 16),
                         child: SekiCard(
                           seki: seki,
                           isDark: isDark,
