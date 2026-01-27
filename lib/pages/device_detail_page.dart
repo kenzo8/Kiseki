@@ -458,7 +458,8 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
                       style: TextStyle(
                         color: valueColor,
                         fontSize: 32,
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.5,
                         height: 1.2,
                       ),
                       textAlign: TextAlign.center,
@@ -484,7 +485,7 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
                       ),
                       child: Column(
                         children: [
-                          _buildInfoRow('STATUS', _getStatus(seki), theme, isDark, valueColor),
+                          _buildInfoRow('STATUS', _getStatus(seki), theme, isDark, valueColor, Icons.info_outline),
                           const SizedBox(height: 20),
                           Divider(
                             height: 1,
@@ -492,7 +493,7 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
                             color: theme.colorScheme.onSurface.withOpacity(0.1),
                           ),
                           const SizedBox(height: 20),
-                          _buildInfoRow('DEVICE TYPE', seki.deviceType, theme, isDark, valueColor),
+                          _buildInfoRow('DEVICE TYPE', seki.deviceType, theme, isDark, valueColor, Icons.devices),
                           const SizedBox(height: 20),
                           Divider(
                             height: 1,
@@ -500,7 +501,7 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
                             color: theme.colorScheme.onSurface.withOpacity(0.1),
                           ),
                           const SizedBox(height: 20),
-                          _buildInfoRow('PERIOD', _getPeriod(seki), theme, isDark, valueColor),
+                          _buildInfoRow('PERIOD', _getPeriod(seki), theme, isDark, valueColor, Icons.access_time),
                           const SizedBox(height: 20),
                           Divider(
                             height: 1,
@@ -512,6 +513,9 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
                         ],
                       ),
                     ),
+                    // Note Section - positioned between Info Card and Action Buttons
+                    const SizedBox(height: 24),
+                    _buildNoteCard(seki.note, categoryColor, theme, isDark),
                     // Usage Selector (for non-owners)
                     if (!isOwner) ...[
                       const SizedBox(height: 24),
@@ -521,11 +525,6 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
                     if (isOwner) ...[
                       const SizedBox(height: 24),
                       _buildActionButtons(seki, theme),
-                    ],
-                    // Note Section styled as testimonial
-                    if (seki.note.isNotEmpty) ...[
-                      const SizedBox(height: 32),
-                      _buildTestimonialCard(seki.note, categoryColor, theme, isDark),
                     ],
                     const SizedBox(height: 40),
                   ],
@@ -544,6 +543,7 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
     ThemeData theme,
     bool isDark,
     Color valueColor,
+    IconData icon,
   ) {
     final labelColor = isDark
         ? theme.colorScheme.onSurface.withOpacity(0.5)
@@ -553,14 +553,24 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: TextStyle(
-            color: labelColor,
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 1.2,
-          ),
+        Row(
+          children: [
+            Icon(
+              icon,
+              size: 16,
+              color: labelColor,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                color: labelColor,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 1.2,
+              ),
+            ),
+          ],
         ),
         Expanded(
           child: Text(
@@ -619,19 +629,29 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
         constraints: const BoxConstraints(minHeight: 44),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Text(
-              'OWNER',
-              style: TextStyle(
-                color: labelColor,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 1.2,
-              ),
-            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.person_outline,
+                      size: 16,
+                      color: labelColor,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'OWNER',
+                      style: TextStyle(
+                        color: labelColor,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                  ],
+                ),
             Expanded(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
@@ -674,7 +694,7 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(16),
               ),
               elevation: 2,
             ),
@@ -691,7 +711,7 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
               side: BorderSide(color: Colors.red.withOpacity(0.5)),
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(16),
               ),
             ),
           ),
@@ -700,59 +720,110 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
     );
   }
 
-  Widget _buildTestimonialCard(
+  Widget _buildNoteCard(
     String note,
     Color categoryColor,
     ThemeData theme,
     bool isDark,
   ) {
+    final isEmpty = note.isEmpty;
+    final labelColor = isDark
+        ? theme.colorScheme.onSurface.withOpacity(0.5)
+        : Colors.grey.shade600;
+    
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: isDark
             ? theme.colorScheme.surface.withOpacity(0.4)
             : Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: isDark
             ? null
             : [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
                 ),
               ],
       ),
       child: Stack(
         children: [
-          // Quote icon background
+          // Quote icon background - subtle
           Positioned(
-            top: 8,
-            left: 8,
+            top: 12,
+            right: 12,
             child: Icon(
               Icons.format_quote,
-              size: 60,
-              color: categoryColor.withOpacity(0.1),
+              size: 40,
+              color: categoryColor.withOpacity(0.08),
             ),
           ),
           // Content
-          Padding(
-            padding: const EdgeInsets.only(left: 8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  note,
-                  style: TextStyle(
-                    color: theme.colorScheme.onSurface.withOpacity(0.9),
-                    fontSize: 16,
-                    height: 1.6,
-                    fontStyle: FontStyle.italic,
-                    fontWeight: FontWeight.w400,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Label
+              Row(
+                children: [
+                  Icon(
+                    Icons.folder_outlined,
+                    size: 16,
+                    color: labelColor,
                   ),
-                ),
-              ],
-            ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'MEMORIES',
+                    style: TextStyle(
+                      color: labelColor,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              // Note content or placeholder - aligned with label
+              isEmpty
+                  ? Text(
+                      'No notes added yet.',
+                      style: TextStyle(
+                        color: labelColor.withOpacity(0.7),
+                        fontSize: 14,
+                        fontStyle: FontStyle.italic,
+                        height: 1.5,
+                      ),
+                    )
+                  : Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Quote icon - positioned to align with text baseline
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2, right: 6),
+                          child: Icon(
+                            Icons.format_quote,
+                            size: 18,
+                            color: categoryColor.withOpacity(0.4),
+                          ),
+                        ),
+                        // Text - this will align with the label text, not the label icon
+                        Expanded(
+                          child: Text(
+                            note,
+                            style: TextStyle(
+                              color: theme.colorScheme.onSurface.withOpacity(0.85),
+                              fontSize: 15,
+                              height: 1.6,
+                              fontStyle: FontStyle.normal,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+            ],
           ),
         ],
       ),
