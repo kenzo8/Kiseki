@@ -759,13 +759,13 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
             icon: const Icon(Icons.edit_outlined, size: 20),
             label: const Text('Edit'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: theme.colorScheme.primary,
+              backgroundColor: const Color(0xFF1A1A1B),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(24),
               ),
-              elevation: 2,
+              elevation: 0,
             ),
           ),
         ),
@@ -777,10 +777,10 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
             label: const Text('Delete'),
             style: OutlinedButton.styleFrom(
               foregroundColor: Colors.red,
-              side: BorderSide(color: Colors.red.withOpacity(0.5)),
+              side: const BorderSide(color: Colors.red, width: 1.5),
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(24),
               ),
             ),
           ),
