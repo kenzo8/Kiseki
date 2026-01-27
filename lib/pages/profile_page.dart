@@ -103,6 +103,15 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
     return activeSekis;
   }
 
+  /// Check if this ProfilePage is displayed as a main page (in IndexedStack)
+  /// Main pages should never show a back button to prevent black screen issues
+  bool _isMainPage(BuildContext context) {
+    // Check if this is the first route (main page)
+    // This is the most reliable way to detect if we're on a main page
+    final route = ModalRoute.of(context);
+    return route?.isFirst ?? false;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -123,6 +132,9 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
         ),
       );
     }
+
+    // Check if this is a main page (should not show back button)
+    final isMainPage = _isMainPage(context);
 
     return Scaffold(
       backgroundColor: scaffoldBg,
@@ -179,7 +191,8 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                             pinned: false,
                             floating: false,
                             expandedHeight: headerHeight,
-                            leading: Navigator.canPop(context)
+                            // Only show back button if NOT a main page AND can pop
+                            leading: (!isMainPage && Navigator.canPop(context))
                                 ? IconButton(
                                     icon: const Icon(Icons.arrow_back),
                                     color: theme.colorScheme.onSurface.withOpacity(0.7),
@@ -319,40 +332,50 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                                                   child: Wrap(
                                                     spacing: 8,
                                                     runSpacing: 6,
-                                                    children: activeDevices.map((seki) {
-                                                      return Container(
-                                                        padding: const EdgeInsets.symmetric(
-                                                          horizontal: 10,
-                                                          vertical: 4,
-                                                        ),
-                                                        decoration: BoxDecoration(
-                                                          color: theme.colorScheme.primaryContainer,
-                                                          borderRadius: BorderRadius.circular(12),
-                                                        ),
-                                                        child: Row(
-                                                          mainAxisSize: MainAxisSize.min,
-                                                          children: [
-                                                            Icon(
-                                                              getIconByDeviceName(seki.deviceName),
-                                                              size: 16,
-                                                              color: theme.colorScheme.onPrimaryContainer,
-                                                            ),
-                                                            const SizedBox(width: 6),
-                                                            Text(
-                                                              seki.deviceName,
-                                                              style: theme.textTheme.labelMedium?.copyWith(
-                                                                color: theme.colorScheme.onPrimaryContainer,
-                                                                fontWeight: FontWeight.w500,
-                                                              ) ?? TextStyle(
-                                                                color: theme.colorScheme.onPrimaryContainer,
-                                                                fontSize: 12,
-                                                                fontWeight: FontWeight.w500,
-                                                              ),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      );
-                                                    }).toList(),
+                                    children: activeDevices.map((seki) {
+                                      return InkWell(
+                                        onTap: () {
+                                          Navigator.of(context).push(
+                                            MaterialPageRoute(
+                                              builder: (context) => DeviceDetailPage(seki: seki),
+                                            ),
+                                          );
+                                        },
+                                        borderRadius: BorderRadius.circular(12),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                            vertical: 4,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: theme.colorScheme.primaryContainer,
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                getIconByDeviceName(seki.deviceName),
+                                                size: 16,
+                                                color: theme.colorScheme.onPrimaryContainer,
+                                              ),
+                                              const SizedBox(width: 6),
+                                              Text(
+                                                seki.deviceName,
+                                                style: theme.textTheme.labelMedium?.copyWith(
+                                                  color: theme.colorScheme.onPrimaryContainer,
+                                                  fontWeight: FontWeight.w500,
+                                                ) ?? TextStyle(
+                                                  color: theme.colorScheme.onPrimaryContainer,
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                    }).toList(),
                                                   ),
                                                 ),
                                               ),

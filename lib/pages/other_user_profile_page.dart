@@ -384,36 +384,46 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> with Single
                                     spacing: 8,
                                     runSpacing: 6,
                                     children: activeDevices.map((seki) {
-                                      return Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 10,
-                                          vertical: 4,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: theme.colorScheme.primaryContainer,
-                                          borderRadius: BorderRadius.circular(12),
-                                        ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Icon(
-                                              getIconByDeviceName(seki.deviceName),
-                                              size: 16,
-                                              color: theme.colorScheme.onPrimaryContainer,
+                                      return InkWell(
+                                        onTap: () {
+                                          Navigator.of(context).push(
+                                            MaterialPageRoute(
+                                              builder: (context) => DeviceDetailPage(seki: seki),
                                             ),
-                                            const SizedBox(width: 6),
-                                            Text(
-                                              seki.deviceName,
-                                              style: theme.textTheme.labelMedium?.copyWith(
+                                          );
+                                        },
+                                        borderRadius: BorderRadius.circular(12),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                            vertical: 4,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: theme.colorScheme.primaryContainer,
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                getIconByDeviceName(seki.deviceName),
+                                                size: 16,
                                                 color: theme.colorScheme.onPrimaryContainer,
-                                                fontWeight: FontWeight.w500,
-                                              ) ?? TextStyle(
-                                                color: theme.colorScheme.onPrimaryContainer,
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.w500,
                                               ),
-                                            ),
-                                          ],
+                                              const SizedBox(width: 6),
+                                              Text(
+                                                seki.deviceName,
+                                                style: theme.textTheme.labelMedium?.copyWith(
+                                                  color: theme.colorScheme.onPrimaryContainer,
+                                                  fontWeight: FontWeight.w500,
+                                                ) ?? TextStyle(
+                                                  color: theme.colorScheme.onPrimaryContainer,
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
                                         ),
                                       );
                                     }).toList(),
