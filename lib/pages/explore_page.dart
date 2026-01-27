@@ -8,6 +8,7 @@ import '../pages/profile_page.dart';
 import '../pages/other_user_profile_page.dart';
 import '../pages/device_detail_page.dart';
 import '../widgets/seki_card.dart';
+import '../widgets/device_icon_selector.dart';
 
 class ExplorePage extends StatefulWidget {
   final User? user;
@@ -19,6 +20,8 @@ class ExplorePage extends StatefulWidget {
 }
 
 class _ExplorePageState extends State<ExplorePage> {
+  String? _selectedDeviceType; // null means "All"
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -63,12 +66,19 @@ class _ExplorePageState extends State<ExplorePage> {
               ),
             ),
             const SizedBox(height: 4),
+            // Filter bar
+            _buildFilterBar(theme, isDark),
+            const SizedBox(height: 8),
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance
-                    .collection('seki')
-                    .orderBy('createdAt', descending: true)
-                    .snapshots(),
+                stream: _selectedDeviceType == null
+                    ? FirebaseFirestore.instance
+                        .collection('seki')
+                        .snapshots()
+                    : FirebaseFirestore.instance
+                        .collection('seki')
+                        .where('deviceType', isEqualTo: _selectedDeviceType)
+                        .snapshots(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return Center(
@@ -90,7 +100,9 @@ class _ExplorePageState extends State<ExplorePage> {
                   if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                     return Center(
                       child: Text(
-                        'No Seki posts yet. Be the first!',
+                        _selectedDeviceType == null
+                            ? 'No Seki posts yet. Be the first!'
+                            : 'No ${_selectedDeviceType} posts yet.',
                         style: TextStyle(
                           color: theme.colorScheme.onSurface.withOpacity(0.6),
                           fontSize: 16,
@@ -146,6 +158,112 @@ class _ExplorePageState extends State<ExplorePage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildFilterBar(ThemeData theme, bool isDark) {
+    return Container(
+      height: 50,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: deviceCategories.length + 1, // +1 for "All" option
+        itemBuilder: (context, index) {
+          if (index == 0) {
+            // "All" option
+            final isSelected = _selectedDeviceType == null;
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _selectedDeviceType = null;
+                  });
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? (isDark ? Colors.white : theme.colorScheme.primary).withOpacity(0.2)
+                        : (isDark ? Colors.white : Colors.black).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: isSelected
+                          ? (isDark ? Colors.white : theme.colorScheme.primary).withOpacity(0.5)
+                          : Colors.transparent,
+                      width: 2,
+                    ),
+                  ),
+                  child: Center(
+                    child: Text(
+                      'All',
+                      style: TextStyle(
+                        color: isSelected
+                            ? (isDark ? Colors.white : theme.colorScheme.primary)
+                            : (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.7),
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }
+
+          final category = deviceCategories[index - 1];
+          final isSelected = _selectedDeviceType == category.deviceType;
+
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: GestureDetector(
+              onTap: () {
+                setState(() {
+                  _selectedDeviceType = category.deviceType;
+                });
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? (isDark ? Colors.white : theme.colorScheme.primary).withOpacity(0.2)
+                      : (isDark ? Colors.white : Colors.black).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isSelected
+                        ? (isDark ? Colors.white : theme.colorScheme.primary).withOpacity(0.5)
+                        : Colors.transparent,
+                    width: 2,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      category.icon,
+                      size: 18,
+                      color: isSelected
+                          ? (isDark ? Colors.white : theme.colorScheme.primary)
+                          : (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.7),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      category.label,
+                      style: TextStyle(
+                        color: isSelected
+                            ? (isDark ? Colors.white : theme.colorScheme.primary)
+                            : (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.7),
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
