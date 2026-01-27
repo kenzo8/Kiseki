@@ -114,34 +114,81 @@ class _ProfilePageState extends State<ProfilePage>
     return activeSekis;
   }
 
-  /// Gets the most common category color from a list of Sekis.
-  /// Returns the primary color if no sekis are available.
-  Color _getMostCommonCategoryColor(List<Seki> sekis, ThemeData theme) {
+  /// Gets gradient colors based on device types and counts.
+  /// Returns a gradient with colors weighted by device count * type frequency.
+  List<Color> _getAvatarBorderGradientColors(List<Seki> sekis, ThemeData theme) {
     if (sekis.isEmpty) {
-      return theme.colorScheme.primary;
+      return [theme.colorScheme.primary, theme.colorScheme.primary];
     }
     
-    // Count occurrences of each deviceType
-    final deviceTypeCounts = <String, int>{};
+    // Count occurrences of each deviceType (weighted by count)
+    final deviceTypeWeights = <String, int>{};
     for (final seki in sekis) {
-      deviceTypeCounts[seki.deviceType] = (deviceTypeCounts[seki.deviceType] ?? 0) + 1;
+      deviceTypeWeights[seki.deviceType] = (deviceTypeWeights[seki.deviceType] ?? 0) + 1;
     }
     
-    // Find the most common deviceType
-    String? mostCommonType;
-    int maxCount = 0;
-    for (final entry in deviceTypeCounts.entries) {
-      if (entry.value > maxCount) {
-        maxCount = entry.value;
-        mostCommonType = entry.key;
+    // Sort device types by weight (count) descending
+    final sortedTypes = deviceTypeWeights.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    
+    final totalDevices = sekis.length;
+    
+    // Calculate how many colors to use based on device count and diversity
+    // More devices = more colors, but cap at 5 for visual clarity
+    int maxColors;
+    if (totalDevices >= 15) {
+      // Many devices: use up to 5 colors to represent diversity
+      maxColors = sortedTypes.length > 5 ? 5 : sortedTypes.length;
+    } else if (totalDevices >= 8) {
+      // Medium devices: use up to 4 colors
+      maxColors = sortedTypes.length > 4 ? 4 : sortedTypes.length;
+    } else {
+      // Few devices: use up to 3 colors
+      maxColors = sortedTypes.length > 3 ? 3 : sortedTypes.length;
+    }
+    
+    // Get colors for top device types, weighted by their count
+    final gradientColors = <Color>[];
+    final colorWeights = <Color, int>{};
+    
+    // Collect colors with their weights
+    for (int i = 0; i < maxColors && i < sortedTypes.length; i++) {
+      final deviceType = sortedTypes[i].key;
+      final count = sortedTypes[i].value;
+      final color = getCategoryColor(deviceType);
+      
+      // If same color appears multiple times, accumulate weight
+      colorWeights[color] = (colorWeights[color] ?? 0) + count;
+    }
+    
+    // Sort colors by weight and add to gradient
+    final sortedColors = colorWeights.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    
+    for (final entry in sortedColors) {
+      gradientColors.add(entry.key);
+    }
+    
+    // Ensure we have at least 2 colors for gradient
+    if (gradientColors.isEmpty) {
+      return [theme.colorScheme.primary, theme.colorScheme.primary];
+    } else if (gradientColors.length == 1) {
+      return [gradientColors[0], gradientColors[0]];
+    } else if (gradientColors.length == 2) {
+      return gradientColors;
+    } else {
+      // For 3+ colors, use first, middle, and last for smooth gradient
+      if (gradientColors.length == 3) {
+        return gradientColors;
+      } else if (gradientColors.length == 4) {
+        // Use first, second, third, and last
+        return [gradientColors[0], gradientColors[1], gradientColors[2], gradientColors[3]];
+      } else {
+        // Use first, middle, and last for 5+ colors
+        final midIndex = gradientColors.length ~/ 2;
+        return [gradientColors[0], gradientColors[midIndex], gradientColors[gradientColors.length - 1]];
       }
     }
-    
-    // Return the color for the most common category, or primary if not found
-    if (mostCommonType != null) {
-      return getCategoryColor(mostCommonType);
-    }
-    return theme.colorScheme.primary;
   }
 
   /// Check if this ProfilePage is displayed as a main page (in IndexedStack)
@@ -210,8 +257,8 @@ class _ProfilePageState extends State<ProfilePage>
             final activeDevices = _getActiveDevices(sekis);
             final deviceCount = sekis.length;
             
-            // Get the most common category color for avatar border
-            final avatarBorderColor = _getMostCommonCategoryColor(sekis, theme);
+            // Get gradient colors for avatar border based on device types and counts
+            final avatarBorderGradientColors = _getAvatarBorderGradientColors(sekis, theme);
 
             // Get cached wants data
             final wants = _dataService.cachedWants ?? [];
@@ -285,18 +332,27 @@ class _ProfilePageState extends State<ProfilePage>
                                     Row(
                                       children: [
                                         Container(
+                                          width: 28,
+                                          height: 28,
                                           decoration: BoxDecoration(
                                             shape: BoxShape.circle,
-                                            border: Border.all(
-                                              color: avatarBorderColor,
-                                              width: 2,
+                                            gradient: LinearGradient(
+                                              colors: avatarBorderGradientColors,
+                                              begin: Alignment.topLeft,
+                                              end: Alignment.bottomRight,
                                             ),
                                           ),
                                           padding: const EdgeInsets.all(2),
-                                          child: Icon(
-                                            Icons.person,
-                                            size: 24,
-                                            color: theme.colorScheme.primary,
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              color: scaffoldBg,
+                                            ),
+                                            child: Icon(
+                                              Icons.person,
+                                              size: 24,
+                                              color: theme.colorScheme.primary,
+                                            ),
                                           ),
                                         ),
                                         const SizedBox(width: 12),
