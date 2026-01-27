@@ -75,12 +75,14 @@ class DeviceIconPreview extends StatelessWidget {
   final String deviceName;
   final bool isDark;
   final double size;
+  final String? deviceType; // Optional deviceType for color mapping
 
   const DeviceIconPreview({
     super.key,
     required this.deviceName,
     required this.isDark,
     this.size = 32,
+    this.deviceType,
   });
 
   @override
@@ -89,20 +91,21 @@ class DeviceIconPreview extends StatelessWidget {
         ? Icons.devices
         : getIconByDeviceName(deviceName);
     
+    // Determine deviceType: use provided one, or infer from deviceName
+    final String categoryType = deviceType ?? suggestDeviceTypeFromName(deviceName);
+    final categoryColor = getCategoryColor(categoryType);
+    
     return Container(
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: (isDark ? Colors.white : Colors.grey.shade200)
-            .withOpacity(isDark ? 0.15 : 1),
+        color: categoryColor.withOpacity(0.12),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Icon(
         icon,
         size: size * 0.7,
-        color: isDark
-            ? Theme.of(context).colorScheme.onSurface.withOpacity(0.8)
-            : Colors.grey.shade700,
+        color: categoryColor,
       ),
     );
   }

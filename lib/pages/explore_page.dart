@@ -201,6 +201,7 @@ class _ExplorePageState extends State<ExplorePage> {
                   label: category.label,
                   icon: category.icon,
                   isSelected: isSelected,
+                  deviceType: category.deviceType,
                   onTap: () {
                     setState(() {
                       _selectedDeviceType = category.deviceType;
@@ -236,8 +237,25 @@ class _ExplorePageState extends State<ExplorePage> {
     required String label,
     IconData? icon,
     required bool isSelected,
+    String? deviceType, // Optional deviceType for category color
     required VoidCallback onTap,
   }) {
+    // Use category color if deviceType is provided, otherwise use theme color
+    final Color? categoryColor = deviceType != null ? getCategoryColor(deviceType) : null;
+    final Color selectedBgColor = categoryColor != null
+        ? categoryColor.withOpacity(0.2)
+        : (isDark ? Colors.white : theme.colorScheme.primary).withOpacity(0.2);
+    final Color unselectedBgColor = (isDark ? Colors.white : Colors.black).withOpacity(0.1);
+    final Color selectedBorderColor = categoryColor != null
+        ? categoryColor
+        : (isDark ? Colors.white : theme.colorScheme.primary).withOpacity(0.5);
+    final Color selectedTextColor = categoryColor != null
+        ? categoryColor
+        : (isDark ? Colors.white : theme.colorScheme.primary);
+    final Color selectedIconColor = categoryColor != null
+        ? categoryColor
+        : (isDark ? Colors.white : theme.colorScheme.primary);
+    
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -246,14 +264,10 @@ class _ExplorePageState extends State<ExplorePage> {
           vertical: 8,
         ),
         decoration: BoxDecoration(
-          color: isSelected
-              ? (isDark ? Colors.white : theme.colorScheme.primary).withOpacity(0.2)
-              : (isDark ? Colors.white : Colors.black).withOpacity(0.1),
+          color: isSelected ? selectedBgColor : unselectedBgColor,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected
-                ? (isDark ? Colors.white : theme.colorScheme.primary).withOpacity(0.5)
-                : Colors.transparent,
+            color: isSelected ? selectedBorderColor : Colors.transparent,
             width: 2,
           ),
         ),
@@ -265,7 +279,7 @@ class _ExplorePageState extends State<ExplorePage> {
                 icon,
                 size: 18,
                 color: isSelected
-                    ? (isDark ? Colors.white : theme.colorScheme.primary)
+                    ? selectedIconColor
                     : (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.7),
               ),
               const SizedBox(width: 6),
@@ -274,7 +288,7 @@ class _ExplorePageState extends State<ExplorePage> {
               label,
               style: TextStyle(
                 color: isSelected
-                    ? (isDark ? Colors.white : theme.colorScheme.primary)
+                    ? selectedTextColor
                     : (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.7),
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                 fontSize: 14,
@@ -333,6 +347,7 @@ class _ExplorePageState extends State<ExplorePage> {
                 itemBuilder: (context, index) {
                   final category = deviceCategories[index];
                   final isSelected = _selectedDeviceType == category.deviceType;
+                  final categoryColor = getCategoryColor(category.deviceType);
                   
                   return GestureDetector(
                     onTap: () {
@@ -344,12 +359,12 @@ class _ExplorePageState extends State<ExplorePage> {
                     child: Container(
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? (isDark ? Colors.white : theme.colorScheme.primary).withOpacity(0.2)
-                            : (isDark ? Colors.white : Colors.black).withOpacity(0.1),
+                            ? categoryColor.withOpacity(0.2)
+                            : Colors.grey[100],
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: isSelected
-                              ? (isDark ? Colors.white : theme.colorScheme.primary).withOpacity(0.5)
+                              ? categoryColor
                               : Colors.transparent,
                           width: 2,
                         ),
@@ -361,16 +376,16 @@ class _ExplorePageState extends State<ExplorePage> {
                             category.icon,
                             size: 32,
                             color: isSelected
-                                ? (isDark ? Colors.white : theme.colorScheme.primary)
-                                : (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.7),
+                                ? categoryColor
+                                : Colors.grey.shade400,
                           ),
                           const SizedBox(height: 8),
                           Text(
                             category.label,
                             style: TextStyle(
                               color: isSelected
-                                  ? (isDark ? Colors.white : theme.colorScheme.primary)
-                                  : (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.7),
+                                  ? categoryColor
+                                  : Colors.grey.shade600,
                               fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                               fontSize: 12,
                             ),

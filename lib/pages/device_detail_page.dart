@@ -446,9 +446,8 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
           seki = Seki.fromFirestore(snapshot.data!);
         }
 
-        final lightGreyBg = isDark
-            ? Colors.white.withOpacity(0.08)
-            : Colors.grey.shade100;
+        final categoryColor = getCategoryColor(seki.deviceType);
+        final iconBgColor = categoryColor.withOpacity(0.12);
         final labelColor = isDark
             ? theme.colorScheme.onSurface.withOpacity(0.5)
             : Colors.grey.shade600;
@@ -492,15 +491,13 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
                       width: 160,
                       height: 160,
                       decoration: BoxDecoration(
-                        color: lightGreyBg,
+                        color: iconBgColor,
                         borderRadius: BorderRadius.circular(24),
                       ),
                       child: Icon(
                         _getIconForDeviceType(seki.deviceType),
                         size: 80,
-                        color: isDark
-                            ? theme.colorScheme.onSurface.withOpacity(0.8)
-                            : Colors.grey.shade700,
+                        color: categoryColor,
                       ),
                     ),
                   ),

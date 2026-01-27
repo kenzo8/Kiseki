@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/seki_model.dart';
+import 'device_icon_selector.dart';
 
 /// Intelligent device icon matching based on device name keywords.
 /// Analyzes the device name to determine the most appropriate icon.
@@ -408,36 +409,12 @@ class SekiCard extends StatelessWidget {
 
   /// Get background color for icon container based on deviceType
   Color _getIconBackgroundColor() {
-    switch (seki.deviceType) {
-      case 'Mobile':
-        return Colors.blue.withOpacity(0.12);
-      case 'Tablet':
-        return Colors.green.withOpacity(0.12);
-      case 'Laptop':
-      case 'Desktop':
-        return Colors.purple.withOpacity(0.12);
-      case 'Watch':
-        return Colors.orange.withOpacity(0.12);
-      default:
-        return Colors.grey.withOpacity(0.12);
-    }
+    return getCategoryColor(seki.deviceType).withOpacity(0.12);
   }
 
   /// Get icon color based on deviceType for consistent tinted look
   Color _getIconColor() {
-    switch (seki.deviceType) {
-      case 'Mobile':
-        return Colors.blue.shade700;
-      case 'Tablet':
-        return Colors.green.shade700;
-      case 'Laptop':
-      case 'Desktop':
-        return Colors.purple.shade700;
-      case 'Watch':
-        return Colors.orange.shade700;
-      default:
-        return Colors.grey.shade700;
-    }
+    return getCategoryColor(seki.deviceType);
   }
 
   @override

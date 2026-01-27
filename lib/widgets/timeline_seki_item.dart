@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/seki_model.dart';
 import 'seki_card.dart';
+import 'device_icon_selector.dart';
 
 /// Borderless timeline item for Seki entries in profile pages.
 /// Uses IntrinsicHeight to ensure proper vertical line rendering.
@@ -90,7 +91,8 @@ class TimelineSekiItem extends StatelessWidget {
     final theme = Theme.of(context);
     final timelineColor = Colors.grey.withOpacity(0.3);
     final yearColor = Colors.grey[500]!;
-    final deviceIconColor = theme.colorScheme.onSurface.withOpacity(0.7);
+    final categoryColor = getCategoryColor(seki.deviceType);
+    final deviceIconColor = categoryColor;
 
     return IntrinsicHeight(
       child: GestureDetector(
@@ -147,7 +149,7 @@ class TimelineSekiItem extends StatelessWidget {
                           width: 24,
                           height: 24,
                           decoration: BoxDecoration(
-                            color: theme.colorScheme.surface,
+                            color: categoryColor.withOpacity(0.12),
                             shape: BoxShape.circle,
                             border: Border.all(
                               color: deviceIconColor,
