@@ -6,6 +6,7 @@ import '../models/seki_model.dart';
 import '../widgets/device_icon_selector.dart';
 import '../widgets/seki_card.dart';
 import '../services/auth_service.dart';
+import '../services/profile_data_service.dart';
 
 class AddDevicePage extends StatefulWidget {
   final Seki? seki;
@@ -346,6 +347,12 @@ class _AddDevicePageState extends State<AddDevicePage> {
       }
 
       await FirebaseFirestore.instance.collection('seki').add(deviceData);
+      
+      // Ensure ProfileDataService is initialized to receive stream updates
+      final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+      if (currentUserId != null) {
+        ProfileDataService.instance.initialize(currentUserId);
+      }
       
       if (mounted) {
         setState(() {

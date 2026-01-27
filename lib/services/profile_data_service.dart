@@ -41,8 +41,12 @@ class ProfileDataService extends ChangeNotifier {
 
   /// Initialize streams for the current user
   void initialize(String userId) {
-    if (_currentUserId == userId && hasData) {
-      // Already initialized for this user
+    // If already initialized for the same user and subscriptions are active, skip
+    if (_currentUserId == userId && 
+        _sekiSubscription != null && 
+        _wantSubscription != null && 
+        _userSubscription != null) {
+      // Already initialized and streams are active - they will auto-update
       return;
     }
 
@@ -50,12 +54,16 @@ class ProfileDataService extends ChangeNotifier {
     _disposeSubscriptions();
 
     // Initialize user data stream
+    _isLoadingUserData = true;
     _userSubscription = FirebaseFirestore.instance
         .collection('users')
         .doc(userId)
         .snapshots()
         .listen((snapshot) {
       _cachedUserData = snapshot;
+      _isLoadingUserData = false;
+      notifyListeners();
+    }, onError: (error) {
       _isLoadingUserData = false;
       notifyListeners();
     });

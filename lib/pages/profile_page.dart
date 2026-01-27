@@ -145,6 +145,12 @@ class _ProfilePageState extends State<ProfilePage>
       );
     }
 
+    // Ensure service is initialized every time build is called
+    // This ensures streams are active even if page was kept alive
+    if (widget.user?.uid != null) {
+      _dataService.initialize(widget.user!.uid);
+    }
+
     // Check if this is a main page (should not show back button)
     final isMainPage = _isMainPage(context);
 
