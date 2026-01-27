@@ -43,6 +43,9 @@ class _AddDevicePageState extends State<AddDevicePage> {
   final FocusNode _deviceNameFocusNode = FocusNode();
   final FocusNode _noteFocusNode = FocusNode();
   final GlobalKey _noteFieldKey = GlobalKey();
+  
+  // Track category color for bottom glow effect
+  Color get _categoryColor => getCategoryColor(_deviceType);
 
   bool get isEditMode => widget.seki != null;
 
@@ -478,10 +481,19 @@ class _AddDevicePageState extends State<AddDevicePage> {
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1A1F35) : theme.colorScheme.surface,
+        gradient: isDark 
+            ? null 
+            : const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFFF8FAFC), Color(0xFFEEF2F6)],
+              ),
+        color: isDark ? const Color(0xFF1A1F35) : null,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      child: DraggableScrollableSheet(
+      child: Stack(
+        children: [
+          DraggableScrollableSheet(
         initialChildSize: 0.9,
         minChildSize: 0.5,
         maxChildSize: 0.95,
@@ -551,6 +563,16 @@ class _AddDevicePageState extends State<AddDevicePage> {
                         // Submit button
                         TextButton(
                           onPressed: !_isLoading ? _handleSubmit : null,
+                          style: !isEditMode && isButtonEnabled
+                              ? TextButton.styleFrom(
+                                  backgroundColor: const Color(0xFF1A1A1B),
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                )
+                              : null,
                           child: _isLoading
                               ? SizedBox(
                                   width: 20,
@@ -563,10 +585,10 @@ class _AddDevicePageState extends State<AddDevicePage> {
                                   ),
                                 )
                               : Text(
-                                  isEditMode ? 'Save Changes' : 'Add',
+                                  isEditMode ? 'Save Changes' : 'Create',
                                   style: TextStyle(
                                     color: isButtonEnabled
-                                        ? (isDark ? Colors.white : theme.colorScheme.primary)
+                                        ? Colors.white
                                         : (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.3),
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
@@ -594,46 +616,74 @@ class _AddDevicePageState extends State<AddDevicePage> {
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            TextField(
-                              controller: _nameController,
-                              focusNode: _deviceNameFocusNode,
-                              style: TextStyle(color: isDark ? Colors.white : theme.colorScheme.onSurface),
-                              decoration: InputDecoration(
-                                labelText: 'Device Name',
-                                labelStyle: TextStyle(
-                                  color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.7),
-                                ),
-                                hintText: _getHintForDeviceType(_deviceType),
-                                hintStyle: TextStyle(
-                                  color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.5),
-                                ),
-                                alignLabelWithHint: true,
-                                enabledBorder: UnderlineInputBorder(
-                                  borderSide: BorderSide(
-                                    color: (isDark ? Colors.grey[600]! : Colors.grey[300]!),
+                            Container(
+                              decoration: BoxDecoration(
+                                color: isDark 
+                                    ? theme.colorScheme.surface.withOpacity(0.4)
+                                    : Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: isDark
+                                    ? null
+                                    : [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.05),
+                                          blurRadius: 10,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
+                              ),
+                              child: TextField(
+                                controller: _nameController,
+                                focusNode: _deviceNameFocusNode,
+                                style: TextStyle(color: isDark ? Colors.white : theme.colorScheme.onSurface),
+                                decoration: InputDecoration(
+                                  labelText: 'Device Name',
+                                  labelStyle: TextStyle(
+                                    color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.7),
                                   ),
-                                ),
-                                focusedBorder: UnderlineInputBorder(
-                                  borderSide: BorderSide(
-                                    color: getCategoryColor(_deviceType),
-                                    width: 1.5,
+                                  hintText: _getHintForDeviceType(_deviceType),
+                                  hintStyle: TextStyle(
+                                    color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.5),
                                   ),
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 16,
-                                ),
-                                suffixIcon: InkWell(
-                                  onTap: () {
-                                    setState(() => _showCategoryPicker = !_showCategoryPicker);
-                                  },
-                                  borderRadius: BorderRadius.circular(24),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(12),
+                                  alignLabelWithHint: true,
+                                  prefixIcon: Padding(
+                                    padding: const EdgeInsets.only(left: 16, right: 12),
                                     child: Icon(
                                       _selectedIcon,
                                       size: 24,
-                                      color: (isDark ? Colors.white : getCategoryColor(_deviceType)).withOpacity(0.8),
+                                      color: (isDark ? Colors.white : _categoryColor).withOpacity(0.8),
+                                    ),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                    borderSide: BorderSide(
+                                      color: (isDark ? Colors.grey[600]! : Colors.grey[300]!),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                    borderSide: BorderSide(
+                                      color: _categoryColor,
+                                      width: 2,
+                                    ),
+                                  ),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 16,
+                                  ),
+                                  suffixIcon: InkWell(
+                                    onTap: () {
+                                      setState(() => _showCategoryPicker = !_showCategoryPicker);
+                                    },
+                                    borderRadius: BorderRadius.circular(24),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(12),
+                                      child: Icon(
+                                        Icons.arrow_drop_down,
+                                        size: 24,
+                                        color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.6),
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -673,31 +723,45 @@ class _AddDevicePageState extends State<AddDevicePage> {
                                 ),
                               ),
                             ),
-                            Switch(
-                              value: _isPreciseMode,
-                              onChanged: (value) {
-                                setState(() {
-                                  _isPreciseMode = value;
-                                  if (value) {
-                                    // When enabling precise mode, initialize dates from year range
-                                    if (_startDate == null) {
-                                      _startDate = DateTime(_yearRange.start.toInt(), 1, 1);
+                            Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(20),
+                                boxShadow: _isPreciseMode && !isDark
+                                    ? [
+                                        BoxShadow(
+                                          color: theme.colorScheme.primary.withOpacity(0.3),
+                                          blurRadius: 8,
+                                          spreadRadius: 1,
+                                        ),
+                                      ]
+                                    : null,
+                              ),
+                              child: Switch(
+                                value: _isPreciseMode,
+                                onChanged: (value) {
+                                  setState(() {
+                                    _isPreciseMode = value;
+                                    if (value) {
+                                      // When enabling precise mode, initialize dates from year range
+                                      if (_startDate == null) {
+                                        _startDate = DateTime(_yearRange.start.toInt(), 1, 1);
+                                      }
+                                      if (!_stillUsing && _endDate == null) {
+                                        _endDate = DateTime(_yearRange.end.toInt(), 12, 31);
+                                      }
+                                    } else {
+                                      // When disabling precise mode, sync year range from dates
+                                      if (_startDate != null) {
+                                        _yearRange = RangeValues(
+                                          _startDate!.year.toDouble(),
+                                          _stillUsing ? DateTime.now().year.toDouble() : (_endDate?.year.toDouble() ?? DateTime.now().year.toDouble()),
+                                        );
+                                      }
                                     }
-                                    if (!_stillUsing && _endDate == null) {
-                                      _endDate = DateTime(_yearRange.end.toInt(), 12, 31);
-                                    }
-                                  } else {
-                                    // When disabling precise mode, sync year range from dates
-                                    if (_startDate != null) {
-                                      _yearRange = RangeValues(
-                                        _startDate!.year.toDouble(),
-                                        _stillUsing ? DateTime.now().year.toDouble() : (_endDate?.year.toDouble() ?? DateTime.now().year.toDouble()),
-                                      );
-                                    }
-                                  }
-                                });
-                              },
-                              activeColor: isDark ? Colors.white : theme.colorScheme.primary,
+                                  });
+                                },
+                                activeColor: isDark ? Colors.white : theme.colorScheme.primary,
+                              ),
                             ),
                           ],
                         ),
@@ -871,63 +935,103 @@ class _AddDevicePageState extends State<AddDevicePage> {
                                 ),
                               ),
                             ),
-                            Switch(
-                              value: _stillUsing,
-                              onChanged: (value) {
-                                setState(() {
-                                  _stillUsing = value;
-                                  if (value) {
-                                    if (_isPreciseMode) {
-                                      _endDate = null;
+                            Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(20),
+                                boxShadow: _stillUsing && !isDark
+                                    ? [
+                                        BoxShadow(
+                                          color: theme.colorScheme.primary.withOpacity(0.3),
+                                          blurRadius: 8,
+                                          spreadRadius: 1,
+                                        ),
+                                      ]
+                                    : null,
+                              ),
+                              child: Switch(
+                                value: _stillUsing,
+                                onChanged: (value) {
+                                  setState(() {
+                                    _stillUsing = value;
+                                    if (value) {
+                                      if (_isPreciseMode) {
+                                        _endDate = null;
+                                      } else {
+                                        _yearRange = RangeValues(_yearRange.start, DateTime.now().year.toDouble());
+                                      }
                                     } else {
-                                      _yearRange = RangeValues(_yearRange.start, DateTime.now().year.toDouble());
+                                      if (_isPreciseMode && _endDate == null) {
+                                        _endDate = DateTime.now();
+                                      }
                                     }
-                                  } else {
-                                    if (_isPreciseMode && _endDate == null) {
-                                      _endDate = DateTime.now();
-                                    }
-                                  }
-                                });
-                              },
-                              activeColor: isDark ? Colors.white : theme.colorScheme.primary,
+                                  });
+                                },
+                                activeColor: isDark ? Colors.white : theme.colorScheme.primary,
+                              ),
                             ),
                           ],
                         ),
                         const SizedBox(height: 20),
                         // Note
-                        TextField(
-                          key: _noteFieldKey,
-                          controller: _noteController,
-                          focusNode: _noteFocusNode,
-                          textInputAction: TextInputAction.done,
-                          onSubmitted: (_) => FocusScope.of(context).unfocus(),
-                          inputFormatters: [
-                            FilteringTextInputFormatter.deny(RegExp(r'\n')),
-                          ],
-                          style: TextStyle(color: isDark ? Colors.white : theme.colorScheme.onSurface),
-                          maxLines: 5,
-                          decoration: InputDecoration(
-                            hintText: "What makes this device special to you?",
-                            hintMaxLines: 5,
-                            hintStyle: TextStyle(
-                              color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.5),
-                            ),
-                            filled: true,
-                            fillColor: (isDark ? Colors.white : Colors.black).withOpacity(0.06),
-                            enabledBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(
-                                color: (isDark ? Colors.grey[600]! : Colors.grey[300]!),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: isDark 
+                                ? theme.colorScheme.surface.withOpacity(0.4)
+                                : Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: isDark
+                                ? null
+                                : [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.05),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                          ),
+                          child: TextField(
+                            key: _noteFieldKey,
+                            controller: _noteController,
+                            focusNode: _noteFocusNode,
+                            textInputAction: TextInputAction.done,
+                            onSubmitted: (_) => FocusScope.of(context).unfocus(),
+                            inputFormatters: [
+                              FilteringTextInputFormatter.deny(RegExp(r'\n')),
+                            ],
+                            style: TextStyle(color: isDark ? Colors.white : theme.colorScheme.onSurface),
+                            maxLines: 5,
+                            decoration: InputDecoration(
+                              hintText: "What makes this device special to you?",
+                              hintMaxLines: 5,
+                              hintStyle: TextStyle(
+                                color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.5),
                               ),
-                            ),
-                            focusedBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(
-                                color: theme.colorScheme.primary,
-                                width: 1.5,
+                              prefixIcon: Padding(
+                                padding: const EdgeInsets.only(left: 16, right: 12, top: 12),
+                                child: Icon(
+                                  Icons.note_outlined,
+                                  size: 24,
+                                  color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.6),
+                                ),
                               ),
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 16,
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(16),
+                                borderSide: BorderSide(
+                                  color: (isDark ? Colors.grey[600]! : Colors.grey[300]!),
+                                  width: 1,
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(16),
+                                borderSide: BorderSide(
+                                  color: theme.colorScheme.primary,
+                                  width: 2,
+                                ),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 16,
+                              ),
                             ),
                           ),
                         ),
@@ -939,6 +1043,8 @@ class _AddDevicePageState extends State<AddDevicePage> {
             ),
           );
         },
+      ),
+        ],
       ),
     );
   }
