@@ -364,7 +364,7 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> with Single
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Currently in Use:',
+                              'In Use:',
                               style: theme.textTheme.bodyMedium?.copyWith(
                                 color: theme.colorScheme.primary,
                                 fontWeight: FontWeight.w500,
