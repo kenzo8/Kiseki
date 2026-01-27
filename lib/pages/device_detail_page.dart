@@ -355,89 +355,14 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
     }
   }
 
-  void _showMoreMenu(Seki seki) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        final theme = Theme.of(context);
-        final isDark = theme.brightness == Brightness.dark;
-        final surfaceColor = isDark
-            ? theme.colorScheme.surface.withOpacity(0.95)
-            : Colors.white;
-        
-        return Container(
-          decoration: BoxDecoration(
-            color: surfaceColor,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: SafeArea(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const SizedBox(height: 8),
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.onSurface.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                ListTile(
-                  leading: Icon(
-                    Icons.edit_outlined,
-                    color: theme.colorScheme.onSurface,
-                  ),
-                  title: Text(
-                    'Edit',
-                    style: TextStyle(color: theme.colorScheme.onSurface),
-                  ),
-                  onTap: () {
-                    Navigator.pop(context);
-                    _showEditSekiBottomSheet(seki);
-                  },
-                ),
-                Divider(
-                  height: 1,
-                  thickness: 1,
-                  color: theme.colorScheme.onSurface.withOpacity(0.1),
-                ),
-                ListTile(
-                  leading: Icon(
-                    Icons.delete_outline,
-                    color: Colors.red,
-                  ),
-                  title: const Text(
-                    'Delete',
-                    style: TextStyle(color: Colors.red),
-                  ),
-                  onTap: () {
-                    Navigator.pop(context);
-                    _deleteDevice(seki);
-                  },
-                ),
-                const SizedBox(height: 8),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final scaffoldBg = isDark ? const Color(0xFF02081A) : const Color(0xFFF5F5F5);
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
     final isOwner = currentUserId != null && currentUserId == widget.seki.uid;
     
-    // Set immersive status bar
-    SystemUIService.setImmersiveStatusBar(context, backgroundColor: scaffoldBg);
-
     return StreamBuilder<DocumentSnapshot>(
       stream: _sekiStream,
       builder: (context, snapshot) {
@@ -447,16 +372,26 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
         }
 
         final categoryColor = getCategoryColor(seki.deviceType);
-        final iconBgColor = categoryColor.withOpacity(0.12);
-        final labelColor = isDark
-            ? theme.colorScheme.onSurface.withOpacity(0.5)
-            : Colors.grey.shade600;
+        // Create subtle gradient background based on category color
+        final gradientStart = isDark
+            ? categoryColor.withOpacity(0.12)
+            : categoryColor.withOpacity(0.06);
+        final gradientEnd = isDark
+            ? categoryColor.withOpacity(0.03)
+            : categoryColor.withOpacity(0.01);
+        final scaffoldBg = isDark 
+            ? const Color(0xFF02081A) 
+            : const Color(0xFFF5F5F5);
+        
+        // Set immersive status bar
+        SystemUIService.setImmersiveStatusBar(context, backgroundColor: scaffoldBg);
+
         final valueColor = theme.colorScheme.onSurface;
 
         return Scaffold(
           backgroundColor: scaffoldBg,
           appBar: AppBar(
-            backgroundColor: scaffoldBg,
+            backgroundColor: Colors.transparent,
             elevation: 0,
             leading: IconButton(
               icon: Icon(
@@ -465,138 +400,136 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
               ),
               onPressed: () => Navigator.of(context).pop(),
             ),
-            actions: isOwner
-                ? [
-                    IconButton(
-                      icon: Icon(
-                        Icons.more_vert,
-                        color: theme.colorScheme.onSurface,
-                      ),
-                      onPressed: () => _showMoreMenu(seki),
-                    ),
-                  ]
-                : null,
           ),
-          body: SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  const SizedBox(height: 32),
-                  // Hero Header: Icon + Device Name
-                  Hero(
-                    tag: 'device_icon_${seki.id}',
-                    child: Container(
-                      width: 160,
-                      height: 160,
-                      decoration: BoxDecoration(
-                        color: iconBgColor,
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      child: Icon(
-                        _getIconForDeviceType(seki.deviceType),
-                        size: 80,
-                        color: categoryColor,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  // Device Name
-                  Text(
-                    seki.deviceName,
-                    style: TextStyle(
-                      color: valueColor,
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      height: 1.2,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 40),
-                  // Unified Info Section
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? theme.colorScheme.surface.withOpacity(0.3)
-                          : Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: isDark
-                          ? null
-                          : [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
-                                blurRadius: 10,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                    ),
-                    child: Column(
-                      children: [
-                        _buildInfoRow('STATUS', _getStatus(seki), labelColor, valueColor),
-                        const SizedBox(height: 20),
-                        Divider(
-                          height: 1,
-                          thickness: 1,
-                          color: theme.colorScheme.onSurface.withOpacity(0.1),
-                        ),
-                        const SizedBox(height: 20),
-                        _buildInfoRow('DEVICE TYPE', seki.deviceType, labelColor, valueColor),
-                        const SizedBox(height: 20),
-                        Divider(
-                          height: 1,
-                          thickness: 1,
-                          color: theme.colorScheme.onSurface.withOpacity(0.1),
-                        ),
-                        const SizedBox(height: 20),
-                        _buildInfoRow('PERIOD', _getPeriod(seki), labelColor, valueColor),
-                        const SizedBox(height: 20),
-                        Divider(
-                          height: 1,
-                          thickness: 1,
-                          color: theme.colorScheme.onSurface.withOpacity(0.1),
-                        ),
-                        const SizedBox(height: 20),
-                        _buildOwnerRow(seki, labelColor, valueColor, theme),
-                      ],
-                    ),
-                  ),
-                  // Usage Selector
-                  const SizedBox(height: 24),
-                  _buildUsageSelector(seki),
-                  // Note Section (if available)
-                  if (seki.note.isNotEmpty) ...[
+          body: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  gradientStart,
+                  gradientEnd,
+                  scaffoldBg,
+                ],
+                stops: const [0.0, 0.3, 1.0],
+              ),
+            ),
+            child: SafeArea(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
                     const SizedBox(height: 32),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: RichText(
-                        textAlign: TextAlign.left,
-                        text: TextSpan(
-                          style: TextStyle(
-                            color: valueColor.withOpacity(0.85),
-                            fontSize: 18,
-                            height: 1.6,
-                            fontStyle: FontStyle.italic,
-                          ),
-                          children: [
-                            TextSpan(
-                              text: '"',
-                              style: TextStyle(
-                                fontSize: 32,
-                                height: 0.5,
-                                color: labelColor,
-                                fontFamily: 'serif',
-                              ),
+                    // Hero Icon Section with white container, shadow, and glow
+                    Hero(
+                      tag: 'device_icon_${seki.id}',
+                      child: Container(
+                        width: 180,
+                        height: 180,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(32),
+                          boxShadow: [
+                            BoxShadow(
+                              color: categoryColor.withOpacity(0.3),
+                              blurRadius: 30,
+                              spreadRadius: 5,
+                              offset: const Offset(0, 8),
                             ),
-                            TextSpan(text: seki.note),
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 20,
+                              offset: const Offset(0, 4),
+                            ),
                           ],
                         ),
+                        child: Icon(
+                          _getIconForDeviceType(seki.deviceType),
+                          size: 90,
+                          color: categoryColor,
+                        ),
                       ),
                     ),
+                    const SizedBox(height: 32),
+                    // Device Name
+                    Text(
+                      seki.deviceName,
+                      style: TextStyle(
+                        color: valueColor,
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        height: 1.2,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 40),
+                    // Unified Info Section
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? theme.colorScheme.surface.withOpacity(0.4)
+                            : Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: isDark
+                            ? null
+                            : [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.05),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                      ),
+                      child: Column(
+                        children: [
+                          _buildInfoRow('STATUS', _getStatus(seki), theme, isDark, valueColor),
+                          const SizedBox(height: 20),
+                          Divider(
+                            height: 1,
+                            thickness: 1,
+                            color: theme.colorScheme.onSurface.withOpacity(0.1),
+                          ),
+                          const SizedBox(height: 20),
+                          _buildInfoRow('DEVICE TYPE', seki.deviceType, theme, isDark, valueColor),
+                          const SizedBox(height: 20),
+                          Divider(
+                            height: 1,
+                            thickness: 1,
+                            color: theme.colorScheme.onSurface.withOpacity(0.1),
+                          ),
+                          const SizedBox(height: 20),
+                          _buildInfoRow('PERIOD', _getPeriod(seki), theme, isDark, valueColor),
+                          const SizedBox(height: 20),
+                          Divider(
+                            height: 1,
+                            thickness: 1,
+                            color: theme.colorScheme.onSurface.withOpacity(0.1),
+                          ),
+                          const SizedBox(height: 20),
+                          _buildOwnerRow(seki, theme, isDark, valueColor),
+                        ],
+                      ),
+                    ),
+                    // Usage Selector (for non-owners)
+                    if (!isOwner) ...[
+                      const SizedBox(height: 24),
+                      _buildUsageSelector(seki),
+                    ],
+                    // Action Buttons (for owners)
+                    if (isOwner) ...[
+                      const SizedBox(height: 24),
+                      _buildActionButtons(seki, theme),
+                    ],
+                    // Note Section styled as testimonial
+                    if (seki.note.isNotEmpty) ...[
+                      const SizedBox(height: 32),
+                      _buildTestimonialCard(seki.note, categoryColor, theme, isDark),
+                    ],
+                    const SizedBox(height: 40),
                   ],
-                  const SizedBox(height: 40),
-                ],
+                ),
               ),
             ),
           ),
@@ -608,9 +541,14 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
   Widget _buildInfoRow(
     String label,
     String value,
-    Color labelColor,
+    ThemeData theme,
+    bool isDark,
     Color valueColor,
   ) {
+    final labelColor = isDark
+        ? theme.colorScheme.onSurface.withOpacity(0.5)
+        : Colors.grey.shade600;
+    
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -641,9 +579,9 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
 
   Widget _buildOwnerRow(
     Seki seki,
-    Color labelColor,
-    Color valueColor,
     ThemeData theme,
+    bool isDark,
+    Color valueColor,
   ) {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
     final ownerId = seki.uid; // This is the publisherId
@@ -651,6 +589,9 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
     
     // Use primary color to indicate clickability
     final usernameColor = theme.colorScheme.primary;
+    final labelColor = isDark
+        ? theme.colorScheme.onSurface.withOpacity(0.5)
+        : Colors.grey.shade600;
 
     return InkWell(
       onTap: () {
@@ -718,6 +659,106 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
       ),
     );
   }
+
+
+  Widget _buildActionButtons(Seki seki, ThemeData theme) {
+    return Row(
+      children: [
+        Expanded(
+          child: ElevatedButton.icon(
+            onPressed: () => _showEditSekiBottomSheet(seki),
+            icon: const Icon(Icons.edit_outlined, size: 20),
+            label: const Text('Edit'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: theme.colorScheme.primary,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              elevation: 2,
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: () => _deleteDevice(seki),
+            icon: const Icon(Icons.delete_outline, size: 20),
+            label: const Text('Delete'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.red,
+              side: BorderSide(color: Colors.red.withOpacity(0.5)),
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTestimonialCard(
+    String note,
+    Color categoryColor,
+    ThemeData theme,
+    bool isDark,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: isDark
+            ? theme.colorScheme.surface.withOpacity(0.4)
+            : Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: isDark
+            ? null
+            : [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+      ),
+      child: Stack(
+        children: [
+          // Quote icon background
+          Positioned(
+            top: 8,
+            left: 8,
+            child: Icon(
+              Icons.format_quote,
+              size: 60,
+              color: categoryColor.withOpacity(0.1),
+            ),
+          ),
+          // Content
+          Padding(
+            padding: const EdgeInsets.only(left: 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  note,
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurface.withOpacity(0.9),
+                    fontSize: 16,
+                    height: 1.6,
+                    fontStyle: FontStyle.italic,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
 
   Widget _buildUsageSelector(Seki seki) {
     final theme = Theme.of(context);
