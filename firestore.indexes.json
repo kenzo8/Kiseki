@@ -1,0 +1,19 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "seki",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "deviceType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

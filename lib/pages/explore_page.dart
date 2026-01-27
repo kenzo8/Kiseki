@@ -74,10 +74,12 @@ class _ExplorePageState extends State<ExplorePage> {
                 stream: _selectedDeviceType == null
                     ? FirebaseFirestore.instance
                         .collection('seki')
+                        .orderBy('createdAt', descending: true)
                         .snapshots()
                     : FirebaseFirestore.instance
                         .collection('seki')
                         .where('deviceType', isEqualTo: _selectedDeviceType)
+                        .orderBy('createdAt', descending: true)
                         .snapshots(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
