@@ -34,6 +34,42 @@ const List<DeviceCategory> deviceCategories = [
   DeviceCategory(icon: Icons.menu_book, label: 'e-Reader', deviceType: 'e-Reader'),
 ];
 
+/// Get the category color for a given deviceType
+Color getCategoryColor(String deviceType) {
+  switch (deviceType) {
+    case 'Mobile':
+      return Colors.blue;
+    case 'Tablet':
+      return Colors.green;
+    case 'Laptop':
+    case 'Desktop':
+      return Colors.purple;
+    case 'Watch':
+      return Colors.orange;
+    case 'Earbuds':
+    case 'Headphones':
+      return Colors.cyan;
+    case 'Camera':
+      return Colors.amber;
+    case 'Gaming':
+      return Colors.red;
+    case 'Drone':
+      return Colors.teal;
+    case 'VR/AR':
+      return Colors.indigo;
+    case 'Smart Home':
+      return Colors.brown;
+    case 'Gaming Peripherals':
+      return Colors.pink;
+    case 'e-Reader':
+      return Colors.deepOrange;
+    case 'Accessory':
+      return Colors.grey;
+    default:
+      return Colors.grey;
+  }
+}
+
 /// Widget that displays a live icon preview based on device name
 class DeviceIconPreview extends StatelessWidget {
   final String deviceName;

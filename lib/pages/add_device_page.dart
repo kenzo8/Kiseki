@@ -192,16 +192,6 @@ class _AddDevicePageState extends State<AddDevicePage> {
     return Icons.devices; // Default fallback
   }
 
-  String _getDeviceTypeForIcon(IconData icon) {
-    // Map icon to device type using deviceCategories
-    for (final category in deviceCategories) {
-      if (category.icon == icon) {
-        return category.deviceType;
-      }
-    }
-    return 'Laptop'; // Default fallback
-  }
-
   String _getHintForDeviceType(String deviceType) {
     // Map device type to appropriate hint text
     switch (deviceType) {
@@ -627,19 +617,14 @@ class _AddDevicePageState extends State<AddDevicePage> {
                             if (_showCategoryPicker) ...[
                               const SizedBox(height: 12),
                               _CategoryPickerStrip(
-                                selectedIcon: _selectedIcon,
+                                selectedDeviceType: _deviceType,
                                 isDark: isDark,
-                                primaryColor: theme.colorScheme.primary,
-                                onCategorySelected: (selectedIcon) {
+                                onCategorySelected: (deviceType) {
                                   setState(() {
                                     _isManualCategorySelection = true;
                                     _showCategoryPicker = false;
-                                    _selectedIcon = selectedIcon;
-                                  });
-                                  // Convert icon to deviceType for parent
-                                  final deviceType = _getDeviceTypeForIcon(selectedIcon);
-                                  setState(() {
                                     _deviceType = deviceType;
+                                    _selectedIcon = _getIconForDeviceType(deviceType);
                                   });
                                 },
                               ),
@@ -928,76 +913,83 @@ class _AddDevicePageState extends State<AddDevicePage> {
 
 /// Minimalist Wrap of category icons (black/white/grey). Single-select only.
 class _CategoryPickerStrip extends StatelessWidget {
-  final IconData selectedIcon;
+  final String selectedDeviceType;
   final bool isDark;
-  final Color primaryColor;
-  final ValueChanged<IconData> onCategorySelected;
+  final ValueChanged<String> onCategorySelected;
 
   const _CategoryPickerStrip({
-    required this.selectedIcon,
+    required this.selectedDeviceType,
     required this.isDark,
-    required this.primaryColor,
     required this.onCategorySelected,
   });
 
-  static const double _iconSize = 24;
-  static const double _chipSize = 44;
-  static const double _spacing = 8;
+  static const double _iconSize = 28;
+  static const double _chipWidth = 80;
+  static const double _chipHeight = 90;
+  static const double _spacing = 12;
+  static const double _borderRadius = 12;
 
   /// Max height for the icon strip when scrollable (>10 categories).
-  static const double _maxHeight = 140;
+  static const double _maxHeight = 200;
 
   @override
   Widget build(BuildContext context) {
-    final base = isDark ? Colors.white : Colors.black;
     final useScroll = deviceCategories.length > 10;
     final wrap = Wrap(
       spacing: _spacing,
       runSpacing: _spacing,
       children: deviceCategories.map<Widget>((category) {
-        // Use icon as unique identifier for exclusive selection
-        final selected = category.icon == selectedIcon;
-        // Capture the specific category icon in a local variable to avoid closure issues
-        final categoryIcon = category.icon;
-        return Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () {
-              // Single-select: tapping updates selection with the specific icon
-              // Each icon has its own closure with its own categoryIcon value
-              onCategorySelected(categoryIcon);
-            },
-            borderRadius: BorderRadius.circular(_chipSize / 2),
+        final selected = category.deviceType == selectedDeviceType;
+        final categoryColor = getCategoryColor(category.deviceType);
+        final unselectedBgColor = Colors.grey[100]!;
+        final unselectedIconColor = Colors.grey.shade400;
+
+        return GestureDetector(
+          onTap: () {
+            onCategorySelected(category.deviceType);
+          },
+          child: AnimatedScale(
+            scale: selected ? 1.1 : 1.0,
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeInOut,
             child: AnimatedContainer(
-              duration: const Duration(milliseconds: 150),
-              width: _chipSize,
-              height: _chipSize,
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeInOut,
+              width: _chipWidth,
+              height: _chipHeight,
               decoration: BoxDecoration(
-                shape: BoxShape.circle,
                 color: selected
-                    ? primaryColor.withOpacity(0.15)
-                    : base.withOpacity(0.06),
+                    ? categoryColor.withOpacity(0.2)
+                    : unselectedBgColor,
+                borderRadius: BorderRadius.circular(_borderRadius),
                 border: Border.all(
-                  color: selected ? primaryColor : Colors.transparent,
-                  width: selected ? 2.5 : 0,
+                  color: selected ? categoryColor : Colors.transparent,
+                  width: 2,
                 ),
-                boxShadow: selected
-                    ? [
-                        BoxShadow(
-                          color: primaryColor.withOpacity(0.2),
-                          blurRadius: 6,
-                          spreadRadius: 0,
-                        ),
-                      ]
-                    : null,
               ),
-              alignment: Alignment.center,
-              child: Icon(
-                category.icon,
-                size: _iconSize,
-                color: selected
-                    ? primaryColor
-                    : base.withOpacity(0.5),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    category.icon,
+                    size: _iconSize,
+                    color: selected ? categoryColor : unselectedIconColor,
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    category.label,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: selected
+                          ? categoryColor
+                          : Colors.grey.shade600,
+                      fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
               ),
             ),
           ),

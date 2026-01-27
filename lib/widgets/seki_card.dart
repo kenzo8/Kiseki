@@ -406,6 +406,40 @@ class SekiCard extends StatelessWidget {
     }
   }
 
+  /// Get background color for icon container based on deviceType
+  Color _getIconBackgroundColor() {
+    switch (seki.deviceType) {
+      case 'Mobile':
+        return Colors.blue.withOpacity(0.12);
+      case 'Tablet':
+        return Colors.green.withOpacity(0.12);
+      case 'Laptop':
+      case 'Desktop':
+        return Colors.purple.withOpacity(0.12);
+      case 'Watch':
+        return Colors.orange.withOpacity(0.12);
+      default:
+        return Colors.grey.withOpacity(0.12);
+    }
+  }
+
+  /// Get icon color based on deviceType for consistent tinted look
+  Color _getIconColor() {
+    switch (seki.deviceType) {
+      case 'Mobile':
+        return Colors.blue.shade700;
+      case 'Tablet':
+        return Colors.green.shade700;
+      case 'Laptop':
+      case 'Desktop':
+        return Colors.purple.shade700;
+      case 'Watch':
+        return Colors.orange.shade700;
+      default:
+        return Colors.grey.shade700;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -440,23 +474,20 @@ class SekiCard extends StatelessWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Left: device icon with Hero animation
+                  // Left: device icon with Hero animation and dynamic colors
                   Hero(
                     tag: 'device_icon_${seki.id}',
                     child: Container(
                       width: 44,
                       height: 44,
                       decoration: BoxDecoration(
-                        color: (isDark ? Colors.white : Colors.grey.shade200)
-                            .withOpacity(isDark ? 0.15 : 1),
-                        borderRadius: BorderRadius.circular(10),
+                        color: _getIconBackgroundColor(),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(
                         getIconByDeviceName(seki.deviceName),
                         size: 24,
-                        color: isDark
-                            ? theme.colorScheme.onSurface.withOpacity(0.8)
-                            : Colors.grey.shade700,
+                        color: _getIconColor(),
                       ),
                     ),
                   ),
