@@ -563,7 +563,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
                         // Submit button
                         TextButton(
                           onPressed: !_isLoading ? _handleSubmit : null,
-                          style: !isEditMode && isButtonEnabled
+                          style: isButtonEnabled
                               ? TextButton.styleFrom(
                                   backgroundColor: const Color(0xFF1A1A1B),
                                   foregroundColor: Colors.white,
@@ -585,7 +585,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
                                   ),
                                 )
                               : Text(
-                                  isEditMode ? 'Save Changes' : 'Create',
+                                  isEditMode ? 'Save' : 'Create',
                                   style: TextStyle(
                                     color: isButtonEnabled
                                         ? Colors.white
@@ -973,115 +973,120 @@ class _AddDevicePageState extends State<AddDevicePage> {
                         ),
                         const SizedBox(height: 20),
                         // Note
-                        Container(
-                          decoration: BoxDecoration(
-                            color: isDark 
-                                ? theme.colorScheme.surface.withOpacity(0.4)
-                                : Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: isDark
-                                ? null
-                                : [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.05),
-                                      blurRadius: 10,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ],
-                          ),
-                          child: Stack(
-                            children: [
-                              // Quote icon background - subtle
-                              Positioned(
-                                top: 12,
-                                right: 12,
-                                child: Icon(
-                                  Icons.format_quote,
-                                  size: 40,
-                                  color: _categoryColor.withOpacity(0.08),
+                        GestureDetector(
+                          onTap: () {
+                            _noteFocusNode.requestFocus();
+                          },
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: isDark 
+                                  ? theme.colorScheme.surface.withOpacity(0.4)
+                                  : Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: isDark
+                                  ? null
+                                  : [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.05),
+                                        blurRadius: 10,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                            ),
+                            child: Stack(
+                              children: [
+                                // Quote icon background - subtle
+                                Positioned(
+                                  top: 12,
+                                  right: 12,
+                                  child: Icon(
+                                    Icons.format_quote,
+                                    size: 40,
+                                    color: _categoryColor.withOpacity(0.08),
+                                  ),
                                 ),
-                              ),
-                              // Content
-                              Padding(
-                                padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    // Label
-                                    Row(
-                                      children: [
-                                        Icon(
-                                          Icons.comment_outlined,
-                                          size: 16,
-                                          color: isDark
-                                              ? theme.colorScheme.onSurface.withOpacity(0.5)
-                                              : Colors.grey.shade600,
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          'IMPRESSION',
-                                          style: TextStyle(
+                                // Content
+                                Padding(
+                                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      // Label
+                                      Row(
+                                        children: [
+                                          Icon(
+                                            Icons.comment_outlined,
+                                            size: 16,
                                             color: isDark
                                                 ? theme.colorScheme.onSurface.withOpacity(0.5)
                                                 : Colors.grey.shade600,
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w600,
-                                            letterSpacing: 1.2,
                                           ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 12),
-                                    // TextField
-                                    TextField(
-                                      key: _noteFieldKey,
-                                      controller: _noteController,
-                                      focusNode: _noteFocusNode,
-                                      textInputAction: TextInputAction.done,
-                                      onSubmitted: (_) => FocusScope.of(context).unfocus(),
-                                      inputFormatters: [
-                                        FilteringTextInputFormatter.deny(RegExp(r'\n')),
-                                      ],
-                                      style: TextStyle(
-                                        color: isDark ? Colors.white : theme.colorScheme.onSurface,
-                                        fontSize: 15,
-                                        height: 1.6,
-                                        fontWeight: FontWeight.w400,
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            'IMPRESSION',
+                                            style: TextStyle(
+                                              color: isDark
+                                                  ? theme.colorScheme.onSurface.withOpacity(0.5)
+                                                  : Colors.grey.shade600,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                              letterSpacing: 1.2,
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                      maxLines: 5,
-                                      decoration: InputDecoration(
-                                        hintText: "What makes this device special to you?",
-                                        hintMaxLines: 5,
-                                        hintStyle: TextStyle(
-                                          color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.5),
+                                      const SizedBox(height: 12),
+                                      // TextField
+                                      TextField(
+                                        key: _noteFieldKey,
+                                        controller: _noteController,
+                                        focusNode: _noteFocusNode,
+                                        textInputAction: TextInputAction.done,
+                                        onSubmitted: (_) => FocusScope.of(context).unfocus(),
+                                        inputFormatters: [
+                                          FilteringTextInputFormatter.deny(RegExp(r'\n')),
+                                        ],
+                                        style: TextStyle(
+                                          color: isDark ? Colors.white : theme.colorScheme.onSurface,
                                           fontSize: 15,
                                           height: 1.6,
+                                          fontWeight: FontWeight.w400,
                                         ),
-                                        prefixIcon: Padding(
-                                          padding: const EdgeInsets.only(left: 0, right: 6, top: 2),
-                                          child: Icon(
-                                            Icons.format_quote,
-                                            size: 18,
-                                            color: _categoryColor.withOpacity(0.4),
+                                        maxLines: 5,
+                                        decoration: InputDecoration(
+                                          hintText: "What makes this device special to you?",
+                                          hintMaxLines: 5,
+                                          hintStyle: TextStyle(
+                                            color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.5),
+                                            fontSize: 15,
+                                            height: 1.6,
+                                          ),
+                                          prefixIcon: Padding(
+                                            padding: const EdgeInsets.only(left: 0, right: 6, top: 2),
+                                            child: Icon(
+                                              Icons.format_quote,
+                                              size: 18,
+                                              color: _categoryColor.withOpacity(0.4),
+                                            ),
+                                          ),
+                                          prefixIconConstraints: const BoxConstraints(
+                                            minWidth: 24,
+                                            minHeight: 24,
+                                          ),
+                                          enabledBorder: InputBorder.none,
+                                          focusedBorder: InputBorder.none,
+                                          border: InputBorder.none,
+                                          contentPadding: const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 12,
                                           ),
                                         ),
-                                        prefixIconConstraints: const BoxConstraints(
-                                          minWidth: 24,
-                                          minHeight: 24,
-                                        ),
-                                        enabledBorder: InputBorder.none,
-                                        focusedBorder: InputBorder.none,
-                                        border: InputBorder.none,
-                                        contentPadding: const EdgeInsets.symmetric(
-                                          horizontal: 12,
-                                          vertical: 12,
-                                        ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       ],
