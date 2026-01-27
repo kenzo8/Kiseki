@@ -163,107 +163,268 @@ class _ExplorePageState extends State<ExplorePage> {
   }
 
   Widget _buildFilterBar(ThemeData theme, bool isDark) {
+    // Show "All" and first 4 common categories, plus a "More" button
+    const int quickFiltersCount = 4;
+    final quickCategories = deviceCategories.take(quickFiltersCount).toList();
+    
     return Container(
       height: 50,
       padding: const EdgeInsets.symmetric(horizontal: 8),
-      child: ListView.builder(
+      child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
-        itemCount: deviceCategories.length + 1, // +1 for "All" option
-        itemBuilder: (context, index) {
-          if (index == 0) {
+        child: Row(
+          children: [
             // "All" option
-            final isSelected = _selectedDeviceType == null;
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _selectedDeviceType = null;
-                  });
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? (isDark ? Colors.white : theme.colorScheme.primary).withOpacity(0.2)
-                        : (isDark ? Colors.white : Colors.black).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: isSelected
-                          ? (isDark ? Colors.white : theme.colorScheme.primary).withOpacity(0.5)
-                          : Colors.transparent,
-                      width: 2,
-                    ),
-                  ),
-                  child: Center(
-                    child: Text(
-                      'All',
-                      style: TextStyle(
-                        color: isSelected
-                            ? (isDark ? Colors.white : theme.colorScheme.primary)
-                            : (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.7),
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            );
-          }
-
-          final category = deviceCategories[index - 1];
-          final isSelected = _selectedDeviceType == category.deviceType;
-
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: GestureDetector(
+            _buildFilterChip(
+              theme: theme,
+              isDark: isDark,
+              label: 'All',
+              icon: null,
+              isSelected: _selectedDeviceType == null,
               onTap: () {
                 setState(() {
-                  _selectedDeviceType = category.deviceType;
+                  _selectedDeviceType = null;
                 });
               },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? (isDark ? Colors.white : theme.colorScheme.primary).withOpacity(0.2)
-                      : (isDark ? Colors.white : Colors.black).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: isSelected
-                        ? (isDark ? Colors.white : theme.colorScheme.primary).withOpacity(0.5)
-                        : Colors.transparent,
-                    width: 2,
-                  ),
+            ),
+            const SizedBox(width: 4),
+            // Quick filter categories
+            ...quickCategories.map((category) {
+              final isSelected = _selectedDeviceType == category.deviceType;
+              return Padding(
+                padding: const EdgeInsets.only(right: 4),
+                child: _buildFilterChip(
+                  theme: theme,
+                  isDark: isDark,
+                  label: category.label,
+                  icon: category.icon,
+                  isSelected: isSelected,
+                  onTap: () {
+                    setState(() {
+                      _selectedDeviceType = category.deviceType;
+                    });
+                  },
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      category.icon,
-                      size: 18,
-                      color: isSelected
-                          ? (isDark ? Colors.white : theme.colorScheme.primary)
-                          : (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.7),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      category.label,
-                      style: TextStyle(
-                        color: isSelected
-                            ? (isDark ? Colors.white : theme.colorScheme.primary)
-                            : (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.7),
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
+              );
+            }),
+            // "More" button
+            Padding(
+              padding: const EdgeInsets.only(left: 4),
+              child: _buildFilterChip(
+                theme: theme,
+                isDark: isDark,
+                label: 'More',
+                icon: Icons.more_horiz,
+                isSelected: _selectedDeviceType != null && 
+                            !quickCategories.any((c) => c.deviceType == _selectedDeviceType),
+                onTap: () {
+                  _showCategoryPicker(theme, isDark);
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterChip({
+    required ThemeData theme,
+    required bool isDark,
+    required String label,
+    IconData? icon,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(
+          horizontal: icon != null ? 12 : 16,
+          vertical: 8,
+        ),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? (isDark ? Colors.white : theme.colorScheme.primary).withOpacity(0.2)
+              : (isDark ? Colors.white : Colors.black).withOpacity(0.1),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected
+                ? (isDark ? Colors.white : theme.colorScheme.primary).withOpacity(0.5)
+                : Colors.transparent,
+            width: 2,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              Icon(
+                icon,
+                size: 18,
+                color: isSelected
+                    ? (isDark ? Colors.white : theme.colorScheme.primary)
+                    : (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.7),
+              ),
+              const SizedBox(width: 6),
+            ],
+            Text(
+              label,
+              style: TextStyle(
+                color: isSelected
+                    ? (isDark ? Colors.white : theme.colorScheme.primary)
+                    : (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.7),
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showCategoryPicker(ThemeData theme, bool isDark) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1A1A2E) : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle bar
+            Container(
+              margin: const EdgeInsets.only(top: 12),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: (isDark ? Colors.white : Colors.black).withOpacity(0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                'Select Device Type',
+                style: TextStyle(
+                  color: theme.colorScheme.onSurface,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
-          );
-        },
+            Flexible(
+              child: GridView.builder(
+                shrinkWrap: true,
+                padding: const EdgeInsets.all(16),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  childAspectRatio: 1.1,
+                ),
+                itemCount: deviceCategories.length,
+                itemBuilder: (context, index) {
+                  final category = deviceCategories[index];
+                  final isSelected = _selectedDeviceType == category.deviceType;
+                  
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _selectedDeviceType = category.deviceType;
+                      });
+                      Navigator.pop(context);
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? (isDark ? Colors.white : theme.colorScheme.primary).withOpacity(0.2)
+                            : (isDark ? Colors.white : Colors.black).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isSelected
+                              ? (isDark ? Colors.white : theme.colorScheme.primary).withOpacity(0.5)
+                              : Colors.transparent,
+                          width: 2,
+                        ),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            category.icon,
+                            size: 32,
+                            color: isSelected
+                                ? (isDark ? Colors.white : theme.colorScheme.primary)
+                                : (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.7),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            category.label,
+                            style: TextStyle(
+                              color: isSelected
+                                  ? (isDark ? Colors.white : theme.colorScheme.primary)
+                                  : (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.7),
+                              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                              fontSize: 12,
+                            ),
+                            textAlign: TextAlign.center,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            // Add "All" option at the bottom
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      _selectedDeviceType = null;
+                    });
+                    Navigator.pop(context);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _selectedDeviceType == null
+                        ? (isDark ? Colors.white : theme.colorScheme.primary).withOpacity(0.2)
+                        : (isDark ? Colors.white : Colors.black).withOpacity(0.1),
+                    foregroundColor: _selectedDeviceType == null
+                        ? (isDark ? Colors.white : theme.colorScheme.primary)
+                        : (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.7),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: BorderSide(
+                        color: _selectedDeviceType == null
+                            ? (isDark ? Colors.white : theme.colorScheme.primary).withOpacity(0.5)
+                            : Colors.transparent,
+                        width: 2,
+                      ),
+                    ),
+                  ),
+                  child: Text(
+                    'All',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: _selectedDeviceType == null ? FontWeight.w600 : FontWeight.w400,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
