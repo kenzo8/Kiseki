@@ -89,7 +89,7 @@ class TimelineSekiItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final timelineColor = Colors.grey.withOpacity(0.3);
+    final timelineColor = Colors.grey.withOpacity(0.2);
     final yearColor = Colors.grey[500]!;
     final categoryColor = getCategoryColor(seki.deviceType);
     final deviceIconColor = categoryColor;
@@ -131,11 +131,11 @@ class TimelineSekiItem extends StatelessWidget {
                   children: [
                     // Vertical line (full height, continuous)
                     Positioned(
-                      left: 19.5, // Center of 40px width (20 - 0.5)
+                      left: 19.25, // Center of 40px width (20 - 0.75)
                       top: 0,
                       bottom: 0,
                       child: Container(
-                        width: 1,
+                        width: 1.5,
                         color: isLast ? Colors.transparent : timelineColor,
                       ),
                     ),
@@ -149,10 +149,10 @@ class TimelineSekiItem extends StatelessWidget {
                           width: 24,
                           height: 24,
                           decoration: BoxDecoration(
-                            color: categoryColor.withOpacity(0.12),
+                            color: categoryColor.withOpacity(0.15),
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: deviceIconColor,
+                              color: deviceIconColor.withOpacity(0.6),
                               width: 2,
                             ),
                           ),

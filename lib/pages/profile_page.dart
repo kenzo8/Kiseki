@@ -222,9 +222,19 @@ class _ProfilePageState extends State<ProfilePage>
                     flexibleSpace: FlexibleSpaceBar(
                       background: Container(
                         decoration: BoxDecoration(
-                          color: isDark
-                              ? theme.colorScheme.surfaceContainerHighest.withOpacity(0.3)
-                              : theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: isDark
+                                ? [
+                                    theme.colorScheme.primary.withOpacity(0.15),
+                                    theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                                  ]
+                                : [
+                                    theme.colorScheme.primary.withOpacity(0.08),
+                                    theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                                  ],
+                          ),
                         ),
                         child: LayoutBuilder(
                           builder: (context, constraints) {
@@ -422,7 +432,7 @@ class _ProfilePageState extends State<ProfilePage>
                                     Text(
                                       '$deviceCount',
                                       style: TextStyle(
-                                        fontWeight: FontWeight.w600,
+                                        fontWeight: FontWeight.w700,
                                         fontSize: 13,
                                         color: textColor,
                                       ),
@@ -452,7 +462,7 @@ class _ProfilePageState extends State<ProfilePage>
                                     Text(
                                       '$wantCount',
                                       style: TextStyle(
-                                        fontWeight: FontWeight.w600,
+                                        fontWeight: FontWeight.w700,
                                         fontSize: 13,
                                         color: textColor,
                                       ),
