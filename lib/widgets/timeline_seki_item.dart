@@ -10,6 +10,7 @@ class TimelineSekiItem extends StatelessWidget {
   final bool isDark;
   final bool isLast;
   final VoidCallback? onTap;
+  final bool showYear;
 
   const TimelineSekiItem({
     super.key,
@@ -17,6 +18,7 @@ class TimelineSekiItem extends StatelessWidget {
     required this.isDark,
     this.isLast = false,
     this.onTap,
+    this.showYear = true,
   });
 
   String get _usageDurationText {
@@ -103,18 +105,20 @@ class TimelineSekiItem extends StatelessWidget {
                 width: 50,
                 child: Padding(
                   padding: const EdgeInsets.only(top: 0),
-                  child: Text(
-                    seki.isPreciseMode && seki.startTime != null
-                        ? '${seki.startTime!.toDate().year}'
-                        : '${seki.startYear}',
-                    style: TextStyle(
-                      color: yearColor,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w400,
-                      letterSpacing: 0.5,
-                    ),
-                    textAlign: TextAlign.right,
-                  ),
+                  child: showYear
+                      ? Text(
+                          seki.isPreciseMode && seki.startTime != null
+                              ? '${seki.startTime!.toDate().year}'
+                              : '${seki.startYear}',
+                          style: TextStyle(
+                            color: yearColor,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                            letterSpacing: 0.5,
+                          ),
+                          textAlign: TextAlign.right,
+                        )
+                      : const SizedBox.shrink(),
                 ),
               ),
               const SizedBox(width: 8),

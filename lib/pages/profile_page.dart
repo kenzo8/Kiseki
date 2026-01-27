@@ -551,17 +551,35 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
           return _buildEmptyState(context, theme);
         }
 
+        // Convert docs to Seki objects and determine which ones should show year
+        final sekis = docs.map((doc) => Seki.fromFirestore(doc)).toList();
+        
+        // Determine which items should show the year (first item of each year group)
+        final shouldShowYear = <bool>[];
+        int? previousYear;
+        
+        for (final seki in sekis) {
+          final currentYear = seki.isPreciseMode && seki.startTime != null
+              ? seki.startTime!.toDate().year
+              : seki.startYear;
+          
+          // Show year if this is the first item or if the year changed
+          final showYear = previousYear == null || previousYear != currentYear;
+          shouldShowYear.add(showYear);
+          previousYear = currentYear;
+        }
+
         return ListView.builder(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          itemCount: docs.length,
+          itemCount: sekis.length,
           itemBuilder: (context, index) {
-            final doc = docs[index];
-            final seki = Seki.fromFirestore(doc);
-            final isLast = index == docs.length - 1;
+            final seki = sekis[index];
+            final isLast = index == sekis.length - 1;
             return TimelineSekiItem(
               seki: seki,
               isDark: isDark,
               isLast: isLast,
+              showYear: shouldShowYear[index],
               onTap: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(
