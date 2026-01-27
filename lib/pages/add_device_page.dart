@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../models/seki_model.dart';
 import '../widgets/device_icon_selector.dart';
@@ -900,6 +901,9 @@ class _AddDevicePageState extends State<AddDevicePage> {
                           focusNode: _noteFocusNode,
                           textInputAction: TextInputAction.done,
                           onSubmitted: (_) => FocusScope.of(context).unfocus(),
+                          inputFormatters: [
+                            FilteringTextInputFormatter.deny(RegExp(r'\n')),
+                          ],
                           style: TextStyle(color: isDark ? Colors.white : theme.colorScheme.onSurface),
                           maxLines: 5,
                           decoration: InputDecoration(
