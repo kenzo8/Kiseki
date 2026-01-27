@@ -643,9 +643,13 @@ class _AddDevicePageState extends State<AddDevicePage> {
                           ],
                         ),
                         const SizedBox(height: 20),
-                        // Conditional Input: Year Range Slider or Date Pickers
-                        if (!_isPreciseMode) ...[
-                          // Year Range Slider
+                        // Animated transition between Year Range Slider and Date Range UI
+                        AnimatedCrossFade(
+                          duration: const Duration(milliseconds: 300),
+                          crossFadeState: _isPreciseMode
+                              ? CrossFadeState.showSecond
+                              : CrossFadeState.showFirst,
+                          firstChild: // Year Range Slider
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -699,8 +703,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
                               ),
                             ],
                           ),
-                        ] else ...[
-                          // Date Pickers
+                          secondChild: // Date Range UI
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -713,64 +716,89 @@ class _AddDevicePageState extends State<AddDevicePage> {
                                 ),
                               ),
                               const SizedBox(height: 12),
-                              // Start Date Button
-                              OutlinedButton.icon(
-                                onPressed: _selectStartDate,
-                                icon: Icon(
-                                  Icons.calendar_today,
-                                  size: 18,
-                                  color: (isDark ? Colors.white : theme.colorScheme.primary),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                decoration: BoxDecoration(
+                                  color: (isDark ? Colors.white : Colors.black).withOpacity(0.06),
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
-                                label: Text(
-                                  _startDate != null
-                                      ? '${_startDate!.year}/${_startDate!.month}/${_startDate!.day}'
-                                      : 'Select Start Date',
-                                  style: TextStyle(
-                                    color: (isDark ? Colors.white : theme.colorScheme.onSurface),
-                                  ),
-                                ),
-                                style: OutlinedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                  side: BorderSide(
-                                    color: (isDark ? Colors.white : theme.colorScheme.primary).withOpacity(0.5),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              // End Date Button
-                              OutlinedButton.icon(
-                                onPressed: _stillUsing ? null : _selectEndDate,
-                                icon: Icon(
-                                  Icons.calendar_today,
-                                  size: 18,
-                                  color: _stillUsing
-                                      ? (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.3)
-                                      : (isDark ? Colors.white : theme.colorScheme.primary),
-                                ),
-                                label: Text(
-                                  _stillUsing
-                                      ? 'Present'
-                                      : (_endDate != null
-                                          ? '${_endDate!.year}/${_endDate!.month}/${_endDate!.day}'
-                                          : 'Select End Date'),
-                                  style: TextStyle(
-                                    color: _stillUsing
-                                        ? (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.3)
-                                        : (isDark ? Colors.white : theme.colorScheme.onSurface),
-                                  ),
-                                ),
-                                style: OutlinedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                  side: BorderSide(
-                                    color: _stillUsing
-                                        ? (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.2)
-                                        : (isDark ? Colors.white : theme.colorScheme.primary).withOpacity(0.5),
-                                  ),
+                                child: Row(
+                                  children: [
+                                    // Calendar Icon Prefix
+                                    Icon(
+                                      Icons.calendar_today,
+                                      size: 20,
+                                      color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.7),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    // Start Date Button
+                                    Expanded(
+                                      child: InkWell(
+                                        onTap: _selectStartDate,
+                                        borderRadius: BorderRadius.circular(8),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                          decoration: BoxDecoration(
+                                            color: (isDark ? Colors.white : Colors.black).withOpacity(0.04),
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: Text(
+                                            _startDate != null
+                                                ? '${_startDate!.year}/${_startDate!.month}/${_startDate!.day}'
+                                                : 'Start Date',
+                                            style: TextStyle(
+                                              color: (isDark ? Colors.white : theme.colorScheme.onSurface),
+                                              fontSize: 14,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    // Separator
+                                    Icon(
+                                      Icons.arrow_forward,
+                                      size: 18,
+                                      color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.5),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    // End Date Button
+                                    Expanded(
+                                      child: InkWell(
+                                        onTap: _stillUsing ? null : _selectEndDate,
+                                        borderRadius: BorderRadius.circular(8),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                          decoration: BoxDecoration(
+                                            color: _stillUsing
+                                                ? Colors.transparent
+                                                : (isDark ? Colors.white : Colors.black).withOpacity(0.04),
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: Text(
+                                            _stillUsing
+                                                ? 'Present'
+                                                : (_endDate != null
+                                                    ? '${_endDate!.year}/${_endDate!.month}/${_endDate!.day}'
+                                                    : 'End Date'),
+                                            style: TextStyle(
+                                              color: _stillUsing
+                                                  ? (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.5)
+                                                  : (isDark ? Colors.white : theme.colorScheme.onSurface),
+                                              fontSize: 14,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
                           ),
-                        ],
+                        ),
                         const SizedBox(height: 20),
                         // Still Using Toggle
                         Row(
