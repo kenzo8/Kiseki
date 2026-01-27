@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -387,9 +388,14 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
         SystemUIService.setImmersiveStatusBar(context, backgroundColor: scaffoldBg);
 
         final valueColor = theme.colorScheme.onSurface;
+        // Device title color - always use dark color
+        final deviceTitleColor = const Color(0xFF333333);
 
         return Scaffold(
           backgroundColor: scaffoldBg,
+          bottomNavigationBar: isOwner
+              ? _buildGlassmorphismBottomBar(context, seki, theme, scaffoldBg, isDark)
+              : null,
           body: Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -447,7 +453,7 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
                     Text(
                       seki.deviceName,
                       style: TextStyle(
-                        color: valueColor,
+                        color: deviceTitleColor,
                         fontSize: 32,
                         fontWeight: FontWeight.w600,
                         letterSpacing: 0.5,
@@ -507,18 +513,21 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
                     // Note Section - positioned between Info Card and Action Buttons
                     const SizedBox(height: 24),
                     _buildNoteCard(seki.note, categoryColor, theme, isDark),
+                    // Add spacing between Impression card and action buttons
+                    if (isOwner) const SizedBox(height: 20),
                     // Usage Selector (for non-owners)
                     if (!isOwner) ...[
                       const SizedBox(height: 24),
                       _buildUsageSelector(seki),
                     ],
                     // Add bottom padding to avoid overlap with fixed buttons
-                    if (isOwner) const SizedBox(height: 100),
+                    // Increased padding to ensure IMPRESSION text isn't cut off
+                    if (isOwner) const SizedBox(height: 120),
                     if (!isOwner) const SizedBox(height: 40),
                       ],
                     ),
                   ),
-                  // 返回按钮 - 浮动在左上角
+                  // 返回按钮 - 浮动在左上角 with glassmorphism
                   Positioned(
                     top: 8,
                     left: 8,
@@ -527,61 +536,30 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
                       child: InkWell(
                         onTap: () => Navigator.of(context).pop(),
                         borderRadius: BorderRadius.circular(24),
-                        child: Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? theme.colorScheme.surface.withOpacity(0.7)
-                                : Colors.white.withOpacity(0.9),
-                            borderRadius: BorderRadius.circular(24),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(24),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                            child: Container(
+                              width: 48,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                color: isDark
+                                    ? Colors.white.withOpacity(0.15)
+                                    : Colors.white.withOpacity(0.3),
+                                borderRadius: BorderRadius.circular(24),
                               ),
-                            ],
-                          ),
-                          child: Icon(
-                            Icons.arrow_back,
-                            color: theme.colorScheme.onSurface,
-                            size: 24,
+                              child: Icon(
+                                Icons.arrow_back,
+                                color: isDark ? Colors.white : const Color(0xFF333333),
+                                size: 24,
+                              ),
+                            ),
                           ),
                         ),
                       ),
                     ),
                   ),
-                  // Action Buttons (for owners) - 固定在底部
-                  if (isOwner)
-                    Positioned(
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      child: Container(
-                        padding: EdgeInsets.only(
-                          top: 40,
-                          left: 24,
-                          right: 24,
-                          bottom: 24 + MediaQuery.of(context).padding.bottom,
-                        ),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              scaffoldBg.withOpacity(0.0),
-                              scaffoldBg.withOpacity(0.3),
-                              scaffoldBg.withOpacity(0.7),
-                              scaffoldBg.withOpacity(0.95),
-                              scaffoldBg,
-                            ],
-                            stops: const [0.0, 0.2, 0.5, 0.8, 1.0],
-                          ),
-                        ),
-                        child: _buildActionButtons(seki, theme),
-                      ),
-                    ),
                 ],
               ),
             ),
@@ -735,6 +713,43 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
   }
 
 
+  Widget _buildGlassmorphismBottomBar(
+    BuildContext context,
+    Seki seki,
+    ThemeData theme,
+    Color scaffoldBg,
+    bool isDark,
+  ) {
+    return ClipRRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        child: Container(
+          padding: EdgeInsets.only(
+            top: 16,
+            left: 24,
+            right: 24,
+            bottom: 16 + MediaQuery.of(context).padding.bottom,
+          ),
+          decoration: BoxDecoration(
+            color: (isDark 
+                ? scaffoldBg 
+                : Colors.white).withOpacity(0.85),
+            border: Border(
+              top: BorderSide(
+                color: Colors.white.withOpacity(0.2),
+                width: 0.5,
+              ),
+            ),
+          ),
+          child: SafeArea(
+            top: false,
+            child: _buildActionButtons(seki, theme),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildActionButtons(Seki seki, ThemeData theme) {
     return Row(
       children: [
@@ -786,7 +801,7 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
         : Colors.grey.shade600;
     
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
       decoration: BoxDecoration(
         color: isDark
             ? theme.colorScheme.surface.withOpacity(0.4)
