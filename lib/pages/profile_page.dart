@@ -326,7 +326,7 @@ class _ProfilePageState extends State<ProfilePage>
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            'In Use:',
+                                            'Currently in Use:',
                                             style: theme.textTheme.bodyMedium?.copyWith(
                                               color: theme.colorScheme.primary,
                                               fontWeight: FontWeight.w500,
