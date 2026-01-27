@@ -6,8 +6,6 @@ import 'package:flutter/services.dart';
 import 'firebase_options.dart';
 import 'pages/login_page.dart';
 import 'pages/explore_page.dart';
-import 'pages/circle_page.dart';
-import 'pages/inbox_page.dart';
 import 'pages/profile_page.dart';
 import 'pages/add_device_page.dart';
 import 'services/system_ui_service.dart';
@@ -149,8 +147,6 @@ class _MainNavigationContentState extends State<_MainNavigationContent> {
         index: _currentIndex,
         children: [
           ExplorePage(user: widget.user),
-          const CirclePage(),
-          const InboxPage(),
           ProfilePage(user: widget.user),
         ],
       ),
@@ -171,36 +167,16 @@ class _MainNavigationContentState extends State<_MainNavigationContent> {
               isDark: isDark,
               onTap: () => setState(() => _currentIndex = 0),
             ),
+            _buildCenterButton(theme, isDark),
             _buildNavItem(
-              icon: Icons.people,
-              iconOutlined: Icons.people_outline,
-              label: 'Circle',
+              icon: Icons.person,
+              iconOutlined: Icons.person_outline,
+              label: 'Profile',
               index: 1,
               isSelected: _currentIndex == 1,
               theme: theme,
               isDark: isDark,
               onTap: () => setState(() => _currentIndex = 1),
-            ),
-            _buildCenterButton(theme, isDark),
-            _buildNavItem(
-              icon: Icons.inbox,
-              iconOutlined: Icons.inbox_outlined,
-              label: 'Inbox',
-              index: 2,
-              isSelected: _currentIndex == 2,
-              theme: theme,
-              isDark: isDark,
-              onTap: () => setState(() => _currentIndex = 2),
-            ),
-            _buildNavItem(
-              icon: Icons.person,
-              iconOutlined: Icons.person_outline,
-              label: 'Profile',
-              index: 3,
-              isSelected: _currentIndex == 3,
-              theme: theme,
-              isDark: isDark,
-              onTap: () => setState(() => _currentIndex = 3),
             ),
           ],
         ),
