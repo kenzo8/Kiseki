@@ -10,6 +10,7 @@ import '../pages/device_detail_page.dart';
 import '../pages/add_device_page.dart';
 import '../widgets/timeline_seki_item.dart';
 import '../widgets/seki_card.dart';
+import '../widgets/device_icon_selector.dart';
 
 /// Custom delegate for pinned TabBar in NestedScrollView
 class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
@@ -113,6 +114,36 @@ class _ProfilePageState extends State<ProfilePage>
     return activeSekis;
   }
 
+  /// Gets the most common category color from a list of Sekis.
+  /// Returns the primary color if no sekis are available.
+  Color _getMostCommonCategoryColor(List<Seki> sekis, ThemeData theme) {
+    if (sekis.isEmpty) {
+      return theme.colorScheme.primary;
+    }
+    
+    // Count occurrences of each deviceType
+    final deviceTypeCounts = <String, int>{};
+    for (final seki in sekis) {
+      deviceTypeCounts[seki.deviceType] = (deviceTypeCounts[seki.deviceType] ?? 0) + 1;
+    }
+    
+    // Find the most common deviceType
+    String? mostCommonType;
+    int maxCount = 0;
+    for (final entry in deviceTypeCounts.entries) {
+      if (entry.value > maxCount) {
+        maxCount = entry.value;
+        mostCommonType = entry.key;
+      }
+    }
+    
+    // Return the color for the most common category, or primary if not found
+    if (mostCommonType != null) {
+      return getCategoryColor(mostCommonType);
+    }
+    return theme.colorScheme.primary;
+  }
+
   /// Check if this ProfilePage is displayed as a main page (in IndexedStack)
   /// Main pages should never show a back button to prevent black screen issues
   bool _isMainPage(BuildContext context) {
@@ -178,6 +209,9 @@ class _ProfilePageState extends State<ProfilePage>
             final sekis = _dataService.cachedSekis ?? [];
             final activeDevices = _getActiveDevices(sekis);
             final deviceCount = sekis.length;
+            
+            // Get the most common category color for avatar border
+            final avatarBorderColor = _getMostCommonCategoryColor(sekis, theme);
 
             // Get cached wants data
             final wants = _dataService.cachedWants ?? [];
@@ -223,16 +257,16 @@ class _ProfilePageState extends State<ProfilePage>
                       background: Container(
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
                             colors: isDark
                                 ? [
-                                    theme.colorScheme.primary.withOpacity(0.15),
-                                    theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                                    const Color(0xFF1A1F2E).withOpacity(0.6),
+                                    const Color(0xFF2A3441).withOpacity(0.4),
                                   ]
                                 : [
-                                    theme.colorScheme.primary.withOpacity(0.08),
-                                    theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                                    const Color(0xFFE8EBF0).withOpacity(0.8),
+                                    const Color(0xFFD4D9E3).withOpacity(0.6),
                                   ],
                           ),
                         ),
@@ -250,10 +284,20 @@ class _ProfilePageState extends State<ProfilePage>
                                   children: [
                                     Row(
                                       children: [
-                                        Icon(
-                                          Icons.person,
-                                          size: 24,
-                                          color: theme.colorScheme.primary,
+                                        Container(
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            border: Border.all(
+                                              color: avatarBorderColor,
+                                              width: 2,
+                                            ),
+                                          ),
+                                          padding: const EdgeInsets.all(2),
+                                          child: Icon(
+                                            Icons.person,
+                                            size: 24,
+                                            color: theme.colorScheme.primary,
+                                          ),
                                         ),
                                         const SizedBox(width: 12),
                                         Expanded(
@@ -277,17 +321,17 @@ class _ProfilePageState extends State<ProfilePage>
                                         Icon(
                                           Icons.email,
                                           size: 18,
-                                          color: theme.colorScheme.onSurfaceVariant,
+                                          color: theme.colorScheme.onSurfaceVariant.withOpacity(0.6),
                                         ),
                                         const SizedBox(width: 10),
                                         Expanded(
                                           child: Text(
                                             email,
-                                            style: theme.textTheme.bodyMedium?.copyWith(
-                                              color: theme.colorScheme.onSurfaceVariant,
+                                            style: theme.textTheme.bodySmall?.copyWith(
+                                              color: theme.colorScheme.onSurfaceVariant.withOpacity(0.6),
                                             ) ?? TextStyle(
-                                              color: theme.colorScheme.onSurfaceVariant,
-                                              fontSize: 14,
+                                              color: theme.colorScheme.onSurfaceVariant.withOpacity(0.6),
+                                              fontSize: 12,
                                             ),
                                           ),
                                         ),
