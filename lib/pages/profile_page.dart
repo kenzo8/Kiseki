@@ -66,6 +66,22 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
     _tabController = TabController(length: 2, vsync: this);
   }
 
+  /// Calculate adaptive height based on content
+  double _calculateHeaderHeight(String bio, List<Seki> activeDevices) {
+    double baseHeight = 140.0; // Base height for username and email
+    if (bio.isNotEmpty) {
+      // Estimate bio height (approximate 1.5 line height * font size)
+      final bioLines = (bio.length / 40).ceil(); // Rough estimate: ~40 chars per line
+      baseHeight += 12 + (bioLines * 20.0); // 12 for spacing + line height
+    }
+    if (activeDevices.isNotEmpty) {
+      baseHeight += 16; // Spacing before "In Use"
+      // Estimate device chips height (max 60px with scrolling)
+      baseHeight += 60.0;
+    }
+    return baseHeight.clamp(200.0, 400.0); // Clamp between 200 and 400
+  }
+
   @override
   void dispose() {
     _tabController.dispose();
@@ -152,6 +168,8 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                         ? wantSnapshot.data!.docs.length 
                         : 0;
 
+                    final headerHeight = _calculateHeaderHeight(bio, activeDevices);
+                    
                     return NestedScrollView(
                       headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
                         return [
@@ -160,7 +178,7 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                             elevation: 0,
                             pinned: false,
                             floating: false,
-                            expandedHeight: 200.0,
+                            expandedHeight: headerHeight,
                             leading: Navigator.canPop(context)
                                 ? IconButton(
                                     icon: const Icon(Icons.arrow_back),
@@ -192,11 +210,18 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                                       ? theme.colorScheme.surfaceContainerHighest.withOpacity(0.3)
                                       : theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
                                 ),
-                                child: Padding(
-                                  padding: const EdgeInsets.fromLTRB(24, 60, 24, 24),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
+                                child: LayoutBuilder(
+                                  builder: (context, constraints) {
+                                    return SingleChildScrollView(
+                                      padding: const EdgeInsets.fromLTRB(24, 60, 24, 24),
+                                      child: ConstrainedBox(
+                                        constraints: BoxConstraints(
+                                          minHeight: constraints.maxHeight - 84,
+                                        ),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
                                       Row(
                                         children: [
                                           Icon(
@@ -287,43 +312,49 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                                             ),
                                             const SizedBox(width: 10),
                                             Expanded(
-                                              child: Wrap(
-                                                spacing: 8,
-                                                runSpacing: 6,
-                                                children: activeDevices.map((seki) {
-                                                  return Container(
-                                                    padding: const EdgeInsets.symmetric(
-                                                      horizontal: 10,
-                                                      vertical: 4,
-                                                    ),
-                                                    decoration: BoxDecoration(
-                                                      color: theme.colorScheme.primaryContainer,
-                                                      borderRadius: BorderRadius.circular(12),
-                                                    ),
-                                                    child: Row(
-                                                      mainAxisSize: MainAxisSize.min,
-                                                      children: [
-                                                        Icon(
-                                                          getIconByDeviceName(seki.deviceName),
-                                                          size: 16,
-                                                          color: theme.colorScheme.onPrimaryContainer,
+                                              child: ConstrainedBox(
+                                                constraints: const BoxConstraints(maxHeight: 60),
+                                                child: SingleChildScrollView(
+                                                  scrollDirection: Axis.vertical,
+                                                  child: Wrap(
+                                                    spacing: 8,
+                                                    runSpacing: 6,
+                                                    children: activeDevices.map((seki) {
+                                                      return Container(
+                                                        padding: const EdgeInsets.symmetric(
+                                                          horizontal: 10,
+                                                          vertical: 4,
                                                         ),
-                                                        const SizedBox(width: 6),
-                                                        Text(
-                                                          seki.deviceName,
-                                                          style: theme.textTheme.labelMedium?.copyWith(
-                                                            color: theme.colorScheme.onPrimaryContainer,
-                                                            fontWeight: FontWeight.w500,
-                                                          ) ?? TextStyle(
-                                                            color: theme.colorScheme.onPrimaryContainer,
-                                                            fontSize: 12,
-                                                            fontWeight: FontWeight.w500,
-                                                          ),
+                                                        decoration: BoxDecoration(
+                                                          color: theme.colorScheme.primaryContainer,
+                                                          borderRadius: BorderRadius.circular(12),
                                                         ),
-                                                      ],
-                                                    ),
-                                                  );
-                                                }).toList(),
+                                                        child: Row(
+                                                          mainAxisSize: MainAxisSize.min,
+                                                          children: [
+                                                            Icon(
+                                                              getIconByDeviceName(seki.deviceName),
+                                                              size: 16,
+                                                              color: theme.colorScheme.onPrimaryContainer,
+                                                            ),
+                                                            const SizedBox(width: 6),
+                                                            Text(
+                                                              seki.deviceName,
+                                                              style: theme.textTheme.labelMedium?.copyWith(
+                                                                color: theme.colorScheme.onPrimaryContainer,
+                                                                fontWeight: FontWeight.w500,
+                                                              ) ?? TextStyle(
+                                                                color: theme.colorScheme.onPrimaryContainer,
+                                                                fontSize: 12,
+                                                                fontWeight: FontWeight.w500,
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      );
+                                                    }).toList(),
+                                                  ),
+                                                ),
                                               ),
                                             ),
                                           ],
@@ -332,10 +363,13 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                                     ],
                                   ),
                                 ),
-                              ),
-                            ),
+                              );
+                            },
                           ),
-                          SliverPersistentHeader(
+                        ),
+                      ),
+                    ),
+                  SliverPersistentHeader(
                             pinned: true,
                             delegate: _SliverAppBarDelegate(
                               TabBar(
