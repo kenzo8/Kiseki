@@ -14,18 +14,24 @@ class DeviceCategory {
   });
 }
 
-/// All available device categories
+/// All available device categories.
+/// [deviceType] equals [label] and is saved to Firestore when adding/editing a device.
 const List<DeviceCategory> deviceCategories = [
-  DeviceCategory(icon: Icons.smartphone, label: 'Mobile', deviceType: 'iPhone'),
-  DeviceCategory(icon: Icons.tablet_mac, label: 'Tablet', deviceType: 'iPad'),
-  DeviceCategory(icon: Icons.laptop, label: 'Laptop', deviceType: 'Mac'),
-  DeviceCategory(icon: Icons.desktop_windows, label: 'Desktop', deviceType: 'Mac'),
-  DeviceCategory(icon: Icons.watch, label: 'Watch', deviceType: 'Apple Watch'),
-  DeviceCategory(icon: Icons.hearing, label: 'Earbuds', deviceType: 'iPod'),
-  DeviceCategory(icon: Icons.headphones, label: 'Headphones', deviceType: 'Vintage'),
-  DeviceCategory(icon: Icons.photo_camera, label: 'Camera', deviceType: 'Vintage'),
-  DeviceCategory(icon: Icons.videogame_asset, label: 'Gaming', deviceType: 'Vintage'),
-  DeviceCategory(icon: Icons.keyboard, label: 'Accessory', deviceType: 'Vintage'),
+  DeviceCategory(icon: Icons.smartphone, label: 'Mobile', deviceType: 'Mobile'),
+  DeviceCategory(icon: Icons.tablet_mac, label: 'Tablet', deviceType: 'Tablet'),
+  DeviceCategory(icon: Icons.laptop, label: 'Laptop', deviceType: 'Laptop'),
+  DeviceCategory(icon: Icons.desktop_windows, label: 'Desktop', deviceType: 'Desktop'),
+  DeviceCategory(icon: Icons.watch, label: 'Watch', deviceType: 'Watch'),
+  DeviceCategory(icon: Icons.hearing, label: 'Earbuds', deviceType: 'Earbuds'),
+  DeviceCategory(icon: Icons.headphones, label: 'Headphones', deviceType: 'Headphones'),
+  DeviceCategory(icon: Icons.photo_camera, label: 'Camera', deviceType: 'Camera'),
+  DeviceCategory(icon: Icons.videogame_asset, label: 'Gaming', deviceType: 'Gaming'),
+  DeviceCategory(icon: Icons.keyboard, label: 'Accessory', deviceType: 'Accessory'),
+  DeviceCategory(icon: Icons.home, label: 'Smart Home', deviceType: 'Smart Home'),
+  DeviceCategory(icon: Icons.view_in_ar, label: 'VR/AR', deviceType: 'VR/AR'),
+  DeviceCategory(icon: Icons.mouse, label: 'Gaming Peripherals', deviceType: 'Gaming Peripherals'),
+  DeviceCategory(icon: Icons.flight_takeoff, label: 'Drone', deviceType: 'Drone'),
+  DeviceCategory(icon: Icons.menu_book, label: 'e-Reader', deviceType: 'e-Reader'),
 ];
 
 /// Widget that displays a live icon preview based on device name

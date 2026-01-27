@@ -79,7 +79,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
       // Initialize with default values for add mode, or use pre-filled values
       _nameController = TextEditingController(text: widget.preFilledDeviceName ?? '');
       _noteController = TextEditingController();
-      _deviceType = 'Mac';
+      _deviceType = 'Laptop';
       // Use override if provided, otherwise use pre-filled or default
       _stillUsing = widget.overrideStillUsing ?? widget.preFilledStillUsing ?? false;
       _yearRange = const RangeValues(2020, 2026);
@@ -198,7 +198,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
         return category.deviceType;
       }
     }
-    return 'Mac'; // Default fallback
+    return 'Laptop'; // Default fallback
   }
 
   void _handleSubmit() {
@@ -899,10 +899,14 @@ class _CategoryPickerStrip extends StatelessWidget {
   static const double _chipSize = 44;
   static const double _spacing = 8;
 
+  /// Max height for the icon strip when scrollable (>10 categories).
+  static const double _maxHeight = 140;
+
   @override
   Widget build(BuildContext context) {
     final base = isDark ? Colors.white : Colors.black;
-    return Wrap(
+    final useScroll = deviceCategories.length > 10;
+    final wrap = Wrap(
       spacing: _spacing,
       runSpacing: _spacing,
       children: deviceCategories.map<Widget>((category) {
@@ -955,5 +959,14 @@ class _CategoryPickerStrip extends StatelessWidget {
         );
       }).toList(),
     );
+    if (useScroll) {
+      return ConstrainedBox(
+        constraints: const BoxConstraints(maxHeight: _maxHeight),
+        child: SingleChildScrollView(
+          child: wrap,
+        ),
+      );
+    }
+    return wrap;
   }
 }

@@ -57,7 +57,18 @@ IconData getIconByDeviceName(String deviceName) {
       lowerName.contains('earbud')) {
     return Icons.hearing;
   }
-  
+
+  // VR/AR (before headphones so "vr headset" etc. match here)
+  if (lowerName.contains('quest') ||
+      lowerName.contains('vision pro') ||
+      lowerName.contains(' vr') ||
+      lowerName.contains('vr ') ||
+      lowerName.contains('pico') ||
+      lowerName.contains('valve index') ||
+      lowerName.contains('hololens')) {
+    return Icons.view_in_ar;
+  }
+
   // Headphones
   if (lowerName.contains('sony xm') || 
       lowerName.contains('headphone') || 
@@ -66,7 +77,7 @@ IconData getIconByDeviceName(String deviceName) {
       lowerName.contains('headset')) {
     return Icons.headphones;
   }
-  
+
   // Gaming consoles
   if (lowerName.contains('switch') || 
       lowerName.contains('ps5') || 
@@ -82,13 +93,44 @@ IconData getIconByDeviceName(String deviceName) {
   // Cameras
   if (lowerName.contains('fuji') || 
       lowerName.contains('sony a') || 
-      lowerName.contains('canon') || 
+      lowerName.contains('canon') ||
       lowerName.contains('camera') ||
       lowerName.contains('nikon') ||
       lowerName.contains('leica')) {
     return Icons.photo_camera;
   }
-  
+
+  // Smart home
+  if (lowerName.contains('nest') ||
+      lowerName.contains('echo') ||
+      lowerName.contains('alexa') ||
+      lowerName.contains('homepod') ||
+      lowerName.contains('smart home') ||
+      lowerName.contains('smarthome') ||
+      lowerName.contains('thermostat') ||
+      lowerName.contains('philips hue')) {
+    return Icons.home;
+  }
+
+  // Drones
+  if (lowerName.contains('drone') ||
+      lowerName.contains('dji') ||
+      lowerName.contains('mavic') ||
+      lowerName.contains('phantom')) {
+    return Icons.flight_takeoff;
+  }
+
+  // e-Readers
+  if (lowerName.contains('kindle') ||
+      lowerName.contains('kobo') ||
+      lowerName.contains('ereader') ||
+      lowerName.contains('e-reader') ||
+      lowerName.contains('nook') ||
+      lowerName.contains('remarkable') ||
+      lowerName.contains('boox')) {
+    return Icons.menu_book;
+  }
+
   // Accessories (keyboards, mice, etc.)
   if (lowerName.contains('keyboard') || 
       lowerName.contains('mouse') || 
@@ -96,85 +138,176 @@ IconData getIconByDeviceName(String deviceName) {
       lowerName.contains('trackpad')) {
     return Icons.keyboard;
   }
-  
+
   // Fallback
   return Icons.devices;
 }
 
-/// Suggests a device type based on device name keywords.
-/// Returns one of the standard device type options for the dropdown.
+/// Suggests a device type (label) based on device name keywords.
+/// Returns one of the device category labels for the icon picker.
 String suggestDeviceTypeFromName(String deviceName) {
   final lowerName = deviceName.toLowerCase();
-  
-  // Mobile phones
-  if (lowerName.contains('iphone') || 
-      lowerName.contains('pixel') || 
-      lowerName.contains('galaxy') || 
+
+  // Mobile
+  if (lowerName.contains('iphone') ||
+      lowerName.contains('pixel') ||
+      lowerName.contains('galaxy') ||
       lowerName.contains('phone') ||
       lowerName.contains('android')) {
-    return 'iPhone';
+    return 'Mobile';
   }
-  
-  // Tablets
-  if (lowerName.contains('ipad') || 
-      lowerName.contains('tab') || 
+
+  // Tablet
+  if (lowerName.contains('ipad') ||
+      lowerName.contains('tab') ||
       lowerName.contains('surface pro') ||
       lowerName.contains('tablet')) {
-    return 'iPad';
+    return 'Tablet';
   }
-  
-  // Laptops/MacBooks
-  if (lowerName.contains('macbook') || 
-      lowerName.contains('laptop') || 
+
+  // Laptop
+  if (lowerName.contains('macbook') ||
+      lowerName.contains('laptop') ||
       lowerName.contains('thinkpad') ||
       lowerName.contains('xps') ||
       lowerName.contains('zenbook')) {
-    return 'Mac';
+    return 'Laptop';
   }
-  
-  // Desktops/Mac desktops
-  if (lowerName.contains('imac') || 
-      lowerName.contains('studio') || 
-      lowerName.contains('desktop') || 
+
+  // Desktop
+  if (lowerName.contains('imac') ||
+      lowerName.contains('studio') ||
+      lowerName.contains('desktop') ||
       lowerName.contains('pc') ||
       lowerName.contains('mac pro') ||
       lowerName.contains('mac mini')) {
-    return 'Mac';
+    return 'Desktop';
   }
-  
-  // Watches
-  if (lowerName.contains('watch') || 
+
+  // Watch
+  if (lowerName.contains('watch') ||
       lowerName.contains('garmin') ||
       lowerName.contains('fitbit')) {
-    return 'Apple Watch';
+    return 'Watch';
   }
-  
-  // Earbuds/iPods
-  if (lowerName.contains('airpods') || 
-      lowerName.contains('buds') || 
+
+  // Earbuds
+  if (lowerName.contains('airpods') ||
+      lowerName.contains('buds') ||
       lowerName.contains('ear') ||
       lowerName.contains('earbud')) {
-    return 'iPod';
+    return 'Earbuds';
   }
-  
-  // Vintage/other devices
+
+  // Smart Home
+  if (lowerName.contains('nest') ||
+      lowerName.contains('echo') ||
+      lowerName.contains('alexa') ||
+      lowerName.contains('homepod') ||
+      lowerName.contains('smart home') ||
+      lowerName.contains('smarthome') ||
+      lowerName.contains('hub') ||
+      lowerName.contains('thermostat') ||
+      lowerName.contains('ring ') ||
+      lowerName.contains('philips hue')) {
+    return 'Smart Home';
+  }
+
+  // VR/AR
+  if (lowerName.contains('quest') ||
+      lowerName.contains('vision pro') ||
+      lowerName.contains('vr ') ||
+      lowerName.contains(' vr') ||
+      lowerName.contains('metaverse') ||
+      lowerName.contains('pico') ||
+      lowerName.contains('valve index') ||
+      lowerName.contains('hololens')) {
+    return 'VR/AR';
+  }
+
+  // Gaming Peripherals
+  if (lowerName.contains('mouse') ||
+      lowerName.contains('keyboard') ||
+      lowerName.contains('hhkb') ||
+      lowerName.contains('mechanical') ||
+      lowerName.contains('gaming mouse') ||
+      lowerName.contains('gaming keyboard')) {
+    return 'Gaming Peripherals';
+  }
+
+  // Drone
+  if (lowerName.contains('drone') ||
+      lowerName.contains('dji') ||
+      lowerName.contains('mavic') ||
+      lowerName.contains('phantom') ||
+      lowerName.contains('mini 2') ||
+      lowerName.contains('mini 3')) {
+    return 'Drone';
+  }
+
+  // e-Reader
+  if (lowerName.contains('kindle') ||
+      lowerName.contains('kobo') ||
+      lowerName.contains('ereader') ||
+      lowerName.contains('e-reader') ||
+      lowerName.contains('nook') ||
+      lowerName.contains('remarkable') ||
+      lowerName.contains('boox')) {
+    return 'e-Reader';
+  }
+
+  // Vintage/old → Accessory
   if (lowerName.contains('vintage') ||
       lowerName.contains('old') ||
       lowerName.contains('retro')) {
-    return 'Vintage';
+    return 'Accessory';
   }
-  
-  // Default fallback
-  return 'Mac';
+
+  return 'Laptop';
 }
 
 /// Returns the appropriate device icon for the given [deviceType].
-/// Supports keyword matching for flexible device type detection.
-/// This function is kept for backward compatibility but prefers deviceName-based matching.
+/// [deviceType] matches category labels. Supports legacy types (Mac, iPhone, etc.) for old Firestore data.
 IconData deviceTypeToIcon(String deviceType) {
   final lowerType = deviceType.toLowerCase();
-  
-  // Exact matches first
+
+  // Label-based matches (deviceType == label)
+  switch (deviceType) {
+    case 'Mobile':
+      return Icons.smartphone;
+    case 'Tablet':
+      return Icons.tablet_mac;
+    case 'Laptop':
+      return Icons.laptop;
+    case 'Desktop':
+      return Icons.desktop_windows;
+    case 'Watch':
+      return Icons.watch;
+    case 'Earbuds':
+      return Icons.hearing;
+    case 'Headphones':
+      return Icons.headphones;
+    case 'Camera':
+      return Icons.photo_camera;
+    case 'Gaming':
+      return Icons.videogame_asset;
+    case 'Accessory':
+      return Icons.keyboard;
+    case 'Smart Home':
+      return Icons.home;
+    case 'VR/AR':
+      return Icons.view_in_ar;
+    case 'Gaming Peripherals':
+      return Icons.mouse;
+    case 'Drone':
+      return Icons.flight_takeoff;
+    case 'e-Reader':
+      return Icons.menu_book;
+    default:
+      break;
+  }
+
+  // Legacy types (old Firestore data)
   switch (deviceType) {
     case 'Mac':
       return Icons.laptop_mac;
@@ -186,11 +319,21 @@ IconData deviceTypeToIcon(String deviceType) {
       return Icons.watch;
     case 'Vintage':
       return Icons.devices_other;
+    case 'smart_home':
+      return Icons.home;
+    case 'vr':
+      return Icons.view_in_ar;
+    case 'gaming_peripheral':
+      return Icons.mouse;
+    case 'drone':
+      return Icons.flight_takeoff;
+    case 'ereader':
+      return Icons.menu_book;
     default:
       break;
   }
-  
-  // Keyword-based matching for expanded device categories
+
+  // Keyword fallback
   if (lowerType.contains('headphone') || lowerType.contains('audio')) {
     return Icons.headphones;
   }
@@ -209,8 +352,22 @@ IconData deviceTypeToIcon(String deviceType) {
   if (lowerType.contains('camera') || lowerType.contains('photo')) {
     return Icons.photo_camera;
   }
-  
-  // Fallback
+  if (lowerType.contains('smart') && lowerType.contains('home')) {
+    return Icons.home;
+  }
+  if (lowerType.contains('vr') || lowerType.contains('ar')) {
+    return Icons.view_in_ar;
+  }
+  if (lowerType.contains('peripheral') || lowerType.contains('mouse') || lowerType.contains('keyboard')) {
+    return Icons.mouse;
+  }
+  if (lowerType.contains('drone')) {
+    return Icons.flight_takeoff;
+  }
+  if (lowerType.contains('ereader') || lowerType.contains('e-reader')) {
+    return Icons.menu_book;
+  }
+
   return Icons.devices;
 }
 
