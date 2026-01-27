@@ -11,6 +11,43 @@ import '../pages/add_device_page.dart';
 import '../widgets/timeline_seki_item.dart';
 import '../widgets/seki_card.dart';
 
+/// Custom delegate for pinned TabBar in NestedScrollView
+class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
+  final TabBar tabBar;
+  final Color backgroundColor;
+  final int deviceCount;
+  final int wantCount;
+
+  _SliverAppBarDelegate(
+    this.tabBar, {
+    required this.backgroundColor,
+    required this.deviceCount,
+    required this.wantCount,
+  });
+
+  @override
+  double get minExtent => tabBar.preferredSize.height;
+
+  @override
+  double get maxExtent => tabBar.preferredSize.height;
+
+  @override
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return Container(
+      color: backgroundColor,
+      child: tabBar,
+    );
+  }
+
+  @override
+  bool shouldRebuild(_SliverAppBarDelegate oldDelegate) {
+    return backgroundColor != oldDelegate.backgroundColor ||
+        deviceCount != oldDelegate.deviceCount ||
+        wantCount != oldDelegate.wantCount;
+  }
+}
+
 class ProfilePage extends StatefulWidget {
   final User? user;
 
@@ -20,7 +57,20 @@ class ProfilePage extends StatefulWidget {
   State<ProfilePage> createState() => _ProfilePageState();
 }
 
-class _ProfilePageState extends State<ProfilePage> {
+class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
 
   /// Gets all active devices from a list of Sekis.
   /// An active device is one where endYear is null.
@@ -59,97 +109,89 @@ class _ProfilePageState extends State<ProfilePage> {
     return Scaffold(
       backgroundColor: scaffoldBg,
       body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Back button (only show if we can pop)
-                  if (Navigator.canPop(context))
-                    IconButton(
-                      icon: const Icon(Icons.arrow_back),
-                      color: theme.colorScheme.onSurface.withOpacity(0.7),
-                      tooltip: 'Back',
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                    )
-                  else
-                    const SizedBox(width: 48), // Spacer to maintain alignment
-                  // Settings button
-                  IconButton(
-                    icon: const Icon(Icons.settings),
-                    color: theme.colorScheme.onSurface.withOpacity(0.7),
-                    tooltip: 'Settings',
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => const SettingsPage(),
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-            // User Info Section
-            StreamBuilder<DocumentSnapshot>(
+        child: StreamBuilder<DocumentSnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('users')
+              .doc(FirebaseAuth.instance.currentUser?.uid ?? '')
+              .snapshots(),
+          builder: (context, userSnapshot) {
+            if (!userSnapshot.hasData || !userSnapshot.data!.exists) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            final userData = userSnapshot.data!.data() as Map<String, dynamic>;
+            final username = userData['username'] as String? ?? 'Unknown';
+            final email = userData['email'] as String? ?? widget.user?.email ?? 'Unknown';
+            final bio = userData['bio'] as String? ?? '';
+
+            return StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
-                  .collection('users')
-                  .doc(FirebaseAuth.instance.currentUser?.uid ?? '')
+                  .collection('seki')
+                  .where('uid', isEqualTo: FirebaseAuth.instance.currentUser?.uid ?? '')
                   .snapshots(),
-              builder: (context, userSnapshot) {
-                if (userSnapshot.hasData && userSnapshot.data!.exists) {
-                  final userData = userSnapshot.data!.data() as Map<String, dynamic>;
-                  final username = userData['username'] as String? ?? 'Unknown';
-                  final email = userData['email'] as String? ?? widget.user?.email ?? 'Unknown';
-                  final bio = userData['bio'] as String? ?? '';
+              builder: (context, sekiSnapshot) {
+                List<Seki> activeDevices = [];
+                if (sekiSnapshot.hasData && sekiSnapshot.data!.docs.isNotEmpty) {
+                  final sekis = sekiSnapshot.data!.docs
+                      .map((doc) => Seki.fromFirestore(doc))
+                      .toList();
+                  activeDevices = _getActiveDevices(sekis);
+                }
 
-                  return StreamBuilder<QuerySnapshot>(
-                    stream: FirebaseFirestore.instance
-                        .collection('seki')
-                        .where('uid', isEqualTo: FirebaseAuth.instance.currentUser?.uid ?? '')
-                        .snapshots(),
-                    builder: (context, sekiSnapshot) {
-                      List<Seki> activeDevices = [];
-                      if (sekiSnapshot.hasData && sekiSnapshot.data!.docs.isNotEmpty) {
-                        final sekis = sekiSnapshot.data!.docs
-                            .map((doc) => Seki.fromFirestore(doc))
-                            .toList();
-                        activeDevices = _getActiveDevices(sekis);
-                      }
+                final deviceCount = sekiSnapshot.hasData ? sekiSnapshot.data!.docs.length : 0;
 
-                      // Get device count
-                      final deviceCount = sekiSnapshot.hasData ? sekiSnapshot.data!.docs.length : 0;
-                      
-                      // Get want count
-                      return StreamBuilder<QuerySnapshot>(
-                        stream: FirebaseFirestore.instance
-                            .collection('wants')
-                            .where('uid', isEqualTo: FirebaseAuth.instance.currentUser?.uid ?? '')
-                            .snapshots(),
-                        builder: (context, wantSnapshot) {
-                          final wantCount = wantSnapshot.hasData 
-                              ? wantSnapshot.data!.docs.length 
-                              : 0;
-                          
-                          return Column(
-                            children: [
-                              // Modern header with user information
-                              Container(
-                                width: double.infinity,
+                return StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('wants')
+                      .where('uid', isEqualTo: FirebaseAuth.instance.currentUser?.uid ?? '')
+                      .snapshots(),
+                  builder: (context, wantSnapshot) {
+                    final wantCount = wantSnapshot.hasData 
+                        ? wantSnapshot.data!.docs.length 
+                        : 0;
+
+                    return NestedScrollView(
+                      headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
+                        return [
+                          SliverAppBar(
+                            backgroundColor: scaffoldBg,
+                            elevation: 0,
+                            pinned: false,
+                            floating: false,
+                            expandedHeight: 200.0,
+                            leading: Navigator.canPop(context)
+                                ? IconButton(
+                                    icon: const Icon(Icons.arrow_back),
+                                    color: theme.colorScheme.onSurface.withOpacity(0.7),
+                                    tooltip: 'Back',
+                                    onPressed: () {
+                                      Navigator.of(context).pop();
+                                    },
+                                  )
+                                : const SizedBox.shrink(),
+                            actions: [
+                              IconButton(
+                                icon: const Icon(Icons.settings),
+                                color: theme.colorScheme.onSurface.withOpacity(0.7),
+                                tooltip: 'Settings',
+                                onPressed: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (context) => const SettingsPage(),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
+                            flexibleSpace: FlexibleSpaceBar(
+                              background: Container(
                                 decoration: BoxDecoration(
                                   color: isDark
                                       ? theme.colorScheme.surfaceContainerHighest.withOpacity(0.3)
                                       : theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
-                                  borderRadius: const BorderRadius.vertical(
-                                    bottom: Radius.circular(24),
-                                  ),
                                 ),
                                 child: Padding(
-                                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+                                  padding: const EdgeInsets.fromLTRB(24, 60, 24, 24),
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
@@ -289,365 +331,299 @@ class _ProfilePageState extends State<ProfilePage> {
                                   ),
                                 ),
                               ),
-                              // Horizontal stats row
-                              Padding(
-                                padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                  children: [
-                                    // Devices stat
-                                    Expanded(
-                                      child: InkWell(
-                                        onTap: deviceCount > 0 ? () {
-                                          // Could navigate to devices list if needed
-                                        } : null,
-                                        borderRadius: BorderRadius.circular(16),
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(vertical: 16),
-                                          child: Column(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Text(
-                                                '$deviceCount',
-                                                style: theme.textTheme.displaySmall?.copyWith(
-                                                  fontWeight: FontWeight.bold,
-                                                  color: theme.colorScheme.onSurface,
-                                                ) ?? TextStyle(
-                                                  fontSize: 36,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: theme.colorScheme.onSurface,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 4),
-                                              Text(
-                                                'Devices',
-                                                style: theme.textTheme.labelLarge?.copyWith(
-                                                  color: theme.colorScheme.onSurfaceVariant,
-                                                ) ?? TextStyle(
-                                                  fontSize: 14,
-                                                  color: theme.colorScheme.onSurfaceVariant,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    // Divider
-                                    Container(
-                                      width: 1,
-                                      height: 48,
-                                      color: theme.colorScheme.outlineVariant.withOpacity(0.3),
-                                    ),
-                                    // Want stat
-                                    Expanded(
-                                      child: InkWell(
-                                        onTap: wantCount > 0 ? () => _showWantsBottomSheet(context, theme, isDark) : null,
-                                        borderRadius: BorderRadius.circular(16),
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(vertical: 16),
-                                          child: Column(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Text(
-                                                '$wantCount',
-                                                style: theme.textTheme.displaySmall?.copyWith(
-                                                  fontWeight: FontWeight.bold,
-                                                  color: theme.colorScheme.onSurface,
-                                                ) ?? TextStyle(
-                                                  fontSize: 36,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: theme.colorScheme.onSurface,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 4),
-                                              Text(
-                                                'Want',
-                                                style: theme.textTheme.labelLarge?.copyWith(
-                                                  color: theme.colorScheme.onSurfaceVariant,
-                                                ) ?? TextStyle(
-                                                  fontSize: 14,
-                                                  color: theme.colorScheme.onSurfaceVariant,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          );
-                        },
-                      );
-                    },
-                  );
-                }
-                return const SizedBox.shrink();
-              },
-            ),
-            const SizedBox(height: 8),
-            Expanded(
-              child: StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance
-                    .collection('seki')
-                    .where('uid', isEqualTo: FirebaseAuth.instance.currentUser?.uid ?? '')
-                    .snapshots(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return Center(
-                      child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
-                      ),
-                    );
-                  }
-
-                  if (snapshot.hasError) {
-                    return Center(
-                      child: Text(
-                        'Failed to load: ${snapshot.error}',
-                        style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.7)),
-                      ),
-                    );
-                  }
-
-                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                    return _buildEmptyState(context, theme);
-                  }
-
-                  // Sort by startYear in ascending order
-                  final docs = snapshot.data!.docs.toList();
-                  docs.sort((a, b) {
-                    final aData = a.data() as Map<String, dynamic>;
-                    final bData = b.data() as Map<String, dynamic>;
-                    final aStartYear = aData['startYear'] as int? ?? 0;
-                    final bStartYear = bData['startYear'] as int? ?? 0;
-                    return aStartYear.compareTo(bStartYear); // Ascending order
-                  });
-
-                  if (docs.isEmpty) {
-                    return _buildEmptyState(context, theme);
-                  }
-
-                  return ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                    itemCount: docs.length,
-                    itemBuilder: (context, index) {
-                      final doc = docs[index];
-                      final seki = Seki.fromFirestore(doc);
-                      final isLast = index == docs.length - 1;
-                      return TimelineSekiItem(
-                        seki: seki,
-                        isDark: isDark,
-                        isLast: isLast,
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => DeviceDetailPage(seki: seki),
                             ),
-                          );
-                        },
-                      );
-                    },
-                  );
-                },
-              ),
-            ),
-          ],
+                          ),
+                          SliverPersistentHeader(
+                            pinned: true,
+                            delegate: _SliverAppBarDelegate(
+                              TabBar(
+                                key: ValueKey('tabbar_${deviceCount}_${wantCount}'),
+                                controller: _tabController,
+                                tabs: [
+                                  Tab(
+                                    child: AnimatedBuilder(
+                                      animation: _tabController,
+                                      builder: (context, child) {
+                                        final isSelected = _tabController.index == 0;
+                                        final textColor = isSelected
+                                            ? theme.colorScheme.primary
+                                            : theme.colorScheme.onSurfaceVariant;
+                                        return Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Text(
+                                              'Owned',
+                                              style: TextStyle(color: textColor),
+                                            ),
+                                            const SizedBox(width: 6),
+                                            Text(
+                                              '$deviceCount',
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.w600,
+                                                fontSize: 13,
+                                                color: textColor,
+                                              ),
+                                            ),
+                                          ],
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                  Tab(
+                                    child: AnimatedBuilder(
+                                      animation: _tabController,
+                                      builder: (context, child) {
+                                        final isSelected = _tabController.index == 1;
+                                        final textColor = isSelected
+                                            ? theme.colorScheme.primary
+                                            : theme.colorScheme.onSurfaceVariant;
+                                        return Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Text(
+                                              'Wants',
+                                              style: TextStyle(color: textColor),
+                                            ),
+                                            const SizedBox(width: 6),
+                                            Text(
+                                              '$wantCount',
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.w600,
+                                                fontSize: 13,
+                                                color: textColor,
+                                              ),
+                                            ),
+                                          ],
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ],
+                                labelColor: theme.colorScheme.primary,
+                                unselectedLabelColor: theme.colorScheme.onSurfaceVariant,
+                                indicatorColor: theme.colorScheme.primary,
+                                indicatorWeight: 3,
+                              ),
+                              backgroundColor: scaffoldBg,
+                              deviceCount: deviceCount,
+                              wantCount: wantCount,
+                            ),
+                          ),
+                        ];
+                      },
+                      body: TabBarView(
+                        controller: _tabController,
+                        children: [
+                          // Owned tab
+                          _buildOwnedTab(context, theme, isDark),
+                          // Wants tab
+                          _buildWantsTab(context, theme, isDark),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
+            );
+          },
         ),
       ),
     );
   }
 
-  void _showWantsBottomSheet(BuildContext context, ThemeData theme, bool isDark) {
-    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
-    if (currentUserId == null) return;
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        final surfaceColor = isDark
-            ? theme.colorScheme.surface.withOpacity(0.95)
-            : Colors.white;
-
-        return Container(
-          decoration: BoxDecoration(
-            color: surfaceColor,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: SafeArea(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const SizedBox(height: 8),
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.onSurface.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.star,
-                        color: theme.colorScheme.primary,
-                        size: 24,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Want List',
-                        style: TextStyle(
-                          color: theme.colorScheme.onSurface,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Flexible(
-                  child: StreamBuilder<QuerySnapshot>(
-                    stream: FirebaseFirestore.instance
-                        .collection('wants')
-                        .where('uid', isEqualTo: currentUserId)
-                        .snapshots(),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(32.0),
-                            child: CircularProgressIndicator(),
-                          ),
-                        );
-                      }
-
-                      if (snapshot.hasError) {
-                        return Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(32.0),
-                            child: Text(
-                              'Failed to load wants: ${snapshot.error}',
-                              style: TextStyle(
-                                color: theme.colorScheme.onSurface.withOpacity(0.7),
-                              ),
-                            ),
-                          ),
-                        );
-                      }
-
-                      if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                        return Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(32.0),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.star_outline,
-                                  size: 48,
-                                  color: theme.colorScheme.onSurface.withOpacity(0.3),
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  'No wants yet',
-                                  style: TextStyle(
-                                    color: theme.colorScheme.onSurface.withOpacity(0.7),
-                                    fontSize: 16,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      }
-
-                      final wants = snapshot.data!.docs
-                          .map((doc) => Want.fromFirestore(doc))
-                          .toList();
-
-                      return ListView.builder(
-                        shrinkWrap: true,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        itemCount: wants.length,
-                        itemBuilder: (context, index) {
-                          final want = wants[index];
-                          return ListTile(
-                            leading: Container(
-                              width: 48,
-                              height: 48,
-                              decoration: BoxDecoration(
-                                color: isDark
-                                    ? Colors.white.withOpacity(0.08)
-                                    : Colors.grey.shade100,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Icon(
-                                getIconByDeviceName(want.deviceName),
-                                color: theme.colorScheme.onSurface.withOpacity(0.7),
-                                size: 24,
-                              ),
-                            ),
-                            title: Text(
-                              want.deviceName,
-                              style: TextStyle(
-                                color: theme.colorScheme.onSurface,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            subtitle: Text(
-                              want.deviceType,
-                              style: TextStyle(
-                                color: theme.colorScheme.onSurface.withOpacity(0.6),
-                                fontSize: 14,
-                              ),
-                            ),
-                            onTap: () {
-                              // Navigate to device detail page if we can find the seki
-                              Navigator.pop(context);
-                              // Try to find the seki by device name
-                              FirebaseFirestore.instance
-                                  .collection('seki')
-                                  .where('deviceName', isEqualTo: want.deviceName)
-                                  .limit(1)
-                                  .get()
-                                  .then((querySnapshot) {
-                                if (querySnapshot.docs.isNotEmpty) {
-                                  final seki = Seki.fromFirestore(querySnapshot.docs.first);
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (context) => DeviceDetailPage(seki: seki),
-                                    ),
-                                  );
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text('Device "${want.deviceName}" not found'),
-                                    ),
-                                  );
-                                }
-                              });
-                            },
-                          );
-                        },
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(height: 8),
-              ],
+  Widget _buildOwnedTab(BuildContext context, ThemeData theme, bool isDark) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('seki')
+          .where('uid', isEqualTo: FirebaseAuth.instance.currentUser?.uid ?? '')
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
             ),
-          ),
+          );
+        }
+
+        if (snapshot.hasError) {
+          return Center(
+            child: Text(
+              'Failed to load: ${snapshot.error}',
+              style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.7)),
+            ),
+          );
+        }
+
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return _buildEmptyState(context, theme);
+        }
+
+        // Sort by startYear in ascending order
+        final docs = snapshot.data!.docs.toList();
+        docs.sort((a, b) {
+          final aData = a.data() as Map<String, dynamic>;
+          final bData = b.data() as Map<String, dynamic>;
+          final aStartYear = aData['startYear'] as int? ?? 0;
+          final bStartYear = bData['startYear'] as int? ?? 0;
+          return aStartYear.compareTo(bStartYear); // Ascending order
+        });
+
+        if (docs.isEmpty) {
+          return _buildEmptyState(context, theme);
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          itemCount: docs.length,
+          itemBuilder: (context, index) {
+            final doc = docs[index];
+            final seki = Seki.fromFirestore(doc);
+            final isLast = index == docs.length - 1;
+            return TimelineSekiItem(
+              seki: seki,
+              isDark: isDark,
+              isLast: isLast,
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => DeviceDetailPage(seki: seki),
+                  ),
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildWantsTab(BuildContext context, ThemeData theme, bool isDark) {
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+    if (currentUserId == null) {
+      return const Center(child: Text('Please sign in'));
+    }
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('wants')
+          .where('uid', isEqualTo: currentUserId)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
+            ),
+          );
+        }
+
+        if (snapshot.hasError) {
+          return Center(
+            child: Text(
+              'Failed to load wants: ${snapshot.error}',
+              style: TextStyle(
+                color: theme.colorScheme.onSurface.withOpacity(0.7),
+              ),
+            ),
+          );
+        }
+
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.star_outline,
+                    size: 72,
+                    color: theme.colorScheme.onSurface.withOpacity(0.3),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No wants yet',
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurface.withOpacity(0.7),
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        final wants = snapshot.data!.docs
+            .map((doc) => Want.fromFirestore(doc))
+            .toList();
+
+        return ListView.builder(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          itemCount: wants.length,
+          itemBuilder: (context, index) {
+            final want = wants[index];
+            return ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              leading: Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? Colors.white.withOpacity(0.08)
+                      : Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  getIconByDeviceName(want.deviceName),
+                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                  size: 24,
+                ),
+              ),
+              title: Text(
+                want.deviceName,
+                style: TextStyle(
+                  color: theme.colorScheme.onSurface,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              subtitle: Text(
+                want.deviceType,
+                style: TextStyle(
+                  color: theme.colorScheme.onSurface.withOpacity(0.6),
+                  fontSize: 14,
+                ),
+              ),
+              onTap: () {
+                // Try to find the seki by device name
+                FirebaseFirestore.instance
+                    .collection('seki')
+                    .where('deviceName', isEqualTo: want.deviceName)
+                    .limit(1)
+                    .get()
+                    .then((querySnapshot) {
+                  if (querySnapshot.docs.isNotEmpty) {
+                    final seki = Seki.fromFirestore(querySnapshot.docs.first);
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => DeviceDetailPage(seki: seki),
+                      ),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Device "${want.deviceName}" not found'),
+                      ),
+                    );
+                  }
+                });
+              },
+            );
+          },
         );
       },
     );
