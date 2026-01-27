@@ -41,6 +41,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
   late IconData _selectedIcon;
   final FocusNode _deviceNameFocusNode = FocusNode();
   final FocusNode _noteFocusNode = FocusNode();
+  final GlobalKey _noteFieldKey = GlobalKey();
 
   bool get isEditMode => widget.seki != null;
 
@@ -254,7 +255,20 @@ class _AddDevicePageState extends State<AddDevicePage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please add a short note')),
       );
+      // Focus and scroll to note field
       _noteFocusNode.requestFocus();
+      // Use a post-frame callback to ensure the widget is built before scrolling
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final context = _noteFieldKey.currentContext;
+        if (context != null) {
+          Scrollable.ensureVisible(
+            context,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            alignment: 0.1, // Position near top of visible area
+          );
+        }
+      });
       return;
     }
     
@@ -535,7 +549,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
                         ),
                         // Submit button
                         TextButton(
-                          onPressed: isButtonEnabled && !_isLoading ? _handleSubmit : null,
+                          onPressed: !_isLoading ? _handleSubmit : null,
                           child: _isLoading
                               ? SizedBox(
                                   width: 20,
@@ -881,6 +895,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
                         const SizedBox(height: 20),
                         // Note
                         TextField(
+                          key: _noteFieldKey,
                           controller: _noteController,
                           focusNode: _noteFocusNode,
                           textInputAction: TextInputAction.done,
