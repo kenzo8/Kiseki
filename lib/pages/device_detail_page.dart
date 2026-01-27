@@ -390,17 +390,6 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
 
         return Scaffold(
           backgroundColor: scaffoldBg,
-          appBar: AppBar(
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            leading: IconButton(
-              icon: Icon(
-                Icons.arrow_back,
-                color: theme.colorScheme.onSurface,
-              ),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-          ),
           body: Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -415,12 +404,14 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
               ),
             ),
             child: SafeArea(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    const SizedBox(height: 32),
+              child: Stack(
+                children: [
+                  SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        const SizedBox(height: 32),
                     // Hero Icon Section with white container, shadow, and glow
                     Hero(
                       tag: 'device_icon_${seki.id}',
@@ -527,8 +518,44 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
                       _buildActionButtons(seki, theme),
                     ],
                     const SizedBox(height: 40),
-                  ],
-                ),
+                      ],
+                    ),
+                  ),
+                  // 返回按钮 - 浮动在左上角
+                  Positioned(
+                    top: 8,
+                    left: 8,
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () => Navigator.of(context).pop(),
+                        borderRadius: BorderRadius.circular(24),
+                        child: Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? theme.colorScheme.surface.withOpacity(0.7)
+                                : Colors.white.withOpacity(0.9),
+                            borderRadius: BorderRadius.circular(24),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            Icons.arrow_back,
+                            color: theme.colorScheme.onSurface,
+                            size: 24,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
