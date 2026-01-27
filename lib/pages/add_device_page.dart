@@ -201,6 +201,44 @@ class _AddDevicePageState extends State<AddDevicePage> {
     return 'Laptop'; // Default fallback
   }
 
+  String _getHintForDeviceType(String deviceType) {
+    // Map device type to appropriate hint text
+    switch (deviceType) {
+      case 'Mobile':
+        return 'e.g., iPhone 15 Pro';
+      case 'Tablet':
+        return 'e.g., iPad Pro 12.9"';
+      case 'Laptop':
+        return 'e.g., MacBook Pro M1';
+      case 'Desktop':
+        return 'e.g., iMac 24"';
+      case 'Watch':
+        return 'e.g., Apple Watch Series 9';
+      case 'Earbuds':
+        return 'e.g., AirPods Pro 2';
+      case 'Headphones':
+        return 'e.g., Sony WH-1000XM5';
+      case 'Camera':
+        return 'e.g., Canon EOS R5';
+      case 'Gaming':
+        return 'e.g., PlayStation 5';
+      case 'Accessory':
+        return 'e.g., Magic Keyboard';
+      case 'Smart Home':
+        return 'e.g., HomePod mini';
+      case 'VR/AR':
+        return 'e.g., Apple Vision Pro';
+      case 'Gaming Peripherals':
+        return 'e.g., Logitech MX Master 3';
+      case 'Drone':
+        return 'e.g., DJI Mavic 3';
+      case 'e-Reader':
+        return 'e.g., Kindle Paperwhite';
+      default:
+        return 'e.g., MacBook Pro M1';
+    }
+  }
+
   void _handleSubmit() {
     // Smart validation with focus management
     if (_nameController.text.trim().isEmpty) {
@@ -543,7 +581,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
                                 labelStyle: TextStyle(
                                   color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.7),
                                 ),
-                                hintText: 'e.g., MacBook Pro M1',
+                                hintText: _getHintForDeviceType(_deviceType),
                                 hintStyle: TextStyle(
                                   color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.5),
                                 ),
