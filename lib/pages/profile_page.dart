@@ -3,8 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../models/seki_model.dart';
-import '../models/want_model.dart';
 import '../services/system_ui_service.dart';
+import '../services/profile_data_service.dart';
 import '../pages/settings_page.dart';
 import '../pages/device_detail_page.dart';
 import '../pages/add_device_page.dart';
@@ -57,13 +57,23 @@ class ProfilePage extends StatefulWidget {
   State<ProfilePage> createState() => _ProfilePageState();
 }
 
-class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStateMixin {
+class _ProfilePageState extends State<ProfilePage> 
+    with SingleTickerProviderStateMixin, AutomaticKeepAliveClientMixin {
   late TabController _tabController;
+  final ProfileDataService _dataService = ProfileDataService.instance;
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    
+    // Initialize data service if user is available
+    if (widget.user?.uid != null) {
+      _dataService.initialize(widget.user!.uid);
+    }
   }
 
   /// Calculate adaptive height based on content
@@ -114,6 +124,8 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // Required for AutomaticKeepAliveClientMixin
+    
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final scaffoldBg = isDark ? const Color(0xFF02081A) : const Color(0xFFF5F5F5);
@@ -139,494 +151,638 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
     return Scaffold(
       backgroundColor: scaffoldBg,
       body: SafeArea(
-        child: StreamBuilder<DocumentSnapshot>(
-          stream: FirebaseFirestore.instance
-              .collection('users')
-              .doc(FirebaseAuth.instance.currentUser?.uid ?? '')
-              .snapshots(),
-          builder: (context, userSnapshot) {
-            if (!userSnapshot.hasData || !userSnapshot.data!.exists) {
-              return const Center(child: CircularProgressIndicator());
+        child: ListenableBuilder(
+          listenable: _dataService,
+          builder: (context, _) {
+            // Get cached user data
+            final userSnapshot = _dataService.cachedUserData;
+            if (userSnapshot == null || !userSnapshot.exists) {
+              if (_dataService.isLoadingUserData) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              return const Center(child: Text('User data not found'));
             }
 
-            final userData = userSnapshot.data!.data() as Map<String, dynamic>;
+            final userData = userSnapshot.data() as Map<String, dynamic>;
             final username = userData['username'] as String? ?? 'Unknown';
             final email = userData['email'] as String? ?? widget.user?.email ?? 'Unknown';
             final bio = userData['bio'] as String? ?? '';
 
-            return StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('seki')
-                  .where('uid', isEqualTo: FirebaseAuth.instance.currentUser?.uid ?? '')
-                  .snapshots(),
-              builder: (context, sekiSnapshot) {
-                List<Seki> activeDevices = [];
-                if (sekiSnapshot.hasData && sekiSnapshot.data!.docs.isNotEmpty) {
-                  final sekis = sekiSnapshot.data!.docs
-                      .map((doc) => Seki.fromFirestore(doc))
-                      .toList();
-                  activeDevices = _getActiveDevices(sekis);
-                }
+            // Get cached seki data
+            final sekis = _dataService.cachedSekis ?? [];
+            final activeDevices = _getActiveDevices(sekis);
+            final deviceCount = sekis.length;
 
-                final deviceCount = sekiSnapshot.hasData ? sekiSnapshot.data!.docs.length : 0;
+            // Get cached wants data
+            final wants = _dataService.cachedWants ?? [];
+            final wantCount = wants.length;
 
-                return StreamBuilder<QuerySnapshot>(
-                  stream: FirebaseFirestore.instance
-                      .collection('wants')
-                      .where('uid', isEqualTo: FirebaseAuth.instance.currentUser?.uid ?? '')
-                      .snapshots(),
-                  builder: (context, wantSnapshot) {
-                    final wantCount = wantSnapshot.hasData 
-                        ? wantSnapshot.data!.docs.length 
-                        : 0;
-
-                    final headerHeight = _calculateHeaderHeight(bio, activeDevices);
-                    
-                    return NestedScrollView(
-                      headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
-                        return [
-                          SliverAppBar(
-                            backgroundColor: scaffoldBg,
-                            elevation: 0,
-                            pinned: false,
-                            floating: false,
-                            expandedHeight: headerHeight,
-                            // Only show back button if NOT a main page AND can pop
-                            leading: (!isMainPage && Navigator.canPop(context))
-                                ? IconButton(
-                                    icon: const Icon(Icons.arrow_back),
-                                    color: theme.colorScheme.onSurface.withOpacity(0.7),
-                                    tooltip: 'Back',
-                                    onPressed: () {
-                                      Navigator.of(context).pop();
-                                    },
-                                  )
-                                : const SizedBox.shrink(),
-                            actions: [
-                              IconButton(
-                                icon: const Icon(Icons.settings),
-                                color: theme.colorScheme.onSurface.withOpacity(0.7),
-                                tooltip: 'Settings',
-                                onPressed: () {
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (context) => const SettingsPage(),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ],
-                            flexibleSpace: FlexibleSpaceBar(
-                              background: Container(
-                                decoration: BoxDecoration(
-                                  color: isDark
-                                      ? theme.colorScheme.surfaceContainerHighest.withOpacity(0.3)
-                                      : theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
+            final headerHeight = _calculateHeaderHeight(bio, activeDevices);
+            
+            return NestedScrollView(
+              headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
+                return [
+                  SliverAppBar(
+                    backgroundColor: scaffoldBg,
+                    elevation: 0,
+                    pinned: false,
+                    floating: false,
+                    expandedHeight: headerHeight,
+                    // Only show back button if NOT a main page AND can pop
+                    leading: (!isMainPage && Navigator.canPop(context))
+                        ? IconButton(
+                            icon: const Icon(Icons.arrow_back),
+                            color: theme.colorScheme.onSurface.withOpacity(0.7),
+                            tooltip: 'Back',
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                          )
+                        : const SizedBox.shrink(),
+                    actions: [
+                      IconButton(
+                        icon: const Icon(Icons.settings),
+                        color: theme.colorScheme.onSurface.withOpacity(0.7),
+                        tooltip: 'Settings',
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const SettingsPage(),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                    flexibleSpace: FlexibleSpaceBar(
+                      background: Container(
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? theme.colorScheme.surfaceContainerHighest.withOpacity(0.3)
+                              : theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                        ),
+                        child: LayoutBuilder(
+                          builder: (context, constraints) {
+                            return SingleChildScrollView(
+                              padding: const EdgeInsets.fromLTRB(24, 60, 24, 24),
+                              child: ConstrainedBox(
+                                constraints: BoxConstraints(
+                                  minHeight: constraints.maxHeight - 84,
                                 ),
-                                child: LayoutBuilder(
-                                  builder: (context, constraints) {
-                                    return SingleChildScrollView(
-                                      padding: const EdgeInsets.fromLTRB(24, 60, 24, 24),
-                                      child: ConstrainedBox(
-                                        constraints: BoxConstraints(
-                                          minHeight: constraints.maxHeight - 84,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.person,
+                                          size: 24,
+                                          color: theme.colorScheme.primary,
                                         ),
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                      Row(
-                                        children: [
-                                          Icon(
-                                            Icons.person,
-                                            size: 24,
-                                            color: theme.colorScheme.primary,
-                                          ),
-                                          const SizedBox(width: 12),
-                                          Expanded(
-                                            child: Text(
-                                              username,
-                                              style: theme.textTheme.headlineSmall?.copyWith(
-                                                fontWeight: FontWeight.w600,
-                                                color: theme.colorScheme.onSurface,
-                                              ) ?? TextStyle(
-                                                color: theme.colorScheme.onSurface,
-                                                fontSize: 24,
-                                                fontWeight: FontWeight.w600,
-                                              ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Text(
+                                            username,
+                                            style: theme.textTheme.headlineSmall?.copyWith(
+                                              fontWeight: FontWeight.w600,
+                                              color: theme.colorScheme.onSurface,
+                                            ) ?? TextStyle(
+                                              color: theme.colorScheme.onSurface,
+                                              fontSize: 24,
+                                              fontWeight: FontWeight.w600,
                                             ),
                                           ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 16),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.email,
+                                          size: 18,
+                                          color: theme.colorScheme.onSurfaceVariant,
+                                        ),
+                                        const SizedBox(width: 10),
+                                        Expanded(
+                                          child: Text(
+                                            email,
+                                            style: theme.textTheme.bodyMedium?.copyWith(
+                                              color: theme.colorScheme.onSurfaceVariant,
+                                            ) ?? TextStyle(
+                                              color: theme.colorScheme.onSurfaceVariant,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    if (bio.isNotEmpty) ...[
+                                      const SizedBox(height: 12),
                                       Row(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           Icon(
-                                            Icons.email,
+                                            Icons.info_outline,
                                             size: 18,
                                             color: theme.colorScheme.onSurfaceVariant,
                                           ),
                                           const SizedBox(width: 10),
                                           Expanded(
                                             child: Text(
-                                              email,
+                                              bio,
                                               style: theme.textTheme.bodyMedium?.copyWith(
                                                 color: theme.colorScheme.onSurfaceVariant,
+                                                height: 1.5,
                                               ) ?? TextStyle(
                                                 color: theme.colorScheme.onSurfaceVariant,
                                                 fontSize: 14,
+                                                height: 1.5,
                                               ),
                                             ),
                                           ),
                                         ],
                                       ),
-                                      if (bio.isNotEmpty) ...[
-                                        const SizedBox(height: 12),
-                                        Row(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Icon(
-                                              Icons.info_outline,
-                                              size: 18,
-                                              color: theme.colorScheme.onSurfaceVariant,
-                                            ),
-                                            const SizedBox(width: 10),
-                                            Expanded(
-                                              child: Text(
-                                                bio,
-                                                style: theme.textTheme.bodyMedium?.copyWith(
-                                                  color: theme.colorScheme.onSurfaceVariant,
-                                                  height: 1.5,
-                                                ) ?? TextStyle(
-                                                  color: theme.colorScheme.onSurfaceVariant,
-                                                  fontSize: 14,
-                                                  height: 1.5,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                      if (activeDevices.isNotEmpty) ...[
-                                        const SizedBox(height: 16),
-                                        Row(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              'In Use:',
-                                              style: theme.textTheme.bodyMedium?.copyWith(
-                                                color: theme.colorScheme.primary,
-                                                fontWeight: FontWeight.w500,
-                                              ) ?? TextStyle(
-                                                color: theme.colorScheme.primary,
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.w500,
-                                              ),
-                                            ),
-                                            const SizedBox(width: 10),
-                                            Expanded(
-                                              child: ConstrainedBox(
-                                                constraints: const BoxConstraints(maxHeight: 60),
-                                                child: SingleChildScrollView(
-                                                  scrollDirection: Axis.vertical,
-                                                  child: Wrap(
-                                                    spacing: 8,
-                                                    runSpacing: 6,
-                                    children: activeDevices.map((seki) {
-                                      return InkWell(
-                                        onTap: () {
-                                          Navigator.of(context).push(
-                                            MaterialPageRoute(
-                                              builder: (context) => DeviceDetailPage(seki: seki),
-                                            ),
-                                          );
-                                        },
-                                        borderRadius: BorderRadius.circular(12),
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 10,
-                                            vertical: 4,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: theme.colorScheme.primaryContainer,
-                                            borderRadius: BorderRadius.circular(12),
-                                          ),
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Icon(
-                                                getIconByDeviceName(seki.deviceName),
-                                                size: 16,
-                                                color: theme.colorScheme.onPrimaryContainer,
-                                              ),
-                                              const SizedBox(width: 6),
-                                              Text(
-                                                seki.deviceName,
-                                                style: theme.textTheme.labelMedium?.copyWith(
-                                                  color: theme.colorScheme.onPrimaryContainer,
-                                                  fontWeight: FontWeight.w500,
-                                                ) ?? TextStyle(
-                                                  color: theme.colorScheme.onPrimaryContainer,
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.w500,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      );
-                                    }).toList(),
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
                                     ],
-                                  ),
+                                    if (activeDevices.isNotEmpty) ...[
+                                      const SizedBox(height: 16),
+                                      Row(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'In Use:',
+                                            style: theme.textTheme.bodyMedium?.copyWith(
+                                              color: theme.colorScheme.primary,
+                                              fontWeight: FontWeight.w500,
+                                            ) ?? TextStyle(
+                                              color: theme.colorScheme.primary,
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 10),
+                                          Expanded(
+                                            child: ConstrainedBox(
+                                              constraints: const BoxConstraints(maxHeight: 60),
+                                              child: SingleChildScrollView(
+                                                scrollDirection: Axis.vertical,
+                                                child: Wrap(
+                                                  spacing: 8,
+                                                  runSpacing: 6,
+                                                  children: activeDevices.map((seki) {
+                                                    return InkWell(
+                                                      onTap: () {
+                                                        Navigator.of(context).push(
+                                                          MaterialPageRoute(
+                                                            builder: (context) => DeviceDetailPage(seki: seki),
+                                                          ),
+                                                        );
+                                                      },
+                                                      borderRadius: BorderRadius.circular(12),
+                                                      child: Container(
+                                                        padding: const EdgeInsets.symmetric(
+                                                          horizontal: 10,
+                                                          vertical: 4,
+                                                        ),
+                                                        decoration: BoxDecoration(
+                                                          color: theme.colorScheme.primaryContainer,
+                                                          borderRadius: BorderRadius.circular(12),
+                                                        ),
+                                                        child: Row(
+                                                          mainAxisSize: MainAxisSize.min,
+                                                          children: [
+                                                            Icon(
+                                                              getIconByDeviceName(seki.deviceName),
+                                                              size: 16,
+                                                              color: theme.colorScheme.onPrimaryContainer,
+                                                            ),
+                                                            const SizedBox(width: 6),
+                                                            Text(
+                                                              seki.deviceName,
+                                                              style: theme.textTheme.labelMedium?.copyWith(
+                                                                color: theme.colorScheme.onPrimaryContainer,
+                                                                fontWeight: FontWeight.w500,
+                                                              ) ?? TextStyle(
+                                                                color: theme.colorScheme.onPrimaryContainer,
+                                                                fontSize: 12,
+                                                                fontWeight: FontWeight.w500,
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    );
+                                                  }).toList(),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ],
                                 ),
-                              );
-                            },
-                          ),
+                              ),
+                            );
+                          },
                         ),
                       ),
                     ),
+                  ),
                   SliverPersistentHeader(
-                            pinned: true,
-                            delegate: _SliverAppBarDelegate(
-                              TabBar(
-                                key: ValueKey('tabbar_${deviceCount}_${wantCount}'),
-                                controller: _tabController,
-                                tabs: [
-                                  Tab(
-                                    child: AnimatedBuilder(
-                                      animation: _tabController,
-                                      builder: (context, child) {
-                                        final isSelected = _tabController.index == 0;
-                                        final textColor = isSelected
-                                            ? theme.colorScheme.primary
-                                            : theme.colorScheme.onSurfaceVariant;
-                                        return Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            Text(
-                                              'Owned',
-                                              style: TextStyle(color: textColor),
-                                            ),
-                                            const SizedBox(width: 6),
-                                            Text(
-                                              '$deviceCount',
-                                              style: TextStyle(
-                                                fontWeight: FontWeight.w600,
-                                                fontSize: 13,
-                                                color: textColor,
-                                              ),
-                                            ),
-                                          ],
-                                        );
-                                      },
+                    pinned: true,
+                    delegate: _SliverAppBarDelegate(
+                      TabBar(
+                        key: ValueKey('tabbar_${deviceCount}_${wantCount}'),
+                        controller: _tabController,
+                        tabs: [
+                          Tab(
+                            child: AnimatedBuilder(
+                              animation: _tabController,
+                              builder: (context, child) {
+                                final isSelected = _tabController.index == 0;
+                                final textColor = isSelected
+                                    ? theme.colorScheme.primary
+                                    : theme.colorScheme.onSurfaceVariant;
+                                return Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      'Owned',
+                                      style: TextStyle(color: textColor),
                                     ),
-                                  ),
-                                  Tab(
-                                    child: AnimatedBuilder(
-                                      animation: _tabController,
-                                      builder: (context, child) {
-                                        final isSelected = _tabController.index == 1;
-                                        final textColor = isSelected
-                                            ? theme.colorScheme.primary
-                                            : theme.colorScheme.onSurfaceVariant;
-                                        return Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            Text(
-                                              'Wants',
-                                              style: TextStyle(color: textColor),
-                                            ),
-                                            const SizedBox(width: 6),
-                                            Text(
-                                              '$wantCount',
-                                              style: TextStyle(
-                                                fontWeight: FontWeight.w600,
-                                                fontSize: 13,
-                                                color: textColor,
-                                              ),
-                                            ),
-                                          ],
-                                        );
-                                      },
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      '$deviceCount',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 13,
+                                        color: textColor,
+                                      ),
                                     ),
-                                  ),
-                                ],
-                                labelColor: theme.colorScheme.primary,
-                                unselectedLabelColor: theme.colorScheme.onSurfaceVariant,
-                                indicatorColor: theme.colorScheme.primary,
-                                indicatorWeight: 3,
-                              ),
-                              backgroundColor: scaffoldBg,
-                              deviceCount: deviceCount,
-                              wantCount: wantCount,
+                                  ],
+                                );
+                              },
                             ),
                           ),
-                        ];
-                      },
-                      body: TabBarView(
-                        controller: _tabController,
-                        children: [
-                          // Owned tab
-                          _buildOwnedTab(context, theme, isDark),
-                          // Wants tab
-                          _buildWantsTab(context, theme, isDark),
+                          Tab(
+                            child: AnimatedBuilder(
+                              animation: _tabController,
+                              builder: (context, child) {
+                                final isSelected = _tabController.index == 1;
+                                final textColor = isSelected
+                                    ? theme.colorScheme.primary
+                                    : theme.colorScheme.onSurfaceVariant;
+                                return Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      'Wants',
+                                      style: TextStyle(color: textColor),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      '$wantCount',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 13,
+                                        color: textColor,
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              },
+                            ),
+                          ),
                         ],
+                        labelColor: theme.colorScheme.primary,
+                        unselectedLabelColor: theme.colorScheme.onSurfaceVariant,
+                        indicatorColor: theme.colorScheme.primary,
+                        indicatorWeight: 3,
                       ),
-                    );
-                  },
-                );
+                      backgroundColor: scaffoldBg,
+                      deviceCount: deviceCount,
+                      wantCount: wantCount,
+                    ),
+                  ),
+                ];
               },
+              body: TabBarView(
+                controller: _tabController,
+                children: [
+                  // Owned tab
+                  _OwnedTab(theme: theme, isDark: isDark),
+                  // Wants tab
+                  _WantsTab(theme: theme, isDark: isDark),
+                ],
+              ),
             );
           },
         ),
       ),
     );
   }
+}
 
-  Widget _buildOwnedTab(BuildContext context, ThemeData theme, bool isDark) {
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('seki')
-          .where('uid', isEqualTo: FirebaseAuth.instance.currentUser?.uid ?? '')
-          .snapshots(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
+/// Owned tab widget with AutomaticKeepAliveClientMixin and pull-to-refresh
+class _OwnedTab extends StatefulWidget {
+  final ThemeData theme;
+  final bool isDark;
+
+  const _OwnedTab({required this.theme, required this.isDark});
+
+  @override
+  State<_OwnedTab> createState() => _OwnedTabState();
+}
+
+class _OwnedTabState extends State<_OwnedTab> with AutomaticKeepAliveClientMixin {
+  final ProfileDataService _dataService = ProfileDataService.instance;
+
+  @override
+  bool get wantKeepAlive => true;
+
+  List<Seki> _sortSekis(List<Seki> sekis) {
+    final sorted = List<Seki>.from(sekis);
+    sorted.sort((a, b) {
+      final aYear = a.isPreciseMode && a.startTime != null
+          ? a.startTime!.toDate().year
+          : a.startYear;
+      final bYear = b.isPreciseMode && b.startTime != null
+          ? b.startTime!.toDate().year
+          : b.startYear;
+      return aYear.compareTo(bYear); // Ascending order
+    });
+    return sorted;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context); // Required for AutomaticKeepAliveClientMixin
+
+    return ListenableBuilder(
+      listenable: _dataService,
+      builder: (context, _) {
+        if (_dataService.isLoadingSekis && _dataService.cachedSekis == null) {
           return Center(
             child: CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
+              valueColor: AlwaysStoppedAnimation<Color>(widget.theme.colorScheme.primary),
             ),
           );
         }
 
-        if (snapshot.hasError) {
-          return Center(
-            child: Text(
-              'Failed to load: ${snapshot.error}',
-              style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.7)),
-            ),
-          );
+        final sekis = _dataService.cachedSekis ?? [];
+        if (sekis.isEmpty) {
+          return _buildEmptyState(context, widget.theme);
         }
 
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return _buildEmptyState(context, theme);
-        }
-
-        // Sort by startYear/startTime in ascending order
-        final docs = snapshot.data!.docs.toList();
-        docs.sort((a, b) {
-          final aData = a.data() as Map<String, dynamic>;
-          final bData = b.data() as Map<String, dynamic>;
-          
-          // Handle both old (startYear) and new (startTime) formats
-          int aStartYear;
-          int bStartYear;
-          
-          if (aData['isPreciseMode'] == true && aData['startTime'] != null) {
-            final aStartTime = aData['startTime'] as Timestamp;
-            aStartYear = aStartTime.toDate().year;
-          } else {
-            aStartYear = aData['startYear'] as int? ?? 0;
-          }
-          
-          if (bData['isPreciseMode'] == true && bData['startTime'] != null) {
-            final bStartTime = bData['startTime'] as Timestamp;
-            bStartYear = bStartTime.toDate().year;
-          } else {
-            bStartYear = bData['startYear'] as int? ?? 0;
-          }
-          
-          return aStartYear.compareTo(bStartYear); // Ascending order
-        });
-
-        if (docs.isEmpty) {
-          return _buildEmptyState(context, theme);
-        }
-
-        // Convert docs to Seki objects and determine which ones should show year
-        final sekis = docs.map((doc) => Seki.fromFirestore(doc)).toList();
+        final sortedSekis = _sortSekis(sekis);
         
-        // Determine which items should show the year (first item of each year group)
+        // Determine which items should show the year
         final shouldShowYear = <bool>[];
         int? previousYear;
         
-        for (final seki in sekis) {
+        for (final seki in sortedSekis) {
           final currentYear = seki.isPreciseMode && seki.startTime != null
               ? seki.startTime!.toDate().year
               : seki.startYear;
           
-          // Show year if this is the first item or if the year changed
           final showYear = previousYear == null || previousYear != currentYear;
           shouldShowYear.add(showYear);
           previousYear = currentYear;
         }
 
-        return ListView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          itemCount: sekis.length,
-          itemBuilder: (context, index) {
-            final seki = sekis[index];
-            final isLast = index == sekis.length - 1;
-            return TimelineSekiItem(
-              seki: seki,
-              isDark: isDark,
-              isLast: isLast,
-              showYear: shouldShowYear[index],
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => DeviceDetailPage(seki: seki),
-                  ),
-                );
-              },
-            );
-          },
+        return RefreshIndicator(
+          onRefresh: () => _dataService.refresh(),
+          color: widget.theme.colorScheme.primary,
+          child: ListView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            itemCount: sortedSekis.length,
+            itemBuilder: (context, index) {
+              final seki = sortedSekis[index];
+              final isLast = index == sortedSekis.length - 1;
+              return TimelineSekiItem(
+                seki: seki,
+                isDark: widget.isDark,
+                isLast: isLast,
+                showYear: shouldShowYear[index],
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => DeviceDetailPage(seki: seki),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
         );
       },
     );
   }
 
-  Widget _buildWantsTab(BuildContext context, ThemeData theme, bool isDark) {
+  Widget _buildEmptyState(BuildContext context, ThemeData theme) {
+    return RefreshIndicator(
+      onRefresh: () => _dataService.refresh(),
+      color: theme.colorScheme.primary,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Container(
+          width: double.infinity,
+          height: MediaQuery.of(context).size.height * 0.6,
+          color: Colors.white,
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Opacity(
+                    opacity: 0.4,
+                    child: Icon(
+                      Icons.devices_outlined,
+                      size: 72,
+                      color: theme.colorScheme.onSurface.withOpacity(0.3),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    "Add a device you've used",
+                    style: TextStyle(
+                      fontSize: 19,
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 20),
+                  OutlinedButton(
+                    onPressed: () {
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (context) => const AddDevicePage(),
+                      );
+                    },
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 32,
+                        vertical: 12,
+                      ),
+                      minimumSize: const Size(0, 46),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      side: BorderSide(
+                        color: theme.colorScheme.onSurface.withOpacity(0.2),
+                        width: 1,
+                      ),
+                    ),
+                    child: Text(
+                      'Add',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Wants tab widget with AutomaticKeepAliveClientMixin and pull-to-refresh
+class _WantsTab extends StatefulWidget {
+  final ThemeData theme;
+  final bool isDark;
+
+  const _WantsTab({required this.theme, required this.isDark});
+
+  @override
+  State<_WantsTab> createState() => _WantsTabState();
+}
+
+class _WantsTabState extends State<_WantsTab> with AutomaticKeepAliveClientMixin {
+  final ProfileDataService _dataService = ProfileDataService.instance;
+
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context); // Required for AutomaticKeepAliveClientMixin
+
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
     if (currentUserId == null) {
       return const Center(child: Text('Please sign in'));
     }
 
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('wants')
-          .where('uid', isEqualTo: currentUserId)
-          .snapshots(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
+    return ListenableBuilder(
+      listenable: _dataService,
+      builder: (context, _) {
+        if (_dataService.isLoadingWants && _dataService.cachedWants == null) {
           return Center(
             child: CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
+              valueColor: AlwaysStoppedAnimation<Color>(widget.theme.colorScheme.primary),
             ),
           );
         }
 
-        if (snapshot.hasError) {
-          return Center(
-            child: Text(
-              'Failed to load wants: ${snapshot.error}',
-              style: TextStyle(
-                color: theme.colorScheme.onSurface.withOpacity(0.7),
-              ),
-            ),
-          );
+        final wants = _dataService.cachedWants ?? [];
+        if (wants.isEmpty) {
+          return _buildEmptyState(context, widget.theme);
         }
 
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return Center(
+        return RefreshIndicator(
+          onRefresh: () => _dataService.refresh(),
+          color: widget.theme.colorScheme.primary,
+          child: ListView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            itemCount: wants.length,
+            itemBuilder: (context, index) {
+              final want = wants[index];
+              return ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                leading: Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: widget.isDark
+                        ? Colors.white.withOpacity(0.08)
+                        : Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    getIconByDeviceName(want.deviceName),
+                    color: widget.theme.colorScheme.onSurface.withOpacity(0.7),
+                    size: 24,
+                  ),
+                ),
+                title: Text(
+                  want.deviceName,
+                  style: TextStyle(
+                    color: widget.theme.colorScheme.onSurface,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                subtitle: Text(
+                  want.deviceType,
+                  style: TextStyle(
+                    color: widget.theme.colorScheme.onSurface.withOpacity(0.6),
+                    fontSize: 14,
+                  ),
+                ),
+                onTap: () {
+                  // Try to find the seki by device name
+                  FirebaseFirestore.instance
+                      .collection('seki')
+                      .where('deviceName', isEqualTo: want.deviceName)
+                      .limit(1)
+                      .get()
+                      .then((querySnapshot) {
+                    if (querySnapshot.docs.isNotEmpty) {
+                      final seki = Seki.fromFirestore(querySnapshot.docs.first);
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => DeviceDetailPage(seki: seki),
+                        ),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Device "${want.deviceName}" not found'),
+                        ),
+                      );
+                    }
+                  });
+                },
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context, ThemeData theme) {
+    return RefreshIndicator(
+      onRefresh: () => _dataService.refresh(),
+      color: theme.colorScheme.primary,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Container(
+          width: double.infinity,
+          height: MediaQuery.of(context).size.height * 0.6,
+          child: Center(
             child: Padding(
               padding: const EdgeInsets.all(32.0),
               child: Column(
@@ -648,146 +804,6 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                 ],
               ),
             ),
-          );
-        }
-
-        final wants = snapshot.data!.docs
-            .map((doc) => Want.fromFirestore(doc))
-            .toList();
-
-        return ListView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          itemCount: wants.length,
-          itemBuilder: (context, index) {
-            final want = wants[index];
-            return ListTile(
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              leading: Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? Colors.white.withOpacity(0.08)
-                      : Colors.grey.shade100,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  getIconByDeviceName(want.deviceName),
-                  color: theme.colorScheme.onSurface.withOpacity(0.7),
-                  size: 24,
-                ),
-              ),
-              title: Text(
-                want.deviceName,
-                style: TextStyle(
-                  color: theme.colorScheme.onSurface,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              subtitle: Text(
-                want.deviceType,
-                style: TextStyle(
-                  color: theme.colorScheme.onSurface.withOpacity(0.6),
-                  fontSize: 14,
-                ),
-              ),
-              onTap: () {
-                // Try to find the seki by device name
-                FirebaseFirestore.instance
-                    .collection('seki')
-                    .where('deviceName', isEqualTo: want.deviceName)
-                    .limit(1)
-                    .get()
-                    .then((querySnapshot) {
-                  if (querySnapshot.docs.isNotEmpty) {
-                    final seki = Seki.fromFirestore(querySnapshot.docs.first);
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => DeviceDetailPage(seki: seki),
-                      ),
-                    );
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Device "${want.deviceName}" not found'),
-                      ),
-                    );
-                  }
-                });
-              },
-            );
-          },
-        );
-      },
-    );
-  }
-
-  Widget _buildEmptyState(BuildContext context, ThemeData theme) {
-    return Container(
-      width: double.infinity,
-      color: Colors.white,
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Top illustration
-              Opacity(
-                opacity: 0.4,
-                child: Icon(
-                  Icons.devices_outlined,
-                  size: 72,
-                  color: theme.colorScheme.onSurface.withOpacity(0.3),
-                ),
-              ),
-              const SizedBox(height: 24),
-              // Main text
-              Text(
-                "Add a device you've used",
-                style: TextStyle(
-                  fontSize: 19,
-                  fontWeight: FontWeight.w600,
-                  color: theme.colorScheme.onSurface,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 20),
-              // Action button
-              OutlinedButton(
-                onPressed: () {
-                  showModalBottomSheet(
-                    context: context,
-                    isScrollControlled: true,
-                    backgroundColor: Colors.transparent,
-                    builder: (context) => const AddDevicePage(),
-                  );
-                },
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 32,
-                    vertical: 12,
-                  ),
-                  minimumSize: const Size(0, 46),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  side: BorderSide(
-                    color: theme.colorScheme.onSurface.withOpacity(0.2),
-                    width: 1,
-                  ),
-                ),
-                child: Text(
-                  'Add',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: theme.colorScheme.onSurface,
-                  ),
-                ),
-              ),
-            ],
           ),
         ),
       ),
