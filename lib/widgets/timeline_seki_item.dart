@@ -208,6 +208,8 @@ class TimelineSekiItem extends StatelessWidget {
                             height: 1.5,
                             fontWeight: FontWeight.w400,
                           ),
+                          maxLines: 4,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ],
