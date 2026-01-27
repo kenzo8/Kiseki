@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
-import '../services/theme_preference_service.dart';
 import '../services/system_ui_service.dart';
 import '../main.dart';
 
@@ -118,77 +117,33 @@ class SettingsPage extends StatelessWidget {
           ),
         ),
         body: SafeArea(
-          child: ValueListenableBuilder<ThemeMode>(
-            valueListenable: themeModeNotifier,
-            builder: (context, currentThemeMode, child) {
-              final isDarkMode = currentThemeMode == ThemeMode.dark;
-              return ListView(
-                padding: const EdgeInsets.all(16.0),
-                children: [
-                  // Dark Mode Toggle
-                  Card(
-                    color: theme.colorScheme.surface.withOpacity(0.1),
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: SwitchListTile(
-                      title: Row(
-                        children: [
-                          Icon(
-                            Icons.dark_mode,
-                            size: 20,
-                            color: theme.colorScheme.onSurface,
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            'Dark Mode',
-                            style: TextStyle(
-                              color: theme.colorScheme.onSurface,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                      value: isDarkMode,
-                      onChanged: (value) async {
-                        // Update the theme immediately
-                        themeModeNotifier.value = value ? ThemeMode.dark : ThemeMode.light;
-                        // Save the preference persistently
-                        await ThemePreferenceService.saveThemePreference(value);
-                      },
-                      activeColor: theme.colorScheme.primary,
-                      inactiveThumbColor: Colors.grey.shade300,
+          child: ListView(
+            padding: const EdgeInsets.all(16.0),
+            children: [
+              // Logout Button
+              Card(
+                color: theme.colorScheme.surface.withOpacity(0.1),
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: ListTile(
+                  leading: Icon(
+                    Icons.logout,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                  title: Text(
+                    'Logout',
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurface,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  // Logout Button
-                  Card(
-                    color: theme.colorScheme.surface.withOpacity(0.1),
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: ListTile(
-                      leading: Icon(
-                        Icons.logout,
-                        color: theme.colorScheme.onSurface,
-                      ),
-                      title: Text(
-                        'Logout',
-                        style: TextStyle(
-                          color: theme.colorScheme.onSurface,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      onTap: () => _handleLogout(context),
-                    ),
-                  ),
-                ],
-              );
-            },
+                  onTap: () => _handleLogout(context),
+                ),
+              ),
+            ],
           ),
         ),
       ),

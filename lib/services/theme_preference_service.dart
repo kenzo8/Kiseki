@@ -11,9 +11,9 @@ class ThemePreferenceService {
 
   /// Load the saved theme preference
   /// Returns true for dark mode, false for light mode
-  /// Defaults to true (dark mode) if no preference is saved
+  /// Defaults to false (light mode) if no preference is saved
   static Future<bool> loadThemePreference() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(_themeKey) ?? true; // Default to dark mode
+    return prefs.getBool(_themeKey) ?? false; // Default to light mode
   }
 }

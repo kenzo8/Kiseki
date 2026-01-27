@@ -10,7 +10,6 @@ import 'pages/circle_page.dart';
 import 'pages/inbox_page.dart';
 import 'pages/profile_page.dart';
 import 'pages/add_device_page.dart';
-import 'services/theme_preference_service.dart';
 import 'services/system_ui_service.dart';
 
 // Global theme state
@@ -24,11 +23,8 @@ Future<void> main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
   
-  // Load theme preference before runApp to prevent flickering
-  final isDarkMode = await ThemePreferenceService.loadThemePreference();
-  themeModeNotifier = ValueNotifier<ThemeMode>(
-    isDarkMode ? ThemeMode.dark : ThemeMode.light,
-  );
+  // Always use light mode
+  themeModeNotifier = ValueNotifier<ThemeMode>(ThemeMode.light);
   
   runApp(const KisekiApp());
 }
