@@ -989,50 +989,99 @@ class _AddDevicePageState extends State<AddDevicePage> {
                                     ),
                                   ],
                           ),
-                          child: TextField(
-                            key: _noteFieldKey,
-                            controller: _noteController,
-                            focusNode: _noteFocusNode,
-                            textInputAction: TextInputAction.done,
-                            onSubmitted: (_) => FocusScope.of(context).unfocus(),
-                            inputFormatters: [
-                              FilteringTextInputFormatter.deny(RegExp(r'\n')),
-                            ],
-                            style: TextStyle(color: isDark ? Colors.white : theme.colorScheme.onSurface),
-                            maxLines: 5,
-                            decoration: InputDecoration(
-                              hintText: "What makes this device special to you?",
-                              hintMaxLines: 5,
-                              hintStyle: TextStyle(
-                                color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.5),
-                              ),
-                              prefixIcon: Padding(
-                                padding: const EdgeInsets.only(left: 16, right: 12, top: 12),
+                          child: Stack(
+                            children: [
+                              // Quote icon background - subtle
+                              Positioned(
+                                top: 12,
+                                right: 12,
                                 child: Icon(
-                                  Icons.note_outlined,
-                                  size: 24,
-                                  color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.6),
+                                  Icons.format_quote,
+                                  size: 40,
+                                  color: _categoryColor.withOpacity(0.08),
                                 ),
                               ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(16),
-                                borderSide: BorderSide(
-                                  color: (isDark ? Colors.grey[600]! : Colors.grey[300]!),
-                                  width: 1,
+                              // Content
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    // Label
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.comment_outlined,
+                                          size: 16,
+                                          color: isDark
+                                              ? theme.colorScheme.onSurface.withOpacity(0.5)
+                                              : Colors.grey.shade600,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          'IMPRESSION',
+                                          style: TextStyle(
+                                            color: isDark
+                                                ? theme.colorScheme.onSurface.withOpacity(0.5)
+                                                : Colors.grey.shade600,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                            letterSpacing: 1.2,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 12),
+                                    // TextField
+                                    TextField(
+                                      key: _noteFieldKey,
+                                      controller: _noteController,
+                                      focusNode: _noteFocusNode,
+                                      textInputAction: TextInputAction.done,
+                                      onSubmitted: (_) => FocusScope.of(context).unfocus(),
+                                      inputFormatters: [
+                                        FilteringTextInputFormatter.deny(RegExp(r'\n')),
+                                      ],
+                                      style: TextStyle(
+                                        color: isDark ? Colors.white : theme.colorScheme.onSurface,
+                                        fontSize: 15,
+                                        height: 1.6,
+                                        fontWeight: FontWeight.w400,
+                                      ),
+                                      maxLines: 5,
+                                      decoration: InputDecoration(
+                                        hintText: "What makes this device special to you?",
+                                        hintMaxLines: 5,
+                                        hintStyle: TextStyle(
+                                          color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.5),
+                                          fontSize: 15,
+                                          height: 1.6,
+                                        ),
+                                        prefixIcon: Padding(
+                                          padding: const EdgeInsets.only(left: 0, right: 6, top: 2),
+                                          child: Icon(
+                                            Icons.format_quote,
+                                            size: 18,
+                                            color: _categoryColor.withOpacity(0.4),
+                                          ),
+                                        ),
+                                        prefixIconConstraints: const BoxConstraints(
+                                          minWidth: 24,
+                                          minHeight: 24,
+                                        ),
+                                        enabledBorder: InputBorder.none,
+                                        focusedBorder: InputBorder.none,
+                                        border: InputBorder.none,
+                                        contentPadding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 12,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(16),
-                                borderSide: BorderSide(
-                                  color: theme.colorScheme.primary,
-                                  width: 2,
-                                ),
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 16,
-                              ),
-                            ),
+                            ],
                           ),
                         ),
                       ],
