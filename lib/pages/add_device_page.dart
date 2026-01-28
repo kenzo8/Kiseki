@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/seki_model.dart';
 import '../widgets/device_icon_selector.dart';
@@ -44,6 +45,9 @@ class _AddDevicePageState extends State<AddDevicePage> {
   final FocusNode _noteFocusNode = FocusNode();
   final GlobalKey _noteFieldKey = GlobalKey();
   String _previousNoteText = '';
+  
+  // Key for storing last selected device type
+  static const String _lastDeviceTypeKey = 'last_device_type';
   
   // Track category color for bottom glow effect
   Color get _categoryColor => getCategoryColor(_deviceType);
@@ -88,6 +92,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
       _nameController = TextEditingController(text: widget.preFilledDeviceName ?? '');
       _noteController = TextEditingController();
       _previousNoteText = '';
+      // Load last selected device type, default to 'Laptop'
       _deviceType = 'Laptop';
       // Use override if provided, otherwise use pre-filled or default
       _stillUsing = widget.overrideStillUsing ?? widget.preFilledStillUsing ?? false;
@@ -102,6 +107,10 @@ class _AddDevicePageState extends State<AddDevicePage> {
     // Auto-focus the device name field when the page opens
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _deviceNameFocusNode.requestFocus();
+      // Load last device type after widget is built
+      if (!isEditMode) {
+        _loadLastDeviceType();
+      }
     });
     
     // Listen to text changes to update button state and suggest device type
@@ -138,6 +147,33 @@ class _AddDevicePageState extends State<AddDevicePage> {
     }
     _previousNoteText = currentText;
     setState(() {});
+  }
+
+  /// Load the last selected device type from SharedPreferences
+  Future<void> _loadLastDeviceType() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final lastType = prefs.getString(_lastDeviceTypeKey);
+      if (lastType != null && lastType.isNotEmpty) {
+        setState(() {
+          _deviceType = lastType;
+          _selectedIcon = deviceTypeToIcon(lastType);
+        });
+      }
+    } catch (e) {
+      // If loading fails, keep default value
+      debugPrint('Failed to load last device type: $e');
+    }
+  }
+
+  /// Save the selected device type to SharedPreferences
+  Future<void> _saveLastDeviceType(String deviceType) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_lastDeviceTypeKey, deviceType);
+    } catch (e) {
+      debugPrint('Failed to save last device type: $e');
+    }
   }
 
   Future<void> _selectStartDate() async {
@@ -368,6 +404,9 @@ class _AddDevicePageState extends State<AddDevicePage> {
       }
 
       await FirebaseFirestore.instance.collection('seki').add(deviceData);
+      
+      // Save the selected device type for next time
+      await _saveLastDeviceType(_deviceType);
       
       // Ensure ProfileDataService is initialized to receive stream updates
       final currentUserId = FirebaseAuth.instance.currentUser?.uid;
