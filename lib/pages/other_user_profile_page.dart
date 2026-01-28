@@ -392,15 +392,21 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> with Single
                                             ),
                                           );
                                         },
-                                        borderRadius: BorderRadius.circular(12),
+                                        borderRadius: BorderRadius.circular(20),
                                         child: Container(
                                           padding: const EdgeInsets.symmetric(
-                                            horizontal: 10,
-                                            vertical: 4,
+                                            horizontal: 14,
+                                            vertical: 6,
                                           ),
                                           decoration: BoxDecoration(
-                                            color: theme.colorScheme.primaryContainer,
-                                            borderRadius: BorderRadius.circular(12),
+                                            color: isDark 
+                                                ? Colors.white.withOpacity(0.05)
+                                                : Colors.grey[100],
+                                            borderRadius: BorderRadius.circular(20),
+                                            border: Border.all(
+                                              color: theme.colorScheme.primary.withOpacity(0.3),
+                                              width: 1,
+                                            ),
                                           ),
                                           child: Row(
                                             mainAxisSize: MainAxisSize.min,
@@ -408,16 +414,16 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> with Single
                                               Icon(
                                                 deviceTypeToIcon(seki.deviceType),
                                                 size: 16,
-                                                color: theme.colorScheme.onPrimaryContainer,
+                                                color: theme.colorScheme.primary.withOpacity(0.7),
                                               ),
                                               const SizedBox(width: 6),
                                               Text(
                                                 seki.deviceName,
                                                 style: theme.textTheme.labelMedium?.copyWith(
-                                                  color: theme.colorScheme.onPrimaryContainer,
+                                                  color: theme.colorScheme.primary.withOpacity(0.8),
                                                   fontWeight: FontWeight.w500,
                                                 ) ?? TextStyle(
-                                                  color: theme.colorScheme.onPrimaryContainer,
+                                                  color: theme.colorScheme.primary.withOpacity(0.8),
                                                   fontSize: 12,
                                                   fontWeight: FontWeight.w500,
                                                 ),
