@@ -201,13 +201,8 @@ class _AddDevicePageState extends State<AddDevicePage> {
   }
 
   IconData _getIconForDeviceType(String deviceType) {
-    // Map device type to icon using deviceCategories
-    for (final category in deviceCategories) {
-      if (category.deviceType == deviceType) {
-        return category.icon;
-      }
-    }
-    return Icons.devices; // Default fallback
+    // Use the centralized deviceTypeToIcon function for consistency
+    return deviceTypeToIcon(deviceType);
   }
 
   String _getDeviceTypeForIcon(IconData icon) {

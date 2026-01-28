@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../models/seki_model.dart';
 import '../widgets/device_icon_selector.dart';
+import '../widgets/seki_card.dart';
 import '../services/system_ui_service.dart';
 import '../services/auth_service.dart';
 import '../services/profile_data_service.dart';
@@ -296,13 +297,8 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
   }
 
   IconData _getIconForDeviceType(String deviceType) {
-    // Map device type to icon using deviceCategories
-    for (final category in deviceCategories) {
-      if (category.deviceType == deviceType) {
-        return category.icon;
-      }
-    }
-    return Icons.devices; // Default fallback
+    // Use the centralized deviceTypeToIcon function for consistency
+    return deviceTypeToIcon(deviceType);
   }
 
   Future<void> _showEditSekiBottomSheet(Seki seki) async {

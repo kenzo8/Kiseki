@@ -334,7 +334,14 @@ IconData deviceTypeToIcon(String deviceType) {
       break;
   }
 
-  // Keyword fallback
+  // Keyword fallback (order matters: more specific matches first)
+  // Check Gaming Peripherals before Gaming to avoid false matches
+  if (lowerType.contains('peripheral') || 
+      (lowerType.contains('gaming') && (lowerType.contains('mouse') || lowerType.contains('keyboard'))) ||
+      lowerType.contains('mouse') || 
+      lowerType.contains('keyboard')) {
+    return Icons.mouse;
+  }
   if (lowerType.contains('headphone') || lowerType.contains('audio')) {
     return Icons.headphones;
   }
@@ -358,9 +365,6 @@ IconData deviceTypeToIcon(String deviceType) {
   }
   if (lowerType.contains('vr') || lowerType.contains('ar')) {
     return Icons.view_in_ar;
-  }
-  if (lowerType.contains('peripheral') || lowerType.contains('mouse') || lowerType.contains('keyboard')) {
-    return Icons.mouse;
   }
   if (lowerType.contains('drone')) {
     return Icons.flight_takeoff;
