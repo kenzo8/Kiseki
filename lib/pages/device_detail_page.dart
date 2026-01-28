@@ -7,6 +7,7 @@ import '../models/seki_model.dart';
 import '../widgets/device_icon_selector.dart';
 import '../services/system_ui_service.dart';
 import '../services/auth_service.dart';
+import '../services/profile_data_service.dart';
 import 'add_device_page.dart';
 import 'profile_page.dart';
 import 'other_user_profile_page.dart';
@@ -142,6 +143,8 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
 
         if (querySnapshot.docs.isNotEmpty) {
           await querySnapshot.docs.first.reference.delete();
+          // Refresh ProfileDataService to update want list immediately
+          ProfileDataService.instance.refresh();
         }
 
         if (mounted) {
@@ -182,6 +185,9 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
           'deviceType': widget.seki.deviceType,
           'createdAt': FieldValue.serverTimestamp(),
         });
+        
+        // Refresh ProfileDataService to update want list immediately
+        ProfileDataService.instance.refresh();
 
         if (mounted) {
           setState(() => _isWantingDevice = true);
@@ -213,6 +219,8 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
 
       if (querySnapshot.docs.isNotEmpty) {
         await querySnapshot.docs.first.reference.delete();
+        // Refresh ProfileDataService to update want list immediately
+        ProfileDataService.instance.refresh();
       }
 
       if (mounted && _isWantingDevice == true) {
