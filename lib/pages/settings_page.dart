@@ -4,7 +4,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/auth_service.dart';
 import '../services/system_ui_service.dart';
-import '../services/import_export_service.dart';
+import '../services/import_export_service.dart' show ImportExportService, ExportFormat;
 import '../services/profile_data_service.dart';
 import '../main.dart';
 
@@ -19,6 +19,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
   bool _isExporting = false;
   bool _isImporting = false;
+  ExportFormat _exportFormat = ExportFormat.xlsx;
 
   Future<void> _handleExport() async {
     final currentUser = FirebaseAuth.instance.currentUser;
@@ -53,8 +54,8 @@ class _SettingsPageState extends State<SettingsPage> {
         return;
       }
 
-      // Export to CSV
-      final filePath = await ImportExportService.exportToCSV(dataService.cachedSekis!);
+      // Export to selected format
+      final filePath = await ImportExportService.export(dataService.cachedSekis!, _exportFormat);
       
       if (filePath != null && mounted) {
         // Share the file
@@ -138,10 +139,10 @@ class _SettingsPageState extends State<SettingsPage> {
     });
 
     try {
-      // Pick CSV file
+      // Pick file (CSV or XLSX)
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
-        allowedExtensions: ['csv'],
+        allowedExtensions: ['csv', 'xlsx'],
       );
 
       if (result == null || result.files.single.path == null) {
@@ -155,8 +156,8 @@ class _SettingsPageState extends State<SettingsPage> {
 
       final filePath = result.files.single.path!;
       
-      // Import from CSV
-      final importResult = await ImportExportService.importFromCSV(filePath);
+      // Import from file (auto-detect format)
+      final importResult = await ImportExportService.importFromFile(filePath);
       
       if (mounted) {
         // Refresh data
@@ -366,13 +367,63 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                   ),
                   subtitle: Text(
-                    'Export device data as CSV table',
+                    'Export device data as ${_exportFormat == ExportFormat.xlsx ? 'XLSX' : 'CSV'} table',
                     style: TextStyle(
                       color: theme.colorScheme.onSurface.withOpacity(0.6),
                       fontSize: 12,
                     ),
                   ),
                   onTap: _isExporting ? null : _handleExport,
+                ),
+              ),
+              const SizedBox(height: 8),
+              // Format selector
+              Card(
+                color: theme.colorScheme.surface.withOpacity(0.1),
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.table_chart,
+                        color: theme.colorScheme.onSurface.withOpacity(0.7),
+                        size: 20,
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Export Format:',
+                        style: TextStyle(
+                          color: theme.colorScheme.onSurface,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const Spacer(),
+                      SegmentedButton<ExportFormat>(
+                        segments: const [
+                          ButtonSegment<ExportFormat>(
+                            value: ExportFormat.csv,
+                            label: Text('CSV'),
+                            icon: Icon(Icons.description, size: 16),
+                          ),
+                          ButtonSegment<ExportFormat>(
+                            value: ExportFormat.xlsx,
+                            label: Text('XLSX'),
+                            icon: Icon(Icons.table_chart, size: 16),
+                          ),
+                        ],
+                        selected: {_exportFormat},
+                        onSelectionChanged: (Set<ExportFormat> newSelection) {
+                          setState(() {
+                            _exportFormat = newSelection.first;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(height: 12),
@@ -408,7 +459,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                   ),
                   subtitle: Text(
-                    'Import device data from CSV table',
+                    'Import device data from CSV or XLSX table',
                     style: TextStyle(
                       color: theme.colorScheme.onSurface.withOpacity(0.6),
                       fontSize: 12,
