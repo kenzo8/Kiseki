@@ -26,6 +26,8 @@ class _ExplorePageState extends State<ExplorePage> {
   List<QueryDocumentSnapshot>? _cachedDocs; // Cache current docs for partial refresh
   bool _isLoading = false;
   Set<String> _updatedItemIds = {}; // Track items that were updated in partial refresh
+  // Cache data for each device type to avoid reloading when switching tabs
+  final Map<String?, List<QueryDocumentSnapshot>> _deviceTypeCache = {};
 
   @override
   void initState() {
@@ -47,14 +49,24 @@ class _ExplorePageState extends State<ExplorePage> {
       if (_cachedDocs != null && _cachedDocs!.isNotEmpty) {
         _refreshPartial();
       } else {
-        _loadData();
+        _loadData(forceRefresh: true);
       }
       // Reset the notifier
       widget.refreshNotifier?.value = false;
     }
   }
 
-  Future<void> _loadData() async {
+  Future<void> _loadData({bool forceRefresh = false}) async {
+    // Check cache first if not forcing refresh
+    if (!forceRefresh && _deviceTypeCache.containsKey(_selectedDeviceType)) {
+      setState(() {
+        _cachedDocs = _deviceTypeCache[_selectedDeviceType];
+        _isLoading = false;
+        _dataFuture = null; // Clear future since we're using cache
+      });
+      return;
+    }
+
     setState(() {
       _isLoading = true;
       _cachedDocs = null; // Clear cache when doing full refresh
@@ -75,6 +87,8 @@ class _ExplorePageState extends State<ExplorePage> {
       if (mounted) {
         setState(() {
           _cachedDocs = snapshot.docs;
+          // Store in cache for this device type
+          _deviceTypeCache[_selectedDeviceType] = snapshot.docs;
           _isLoading = false;
         });
       }
@@ -89,7 +103,7 @@ class _ExplorePageState extends State<ExplorePage> {
 
   Future<void> _refreshPartial() async {
     if (_cachedDocs == null || _cachedDocs!.isEmpty) {
-      _loadData();
+      _loadData(forceRefresh: true);
       return;
     }
 
@@ -168,6 +182,8 @@ class _ExplorePageState extends State<ExplorePage> {
       // Update the cached docs directly
       setState(() {
         _cachedDocs = updatedDocs;
+        // Update the device type cache as well
+        _deviceTypeCache[_selectedDeviceType] = updatedDocs;
         _updatedItemIds = updatedIds;
         // Clear the updated IDs after animation completes
         Future.delayed(const Duration(milliseconds: 600), () {
@@ -180,7 +196,7 @@ class _ExplorePageState extends State<ExplorePage> {
       });
     } catch (e) {
       // If partial refresh fails, fall back to full refresh
-      _loadData();
+      _loadData(forceRefresh: true);
     }
   }
 
@@ -205,7 +221,7 @@ class _ExplorePageState extends State<ExplorePage> {
     if (_cachedDocs != null && _cachedDocs!.isNotEmpty) {
       await _refreshPartial();
     } else {
-      await _loadData();
+      await _loadData(forceRefresh: true);
     }
   }
 
@@ -224,7 +240,6 @@ class _ExplorePageState extends State<ExplorePage> {
             final seki = Seki.fromFirestore(doc);
             final currentUserId = FirebaseAuth.instance.currentUser?.uid;
             final publisherId = seki.publisherId;
-            final isUpdated = _updatedItemIds.contains(doc.id);
 
             // Add animation for updated items
             return TweenAnimationBuilder<double>(
@@ -274,7 +289,7 @@ class _ExplorePageState extends State<ExplorePage> {
                               if (_cachedDocs != null && _cachedDocs!.isNotEmpty) {
                                 _refreshPartial();
                               } else {
-                                _loadData();
+                                _loadData(forceRefresh: true);
                               }
                             }
                           },
@@ -392,7 +407,7 @@ class _ExplorePageState extends State<ExplorePage> {
                       if (_cachedDocs != null && _cachedDocs!.isNotEmpty) {
                         _refreshPartial();
                       } else {
-                        _loadData();
+                        _loadData(forceRefresh: true);
                       }
                     }
                   },
@@ -500,7 +515,7 @@ class _ExplorePageState extends State<ExplorePage> {
                 setState(() {
                   _selectedDeviceType = null;
                 });
-                _loadData();
+                _loadData(forceRefresh: false);
               },
             ),
             const SizedBox(width: 4),
@@ -520,7 +535,7 @@ class _ExplorePageState extends State<ExplorePage> {
                     setState(() {
                       _selectedDeviceType = category.deviceType;
                     });
-                    _loadData();
+                    _loadData(forceRefresh: false);
                   },
                 ),
               );
@@ -670,7 +685,7 @@ class _ExplorePageState extends State<ExplorePage> {
                         _selectedDeviceType = category.deviceType;
                       });
                       Navigator.pop(context);
-                      _loadData();
+                      _loadData(forceRefresh: false);
                     },
                     child: Container(
                       decoration: BoxDecoration(
@@ -727,7 +742,7 @@ class _ExplorePageState extends State<ExplorePage> {
                       _selectedDeviceType = null;
                     });
                     Navigator.pop(context);
-                    _loadData();
+                    _loadData(forceRefresh: false);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _selectedDeviceType == null
