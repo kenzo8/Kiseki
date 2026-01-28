@@ -118,7 +118,7 @@ IconData getIconByDeviceName(String deviceName) {
       lowerName.contains('dji') ||
       lowerName.contains('mavic') ||
       lowerName.contains('phantom')) {
-    return Icons.flight_takeoff;
+    return Icons.flight;
   }
 
   // e-Readers
@@ -301,7 +301,7 @@ IconData deviceTypeToIcon(String deviceType) {
     case 'Mouse':
       return Icons.mouse;
     case 'Drone':
-      return Icons.flight_takeoff;
+      return Icons.flight;
     case 'e-Reader':
       return Icons.menu_book;
     default:
@@ -327,7 +327,7 @@ IconData deviceTypeToIcon(String deviceType) {
     case 'gaming_peripheral':
       return Icons.mouse;
     case 'drone':
-      return Icons.flight_takeoff;
+      return Icons.flight;
     case 'ereader':
       return Icons.menu_book;
     default:
@@ -367,7 +367,7 @@ IconData deviceTypeToIcon(String deviceType) {
     return Icons.view_in_ar;
   }
   if (lowerType.contains('drone')) {
-    return Icons.flight_takeoff;
+    return Icons.flight;
   }
   if (lowerType.contains('ereader') || lowerType.contains('e-reader')) {
     return Icons.menu_book;

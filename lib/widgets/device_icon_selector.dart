@@ -30,7 +30,7 @@ const List<DeviceCategory> deviceCategories = [
   DeviceCategory(icon: Icons.home, label: 'SmartHome', deviceType: 'SmartHome'),
   DeviceCategory(icon: Icons.view_in_ar, label: 'VR/AR', deviceType: 'VR/AR'),
   DeviceCategory(icon: Icons.mouse, label: 'Mouse', deviceType: 'Mouse'),
-  DeviceCategory(icon: Icons.flight_takeoff, label: 'Drone', deviceType: 'Drone'),
+  DeviceCategory(icon: Icons.flight, label: 'Drone', deviceType: 'Drone'),
   DeviceCategory(icon: Icons.menu_book, label: 'e-Reader', deviceType: 'e-Reader'),
 ];
 
