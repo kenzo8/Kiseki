@@ -231,7 +231,7 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
     }
   }
 
-  void _openDeviceSheet({required bool stillUsing}) {
+  Future<void> _openDeviceSheet({required bool stillUsing}) async {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
     if (currentUserId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -243,7 +243,7 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
     // If user has existing device, open Edit sheet; otherwise open Add sheet
     final existingDevice = _userDeviceEntry;
     
-    showModalBottomSheet(
+    final result = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -256,15 +256,20 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
               preFilledDeviceName: widget.seki.deviceName,
               preFilledStillUsing: stillUsing,
             ),
-    ).then((_) async {
-      // Refresh device status after sheet closes
-      await _checkUserDeviceStatus();
-      
-      // If device was just added and Want was active, clear it
-      if (_userDeviceEntry != null && _isWantingDevice == true) {
-        await _clearWantState();
-      }
-    });
+    );
+    
+    // Refresh device status after sheet closes
+    await _checkUserDeviceStatus();
+    
+    // If device was just added and Want was active, clear it
+    if (_userDeviceEntry != null && _isWantingDevice == true) {
+      await _clearWantState();
+    }
+    
+    // If device was added/edited successfully, pop with result
+    if (result == true && mounted) {
+      Navigator.of(context).pop(true);
+    }
   }
 
   String _getStatus(Seki seki) {
@@ -300,13 +305,18 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
     return Icons.devices; // Default fallback
   }
 
-  void _showEditSekiBottomSheet(Seki seki) {
-    showModalBottomSheet(
+  Future<void> _showEditSekiBottomSheet(Seki seki) async {
+    final result = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => AddDevicePage(seki: seki),
     );
+    
+    // If device was edited successfully, pop with result
+    if (result == true && mounted) {
+      Navigator.of(context).pop(true);
+    }
   }
 
   Future<void> _deleteDevice(Seki seki) async {

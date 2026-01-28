@@ -389,7 +389,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
         setState(() {
           _isLoading = false;
         });
-        Navigator.pop(context);
+        Navigator.pop(context, true); // Return true to indicate success
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Device added successfully!'),
@@ -459,7 +459,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
         setState(() {
           _isLoading = false;
         });
-        Navigator.pop(context);
+        Navigator.pop(context, true); // Return true to indicate success
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Device updated successfully!'),

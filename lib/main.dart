@@ -111,14 +111,20 @@ class _MainNavigationContent extends StatefulWidget {
 
 class _MainNavigationContentState extends State<_MainNavigationContent> {
   int _currentIndex = 0;
+  final ValueNotifier<bool> _exploreRefreshNotifier = ValueNotifier<bool>(false);
 
-  void _showSendSekiBottomSheet() {
-    showModalBottomSheet(
+  void _showSendSekiBottomSheet() async {
+    final result = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => const AddDevicePage(),
     );
+    
+    // If device was added/updated successfully, refresh explore page
+    if (result == true) {
+      _exploreRefreshNotifier.value = true;
+    }
   }
 
   @override
@@ -146,7 +152,7 @@ class _MainNavigationContentState extends State<_MainNavigationContent> {
       body: IndexedStack(
         index: _currentIndex,
         children: [
-          ExplorePage(user: widget.user),
+          ExplorePage(refreshNotifier: _exploreRefreshNotifier, user: widget.user),
           ProfilePage(user: widget.user),
         ],
       ),

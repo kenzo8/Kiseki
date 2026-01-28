@@ -12,8 +12,9 @@ import '../widgets/device_icon_selector.dart';
 
 class ExplorePage extends StatefulWidget {
   final User? user;
+  final ValueNotifier<bool>? refreshNotifier;
 
-  const ExplorePage({super.key, required this.user});
+  const ExplorePage({super.key, required this.user, this.refreshNotifier});
 
   @override
   State<ExplorePage> createState() => _ExplorePageState();
@@ -21,6 +22,44 @@ class ExplorePage extends StatefulWidget {
 
 class _ExplorePageState extends State<ExplorePage> {
   String? _selectedDeviceType; // null means "All"
+  Future<QuerySnapshot>? _dataFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+    // Listen to refresh notifications
+    widget.refreshNotifier?.addListener(_onRefreshRequested);
+  }
+
+  @override
+  void dispose() {
+    widget.refreshNotifier?.removeListener(_onRefreshRequested);
+    super.dispose();
+  }
+
+  void _onRefreshRequested() {
+    if (widget.refreshNotifier?.value == true) {
+      _loadData();
+      // Reset the notifier
+      widget.refreshNotifier?.value = false;
+    }
+  }
+
+  Future<void> _loadData() async {
+    setState(() {
+      _dataFuture = _selectedDeviceType == null
+          ? FirebaseFirestore.instance
+              .collection('seki')
+              .orderBy('createdAt', descending: true)
+              .get()
+          : FirebaseFirestore.instance
+              .collection('seki')
+              .where('deviceType', isEqualTo: _selectedDeviceType)
+              .orderBy('createdAt', descending: true)
+              .get();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -70,17 +109,8 @@ class _ExplorePageState extends State<ExplorePage> {
             _buildFilterBar(theme, isDark),
             const SizedBox(height: 8),
             Expanded(
-              child: StreamBuilder<QuerySnapshot>(
-                stream: _selectedDeviceType == null
-                    ? FirebaseFirestore.instance
-                        .collection('seki')
-                        .orderBy('createdAt', descending: true)
-                        .snapshots()
-                    : FirebaseFirestore.instance
-                        .collection('seki')
-                        .where('deviceType', isEqualTo: _selectedDeviceType)
-                        .orderBy('createdAt', descending: true)
-                        .snapshots(),
+              child: FutureBuilder<QuerySnapshot>(
+                future: _dataFuture,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return Center(
@@ -100,60 +130,79 @@ class _ExplorePageState extends State<ExplorePage> {
                   }
 
                   if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                    return Center(
-                      child: Text(
-                        _selectedDeviceType == null
-                            ? 'No Seki posts yet. Be the first!'
-                            : 'No ${_selectedDeviceType} posts yet.',
-                        style: TextStyle(
-                          color: theme.colorScheme.onSurface.withOpacity(0.6),
-                          fontSize: 16,
+                    return RefreshIndicator(
+                      onRefresh: _loadData,
+                      color: theme.colorScheme.primary,
+                      child: SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        child: SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.5,
+                          child: Center(
+                            child: Text(
+                              _selectedDeviceType == null
+                                  ? 'No Seki posts yet. Be the first!'
+                                  : 'No ${_selectedDeviceType} posts yet.',
+                              style: TextStyle(
+                                color: theme.colorScheme.onSurface.withOpacity(0.6),
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                     );
                   }
 
-                  return ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    itemCount: snapshot.data!.docs.length,
-                    itemBuilder: (context, index) {
-                      final doc = snapshot.data!.docs[index];
-                      final seki = Seki.fromFirestore(doc);
-                      final currentUserId = FirebaseAuth.instance.currentUser?.uid;
-                      final publisherId = seki.publisherId;
+                  return RefreshIndicator(
+                    onRefresh: _loadData,
+                    color: theme.colorScheme.primary,
+                    child: ListView.builder(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      itemCount: snapshot.data!.docs.length,
+                      itemBuilder: (context, index) {
+                        final doc = snapshot.data!.docs[index];
+                        final seki = Seki.fromFirestore(doc);
+                        final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+                        final publisherId = seki.publisherId;
 
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: SekiCard(
-                          seki: seki,
-                          isDark: isDark,
-                          onBodyTap: () {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: SekiCard(
+                            seki: seki,
+                            isDark: isDark,
+                          onBodyTap: () async {
                             // Navigate to DeviceDetailPage with the device object
-                            Navigator.of(context).push(
+                            final result = await Navigator.of(context).push(
                               MaterialPageRoute(
                                 builder: (context) => DeviceDetailPage(seki: seki),
                               ),
                             );
-                          },
-                          onBottomBarTap: () {
-                            // Navigate to ProfilePage based on owner
-                            if (publisherId == currentUserId) {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) => ProfilePage(user: widget.user),
-                                ),
-                              );
-                            } else {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) => OtherUserProfilePage(publisherId: publisherId),
-                                ),
-                              );
+                            // If device was edited, refresh the list
+                            if (result == true) {
+                              _loadData();
                             }
                           },
-                        ),
-                      );
-                    },
+                            onBottomBarTap: () {
+                              // Navigate to ProfilePage based on owner
+                              if (publisherId == currentUserId) {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) => ProfilePage(user: widget.user),
+                                  ),
+                                );
+                              } else {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) => OtherUserProfilePage(publisherId: publisherId),
+                                  ),
+                                );
+                              }
+                            },
+                          ),
+                        );
+                      },
+                    ),
                   );
                 },
               ),
@@ -187,6 +236,7 @@ class _ExplorePageState extends State<ExplorePage> {
                 setState(() {
                   _selectedDeviceType = null;
                 });
+                _loadData();
               },
             ),
             const SizedBox(width: 4),
@@ -206,6 +256,7 @@ class _ExplorePageState extends State<ExplorePage> {
                     setState(() {
                       _selectedDeviceType = category.deviceType;
                     });
+                    _loadData();
                   },
                 ),
               );
@@ -355,6 +406,7 @@ class _ExplorePageState extends State<ExplorePage> {
                         _selectedDeviceType = category.deviceType;
                       });
                       Navigator.pop(context);
+                      _loadData();
                     },
                     child: Container(
                       decoration: BoxDecoration(
@@ -411,6 +463,7 @@ class _ExplorePageState extends State<ExplorePage> {
                       _selectedDeviceType = null;
                     });
                     Navigator.pop(context);
+                    _loadData();
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _selectedDeviceType == null
