@@ -296,11 +296,6 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
     }
   }
 
-  IconData _getIconForDeviceType(String deviceType) {
-    // Use the centralized deviceTypeToIcon function for consistency
-    return deviceTypeToIcon(deviceType);
-  }
-
   Future<void> _showEditSekiBottomSheet(Seki seki) async {
     final result = await showModalBottomSheet<bool>(
       context: context,
@@ -512,7 +507,7 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
                           ],
                         ),
                         child: Icon(
-                          _getIconForDeviceType(seki.deviceType),
+                          deviceTypeToIcon(seki.deviceType),
                           size: 90,
                           color: categoryColor,
                         ),

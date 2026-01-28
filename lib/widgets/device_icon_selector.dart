@@ -124,15 +124,10 @@ class DeviceCategorySelector extends StatelessWidget {
     required this.isDark,
   });
 
-  IconData _getIconForDeviceType(String deviceType) {
-    // Use the centralized deviceTypeToIcon function for consistency
-    return deviceTypeToIcon(deviceType);
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final selectedIcon = _getIconForDeviceType(selectedDeviceType);
+    final selectedIcon = deviceTypeToIcon(selectedDeviceType);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),

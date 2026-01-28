@@ -97,7 +97,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
     }
     
     // Initialize selected icon from current deviceType
-    _selectedIcon = _getIconForDeviceType(_deviceType);
+    _selectedIcon = deviceTypeToIcon(_deviceType);
     
     // Auto-focus the device name field when the page opens
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -118,7 +118,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
         if (suggestedType != _deviceType) {
           setState(() {
             _deviceType = suggestedType;
-            _selectedIcon = _getIconForDeviceType(suggestedType);
+            _selectedIcon = deviceTypeToIcon(suggestedType);
           });
         }
       }
@@ -198,11 +198,6 @@ class _AddDevicePageState extends State<AddDevicePage> {
     _deviceNameFocusNode.dispose();
     _noteFocusNode.dispose();
     super.dispose();
-  }
-
-  IconData _getIconForDeviceType(String deviceType) {
-    // Use the centralized deviceTypeToIcon function for consistency
-    return deviceTypeToIcon(deviceType);
   }
 
   String _getDeviceTypeForIcon(IconData icon) {
