@@ -88,6 +88,7 @@ class ProfileDataService extends ChangeNotifier {
     _wantSubscription = FirebaseFirestore.instance
         .collection('wants')
         .where('uid', isEqualTo: userId)
+        .orderBy('createdAt', descending: true)
         .snapshots()
         .listen((snapshot) {
       _cachedWants = snapshot.docs.map((doc) => Want.fromFirestore(doc)).toList();
