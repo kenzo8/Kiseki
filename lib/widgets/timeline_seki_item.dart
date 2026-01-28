@@ -157,7 +157,7 @@ class TimelineSekiItem extends StatelessWidget {
                             ),
                           ),
                           child: Icon(
-                            getIconByDeviceName(seki.deviceName),
+                            deviceTypeToIcon(seki.deviceType),
                             size: 14,
                             color: deviceIconColor,
                           ),

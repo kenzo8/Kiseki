@@ -406,7 +406,7 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> with Single
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
                                               Icon(
-                                                getIconByDeviceName(seki.deviceName),
+                                                deviceTypeToIcon(seki.deviceType),
                                                 size: 16,
                                                 color: theme.colorScheme.onPrimaryContainer,
                                               ),
@@ -658,7 +658,7 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> with Single
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
-                  getIconByDeviceName(want.deviceName),
+                  deviceTypeToIcon(want.deviceType),
                   color: theme.colorScheme.onSurface.withOpacity(0.7),
                   size: 24,
                 ),

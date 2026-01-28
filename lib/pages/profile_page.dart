@@ -495,7 +495,7 @@ class _ProfilePageState extends State<ProfilePage>
                                                           mainAxisSize: MainAxisSize.min,
                                                           children: [
                                                             Icon(
-                                                              getIconByDeviceName(seki.deviceName),
+                                                              deviceTypeToIcon(seki.deviceType),
                                                               size: 16,
                                                               color: theme.colorScheme.onPrimaryContainer,
                                                             ),
@@ -891,7 +891,7 @@ class _WantsTabState extends State<_WantsTab> with AutomaticKeepAliveClientMixin
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
-                    getIconByDeviceName(want.deviceName),
+                    deviceTypeToIcon(want.deviceType),
                     color: categoryColor,
                     size: 24,
                   ),

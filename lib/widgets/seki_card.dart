@@ -466,7 +466,7 @@ class SekiCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(
-                        getIconByDeviceName(seki.deviceName),
+                        deviceTypeToIcon(seki.deviceType),
                         size: 24,
                         color: _getIconColor(),
                       ),
