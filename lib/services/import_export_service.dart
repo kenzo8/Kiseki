@@ -13,26 +13,39 @@ class ImportExportService {
       // Create CSV content
       final csvBuffer = StringBuffer();
       
-      // Add header row
-      csvBuffer.writeln('Device Name,Device Type,Start Year,End Year,Start Date,End Date,Precise Mode,Note,Created At');
+      // Add header row - unified format using dates only
+      csvBuffer.writeln('Device Name,Device Type,Start Date,End Date,Note,Created At');
       
       // Add data rows
       for (final device in devices) {
         final deviceName = _escapeCsvField(device.deviceName);
         final deviceType = _escapeCsvField(device.deviceType);
-        final startYear = device.startYear.toString();
-        final endYear = device.endYear?.toString() ?? 'Present';
-        final startDate = device.startTime != null 
-            ? '${device.startTime!.toDate().year}/${device.startTime!.toDate().month}/${device.startTime!.toDate().day}'
-            : '';
-        final endDate = device.endTime != null
-            ? '${device.endTime!.toDate().year}/${device.endTime!.toDate().month}/${device.endTime!.toDate().day}'
-            : (device.endYear == null ? 'Present' : '');
-        final isPreciseMode = device.isPreciseMode ? 'Yes' : 'No';
+        
+        // Unified date format: use precise date if available, otherwise convert from year
+        String startDate;
+        if (device.startTime != null) {
+          final date = device.startTime!.toDate();
+          startDate = '${date.year}/${date.month}/${date.day}';
+        } else {
+          // Convert year to date format: year/-/-
+          startDate = '${device.startYear}/-/-';
+        }
+        
+        String endDate;
+        if (device.endTime != null) {
+          final date = device.endTime!.toDate();
+          endDate = '${date.year}/${date.month}/${date.day}';
+        } else if (device.endYear != null) {
+          // Convert year to date format: year/-/-
+          endDate = '${device.endYear}/-/-';
+        } else {
+          endDate = 'Present';
+        }
+        
         final note = _escapeCsvField(device.note);
         final createdAt = device.createdAt.toDate().toString();
         
-        csvBuffer.writeln('$deviceName,$deviceType,$startYear,$endYear,$startDate,$endDate,$isPreciseMode,$note,$createdAt');
+        csvBuffer.writeln('$deviceName,$deviceType,$startDate,$endDate,$note,$createdAt');
       }
       
       // Save to file
@@ -109,20 +122,41 @@ class ImportExportService {
           final line = dataLines[i];
           final fields = _parseCsvLine(line);
           
-          if (fields.length < 9) {
+          // Support both old format (9 fields) and new format (6 fields)
+          if (fields.length < 6) {
             failCount++;
-            errors.add('Row ${i + 2}: Insufficient fields');
+            errors.add('Row ${i + 2}: Insufficient fields (expected at least 6)');
             continue;
           }
           
-          final deviceName = fields[0].trim();
-          final deviceType = fields[1].trim();
-          final startYearStr = fields[2].trim();
-          final endYearStr = fields[3].trim();
-          final startDateStr = fields[4].trim();
-          final endDateStr = fields[5].trim();
-          final isPreciseModeStr = fields[6].trim();
-          final note = fields[7].trim();
+          String deviceName;
+          String deviceType;
+          String startDateStr;
+          String endDateStr;
+          String note;
+          String createdAtStr = ''; // Optional Created At field
+          
+          // Check if old format (with Year columns) or new format
+          if (fields.length >= 9) {
+            // Old format: Device Name,Device Type,Start Year,End Year,Start Date,End Date,Precise Mode,Note,Created At
+            deviceName = fields[0].trim();
+            deviceType = fields[1].trim();
+            // Prefer Start Date over Start Year
+            startDateStr = fields[4].trim().isNotEmpty ? fields[4].trim() : fields[2].trim();
+            endDateStr = fields[5].trim().isNotEmpty && fields[5].trim() != 'Present' 
+                ? fields[5].trim() 
+                : (fields[3].trim().isNotEmpty && fields[3].trim() != 'Present' ? fields[3].trim() : 'Present');
+            note = fields[7].trim();
+            createdAtStr = fields.length > 8 ? fields[8].trim() : '';
+          } else {
+            // New format: Device Name,Device Type,Start Date,End Date,Note,Created At
+            deviceName = fields[0].trim();
+            deviceType = fields[1].trim();
+            startDateStr = fields[2].trim();
+            endDateStr = fields[3].trim();
+            note = fields[4].trim();
+            createdAtStr = fields.length > 5 ? fields[5].trim() : '';
+          }
           
           if (deviceName.isEmpty) {
             failCount++;
@@ -130,74 +164,106 @@ class ImportExportService {
             continue;
           }
           
-          // Parse dates
-          final isPreciseMode = isPreciseModeStr == 'Yes' || isPreciseModeStr == 'true' || isPreciseModeStr == '1';
+          // Unified date parsing - always use precise mode
           int startYear;
           int? endYear;
           Timestamp? startTime;
           Timestamp? endTime;
           
-          if (isPreciseMode && startDateStr.isNotEmpty) {
-            // Parse precise date
-            try {
-              final startDateParts = startDateStr.split('/');
-              if (startDateParts.length == 3) {
-                startYear = int.parse(startDateParts[0]);
-                final startMonth = int.parse(startDateParts[1]);
-                final startDay = int.parse(startDateParts[2]);
-                startTime = Timestamp.fromDate(DateTime(startYear, startMonth, startDay));
+          try {
+            // Parse start date
+            if (startDateStr.isEmpty) {
+              failCount++;
+              errors.add('Row ${i + 2}: Start date cannot be empty');
+              continue;
+            }
+            
+            // Try parsing as date (YYYY/MM/DD), year with dashes (YYYY/-/-), or year (YYYY)
+            final startParts = startDateStr.split('/');
+            if (startParts.length == 3) {
+              // Check if it's YYYY/-/- format
+              if (startParts[1] == '-' && startParts[2] == '-') {
+                // Year format: YYYY/-/-
+                startYear = int.parse(startParts[0]);
+                startTime = Timestamp.fromDate(DateTime(startYear, 1, 1));
               } else {
-                throw Exception('Date format error');
+                // Date format: YYYY/MM/DD
+                startYear = int.parse(startParts[0]);
+                final startMonth = int.parse(startParts[1]);
+                final startDay = int.parse(startParts[2]);
+                startTime = Timestamp.fromDate(DateTime(startYear, startMonth, startDay));
               }
-              
-              if (endDateStr.isNotEmpty && endDateStr != 'Present') {
-                final endDateParts = endDateStr.split('/');
-                if (endDateParts.length == 3) {
-                  endYear = int.parse(endDateParts[0]);
-                  final endMonth = int.parse(endDateParts[1]);
-                  final endDay = int.parse(endDateParts[2]);
+            } else if (startParts.length == 1) {
+              // Year format: YYYY
+              startYear = int.parse(startParts[0]);
+              startTime = Timestamp.fromDate(DateTime(startYear, 1, 1));
+            } else {
+              throw Exception('Invalid start date format');
+            }
+            
+            // Parse end date
+            if (endDateStr.isEmpty || endDateStr == 'Present') {
+              endTime = null;
+              endYear = null;
+            } else {
+              final endParts = endDateStr.split('/');
+              if (endParts.length == 3) {
+                // Check if it's YYYY/-/- format
+                if (endParts[1] == '-' && endParts[2] == '-') {
+                  // Year format: YYYY/-/-
+                  endYear = int.parse(endParts[0]);
+                  endTime = Timestamp.fromDate(DateTime(endYear, 12, 31));
+                } else {
+                  // Date format: YYYY/MM/DD
+                  endYear = int.parse(endParts[0]);
+                  final endMonth = int.parse(endParts[1]);
+                  final endDay = int.parse(endParts[2]);
                   endTime = Timestamp.fromDate(DateTime(endYear, endMonth, endDay));
                 }
+              } else if (endParts.length == 1) {
+                // Year format: YYYY
+                endYear = int.parse(endParts[0]);
+                endTime = Timestamp.fromDate(DateTime(endYear, 12, 31));
+              } else {
+                throw Exception('Invalid end date format');
               }
-            } catch (e) {
-              failCount++;
-              errors.add('Row ${i + 2}: Date parsing error - $e');
-              continue;
             }
-          } else {
-            // Parse year
-            try {
-              startYear = int.parse(startYearStr);
-              if (endYearStr.isNotEmpty && endYearStr != 'Present') {
-                endYear = int.parse(endYearStr);
-              }
-            } catch (e) {
-              failCount++;
-              errors.add('Row ${i + 2}: Year parsing error');
-              continue;
-            }
+          } catch (e) {
+            failCount++;
+            errors.add('Row ${i + 2}: Date parsing error - $e');
+            continue;
           }
           
-          // Create device data
+          // Parse Created At - use provided timestamp or default to current time
+          dynamic createdAt;
+          if (createdAtStr.isNotEmpty) {
+            try {
+              // Try to parse ISO 8601 format (e.g., "2020-03-15 10:30:00.000")
+              final parsedDate = DateTime.parse(createdAtStr);
+              createdAt = Timestamp.fromDate(parsedDate);
+            } catch (e) {
+              // If parsing fails, use server timestamp
+              createdAt = FieldValue.serverTimestamp();
+            }
+          } else {
+            // Empty or not provided, use server timestamp
+            createdAt = FieldValue.serverTimestamp();
+          }
+          
+          // Create device data - always use precise mode
           final Map<String, dynamic> deviceData = {
             'uid': uid,
             'username': username,
             'deviceName': deviceName,
             'deviceType': deviceType,
-            'isPreciseMode': isPreciseMode,
-            'createdAt': FieldValue.serverTimestamp(),
+            'isPreciseMode': true, // Always use precise mode
+            'startTime': startTime,
+            'endTime': endTime,
+            'startYear': startYear, // Also save for backward compatibility
+            'endYear': endYear,
+            'createdAt': createdAt,
             'note': note,
           };
-          
-          if (isPreciseMode) {
-            deviceData['startTime'] = startTime ?? Timestamp.fromDate(DateTime(startYear, 1, 1));
-            deviceData['endTime'] = endTime;
-            deviceData['startYear'] = startYear;
-            deviceData['endYear'] = endYear;
-          } else {
-            deviceData['startYear'] = startYear;
-            deviceData['endYear'] = endYear;
-          }
           
           await FirebaseFirestore.instance.collection('seki').add(deviceData);
           successCount++;
