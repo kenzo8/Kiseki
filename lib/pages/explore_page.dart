@@ -23,6 +23,9 @@ class ExplorePage extends StatefulWidget {
 class _ExplorePageState extends State<ExplorePage> {
   String? _selectedDeviceType; // null means "All"
   Future<QuerySnapshot>? _dataFuture;
+  List<QueryDocumentSnapshot>? _cachedDocs; // Cache current docs for partial refresh
+  bool _isLoading = false;
+  Set<String> _updatedItemIds = {}; // Track items that were updated in partial refresh
 
   @override
   void initState() {
@@ -40,7 +43,12 @@ class _ExplorePageState extends State<ExplorePage> {
 
   void _onRefreshRequested() {
     if (widget.refreshNotifier?.value == true) {
-      _loadData();
+      // If we have cached data, do partial refresh; otherwise full refresh
+      if (_cachedDocs != null && _cachedDocs!.isNotEmpty) {
+        _refreshPartial();
+      } else {
+        _loadData();
+      }
       // Reset the notifier
       widget.refreshNotifier?.value = false;
     }
@@ -48,6 +56,8 @@ class _ExplorePageState extends State<ExplorePage> {
 
   Future<void> _loadData() async {
     setState(() {
+      _isLoading = true;
+      _cachedDocs = null; // Clear cache when doing full refresh
       _dataFuture = _selectedDeviceType == null
           ? FirebaseFirestore.instance
               .collection('seki')
@@ -59,6 +69,356 @@ class _ExplorePageState extends State<ExplorePage> {
               .orderBy('createdAt', descending: true)
               .get();
     });
+    
+    // Cache the docs after loading
+    _dataFuture?.then((snapshot) {
+      if (mounted) {
+        setState(() {
+          _cachedDocs = snapshot.docs;
+          _isLoading = false;
+        });
+      }
+    }).catchError((error) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    });
+  }
+
+  Future<void> _refreshPartial() async {
+    if (_cachedDocs == null || _cachedDocs!.isEmpty) {
+      _loadData();
+      return;
+    }
+
+    try {
+      // Get the latest data for the first few items (most recent)
+      // This will catch newly added items and recent updates
+      final latestSnapshot = _selectedDeviceType == null
+          ? await FirebaseFirestore.instance
+              .collection('seki')
+              .orderBy('createdAt', descending: true)
+              .limit(20) // Get top 20 most recent
+              .get()
+          : await FirebaseFirestore.instance
+              .collection('seki')
+              .where('deviceType', isEqualTo: _selectedDeviceType)
+              .orderBy('createdAt', descending: true)
+              .limit(20)
+              .get();
+
+      if (!mounted) return;
+
+      // Create a map of existing docs by ID for quick lookup
+      final existingDocsMap = <String, QueryDocumentSnapshot>{};
+      for (var doc in _cachedDocs!) {
+        existingDocsMap[doc.id] = doc;
+      }
+
+      // Update or add docs from the latest snapshot
+      final updatedDocs = <QueryDocumentSnapshot>[];
+      final processedIds = <String>{};
+
+      // First, add/update items from latest snapshot
+      for (var newDoc in latestSnapshot.docs) {
+        processedIds.add(newDoc.id);
+        // Always use the new data if it exists (it might be updated)
+        updatedDocs.add(newDoc);
+      }
+
+      // Add remaining existing docs that weren't in the latest snapshot
+      for (var doc in _cachedDocs!) {
+        if (!processedIds.contains(doc.id)) {
+          updatedDocs.add(doc);
+        }
+      }
+
+      // Sort by createdAt descending
+      updatedDocs.sort((a, b) {
+        final aTime = a.data() as Map<String, dynamic>;
+        final bTime = b.data() as Map<String, dynamic>;
+        final aCreatedAt = aTime['createdAt'] as Timestamp?;
+        final bCreatedAt = bTime['createdAt'] as Timestamp?;
+        if (aCreatedAt == null && bCreatedAt == null) return 0;
+        if (aCreatedAt == null) return 1;
+        if (bCreatedAt == null) return -1;
+        return bCreatedAt.compareTo(aCreatedAt);
+      });
+
+      // Track which items were updated/added (compare with existing docs)
+      final updatedIds = <String>{};
+      final existingIds = _cachedDocs!.map((doc) => doc.id).toSet();
+      
+      for (var newDoc in latestSnapshot.docs) {
+        final docId = newDoc.id;
+        // Mark as updated if it's a new item
+        if (!existingIds.contains(docId)) {
+          updatedIds.add(docId);
+        } else {
+          // Check if existing item was updated
+          final oldDoc = existingDocsMap[docId]!;
+          if (_isDocUpdated(oldDoc, newDoc)) {
+            updatedIds.add(docId);
+          }
+        }
+      }
+
+      // Update the cached docs directly
+      setState(() {
+        _cachedDocs = updatedDocs;
+        _updatedItemIds = updatedIds;
+        // Clear the updated IDs after animation completes
+        Future.delayed(const Duration(milliseconds: 600), () {
+          if (mounted) {
+            setState(() {
+              _updatedItemIds.clear();
+            });
+          }
+        });
+      });
+    } catch (e) {
+      // If partial refresh fails, fall back to full refresh
+      _loadData();
+    }
+  }
+
+  bool _isDocUpdated(QueryDocumentSnapshot oldDoc, QueryDocumentSnapshot newDoc) {
+    // Compare key fields that might change
+    final oldData = oldDoc.data() as Map<String, dynamic>;
+    final newData = newDoc.data() as Map<String, dynamic>;
+    
+    return oldData['deviceName'] != newData['deviceName'] ||
+           oldData['deviceType'] != newData['deviceType'] ||
+           oldData['note'] != newData['note'] ||
+           oldData['startYear'] != newData['startYear'] ||
+           oldData['endYear'] != newData['endYear'] ||
+           oldData['isPreciseMode'] != newData['isPreciseMode'] ||
+           oldData['startTime'] != newData['startTime'] ||
+           oldData['endTime'] != newData['endTime'];
+  }
+
+
+  Future<void> _handleRefresh() async {
+    // Use partial refresh if we have cached data, otherwise full refresh
+    if (_cachedDocs != null && _cachedDocs!.isNotEmpty) {
+      await _refreshPartial();
+    } else {
+      await _loadData();
+    }
+  }
+
+  Widget _buildContent(ThemeData theme, bool isDark) {
+    // If we have cached docs, use them directly for faster UI updates
+    if (_cachedDocs != null && _cachedDocs!.isNotEmpty) {
+      return RefreshIndicator(
+        onRefresh: _handleRefresh,
+        color: theme.colorScheme.primary,
+        child: ListView.builder(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          itemCount: _cachedDocs!.length,
+          itemBuilder: (context, index) {
+            final doc = _cachedDocs![index];
+            final seki = Seki.fromFirestore(doc);
+            final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+            final publisherId = seki.publisherId;
+            final isUpdated = _updatedItemIds.contains(doc.id);
+
+            // Add animation for updated items
+            return TweenAnimationBuilder<double>(
+              key: ValueKey('${doc.id}_${_updatedItemIds.contains(doc.id)}'),
+              tween: Tween<double>(
+                begin: _updatedItemIds.contains(doc.id) ? 0.0 : 1.0,
+                end: 1.0,
+              ),
+              duration: _updatedItemIds.contains(doc.id)
+                  ? const Duration(milliseconds: 400)
+                  : const Duration(milliseconds: 0),
+              curve: Curves.easeOut,
+              builder: (context, value, child) {
+                return Opacity(
+                  opacity: value,
+                  child: Transform.translate(
+                    offset: Offset(0, _updatedItemIds.contains(doc.id) ? (1 - value) * 15 : 0),
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeOut,
+                        decoration: _updatedItemIds.contains(doc.id) && value > 0.5
+                            ? BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: theme.colorScheme.primary.withOpacity(0.2 * (value - 0.5) * 2),
+                                    blurRadius: 10,
+                                    spreadRadius: 1,
+                                  ),
+                                ],
+                              )
+                            : null,
+                        child: SekiCard(
+                          seki: seki,
+                          isDark: isDark,
+                          onBodyTap: () async {
+                            // Navigate to DeviceDetailPage with the device object
+                            final result = await Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => DeviceDetailPage(seki: seki),
+                              ),
+                            );
+                            // If device was edited, do partial refresh
+                            if (result == true) {
+                              if (_cachedDocs != null && _cachedDocs!.isNotEmpty) {
+                                _refreshPartial();
+                              } else {
+                                _loadData();
+                              }
+                            }
+                          },
+                          onBottomBarTap: () {
+                            // Navigate to ProfilePage based on owner
+                            if (publisherId == currentUserId) {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => ProfilePage(user: widget.user),
+                                ),
+                              );
+                            } else {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => OtherUserProfilePage(publisherId: publisherId),
+                                ),
+                              );
+                            }
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+        ),
+      );
+    }
+
+    // Otherwise use FutureBuilder for initial load
+    return FutureBuilder<QuerySnapshot>(
+      future: _dataFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting || _isLoading) {
+          return Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
+            ),
+          );
+        }
+
+        if (snapshot.hasError) {
+          return Center(
+            child: Text(
+              'Failed to load: ${snapshot.error}',
+              style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.7)),
+            ),
+          );
+        }
+
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return RefreshIndicator(
+            onRefresh: _handleRefresh,
+            color: theme.colorScheme.primary,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: SizedBox(
+                height: MediaQuery.of(context).size.height * 0.5,
+                child: Center(
+                  child: Text(
+                    _selectedDeviceType == null
+                        ? 'No Seki posts yet. Be the first!'
+                        : 'No ${_selectedDeviceType} posts yet.',
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurface.withOpacity(0.6),
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        }
+
+        // Update cache when data is loaded from FutureBuilder
+        if (_cachedDocs == null && snapshot.hasData) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              setState(() {
+                _cachedDocs = snapshot.data!.docs;
+              });
+            }
+          });
+        }
+
+        return RefreshIndicator(
+          onRefresh: _handleRefresh,
+          color: theme.colorScheme.primary,
+          child: ListView.builder(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            itemCount: snapshot.data!.docs.length,
+            itemBuilder: (context, index) {
+              final doc = snapshot.data!.docs[index];
+              final seki = Seki.fromFirestore(doc);
+              final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+              final publisherId = seki.publisherId;
+
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: SekiCard(
+                  seki: seki,
+                  isDark: isDark,
+                  onBodyTap: () async {
+                    // Navigate to DeviceDetailPage with the device object
+                    final result = await Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => DeviceDetailPage(seki: seki),
+                      ),
+                    );
+                    // If device was edited, do partial refresh
+                    if (result == true) {
+                      if (_cachedDocs != null && _cachedDocs!.isNotEmpty) {
+                        _refreshPartial();
+                      } else {
+                        _loadData();
+                      }
+                    }
+                  },
+                  onBottomBarTap: () {
+                    // Navigate to ProfilePage based on owner
+                    if (publisherId == currentUserId) {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => ProfilePage(user: widget.user),
+                        ),
+                      );
+                    } else {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => OtherUserProfilePage(publisherId: publisherId),
+                        ),
+                      );
+                    }
+                  },
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -109,103 +469,7 @@ class _ExplorePageState extends State<ExplorePage> {
             _buildFilterBar(theme, isDark),
             const SizedBox(height: 8),
             Expanded(
-              child: FutureBuilder<QuerySnapshot>(
-                future: _dataFuture,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return Center(
-                      child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
-                      ),
-                    );
-                  }
-
-                  if (snapshot.hasError) {
-                    return Center(
-                      child: Text(
-                        'Failed to load: ${snapshot.error}',
-                        style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.7)),
-                      ),
-                    );
-                  }
-
-                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                    return RefreshIndicator(
-                      onRefresh: _loadData,
-                      color: theme.colorScheme.primary,
-                      child: SingleChildScrollView(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        child: SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.5,
-                          child: Center(
-                            child: Text(
-                              _selectedDeviceType == null
-                                  ? 'No Seki posts yet. Be the first!'
-                                  : 'No ${_selectedDeviceType} posts yet.',
-                              style: TextStyle(
-                                color: theme.colorScheme.onSurface.withOpacity(0.6),
-                                fontSize: 16,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  }
-
-                  return RefreshIndicator(
-                    onRefresh: _loadData,
-                    color: theme.colorScheme.primary,
-                    child: ListView.builder(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      itemCount: snapshot.data!.docs.length,
-                      itemBuilder: (context, index) {
-                        final doc = snapshot.data!.docs[index];
-                        final seki = Seki.fromFirestore(doc);
-                        final currentUserId = FirebaseAuth.instance.currentUser?.uid;
-                        final publisherId = seki.publisherId;
-
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: SekiCard(
-                            seki: seki,
-                            isDark: isDark,
-                          onBodyTap: () async {
-                            // Navigate to DeviceDetailPage with the device object
-                            final result = await Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => DeviceDetailPage(seki: seki),
-                              ),
-                            );
-                            // If device was edited, refresh the list
-                            if (result == true) {
-                              _loadData();
-                            }
-                          },
-                            onBottomBarTap: () {
-                              // Navigate to ProfilePage based on owner
-                              if (publisherId == currentUserId) {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (context) => ProfilePage(user: widget.user),
-                                  ),
-                                );
-                              } else {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (context) => OtherUserProfilePage(publisherId: publisherId),
-                                  ),
-                                );
-                              }
-                            },
-                          ),
-                        );
-                      },
-                    ),
-                  );
-                },
-              ),
+              child: _buildContent(theme, isDark),
             ),
           ],
         ),
