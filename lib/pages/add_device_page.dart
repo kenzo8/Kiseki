@@ -724,208 +724,345 @@ class _AddDevicePageState extends State<AddDevicePage> {
                           ],
                         ),
                         const SizedBox(height: 36),
-                        // Precise Mode Toggle
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                'Precise Mode',
-                                style: TextStyle(
-                                  color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.9),
-                                  fontSize: 16,
-                                ),
-                              ),
-                            ),
-                            Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(20),
-                                boxShadow: _isPreciseMode && !isDark
-                                    ? [
-                                        BoxShadow(
-                                          color: theme.colorScheme.primary.withOpacity(0.3),
-                                          blurRadius: 8,
-                                          spreadRadius: 1,
-                                        ),
-                                      ]
-                                    : null,
-                              ),
-                              child: Switch(
-                                value: _isPreciseMode,
-                                onChanged: (value) {
-                                  setState(() {
-                                    _isPreciseMode = value;
-                                    if (value) {
-                                      // When enabling precise mode, initialize dates from year range
-                                      if (_startDate == null) {
-                                        _startDate = DateTime(_yearRange.start.toInt(), 1, 1);
-                                      }
-                                      if (!_stillUsing && _endDate == null) {
-                                        _endDate = DateTime(_yearRange.end.toInt(), 12, 31);
-                                      }
-                                    } else {
-                                      // When disabling precise mode, sync year range from dates
-                                      if (_startDate != null) {
-                                        _yearRange = RangeValues(
-                                          _startDate!.year.toDouble(),
-                                          _stillUsing ? DateTime.now().year.toDouble() : (_endDate?.year.toDouble() ?? DateTime.now().year.toDouble()),
-                                        );
-                                      }
-                                    }
-                                  });
-                                },
-                                activeColor: isDark ? Colors.white : theme.colorScheme.primary,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
-                        // Animated transition between Year Range Slider and Date Range UI
-                        AnimatedCrossFade(
-                          duration: const Duration(milliseconds: 300),
-                          crossFadeState: _isPreciseMode
-                              ? CrossFadeState.showSecond
-                              : CrossFadeState.showFirst,
-                          firstChild: // Year Range Slider
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                        // 构造时间区 (Construction Time Section)
+                        Container(
+                          decoration: BoxDecoration(
+                            color: isDark 
+                                ? theme.colorScheme.surface.withOpacity(0.4)
+                                : Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: isDark
+                                ? null
+                                : [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.05),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                          ),
+                          child: Stack(
                             children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    'Year Range',
-                                    style: TextStyle(
-                                      color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.9),
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  Text(
-                                    _stillUsing
-                                        ? '${_yearRange.start.toInt()} - Present'
-                                        : '${_yearRange.start.toInt()} - ${_yearRange.end.toInt()}',
-                                    style: TextStyle(
-                                      color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.7),
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              RangeSlider(
-                                values: _yearRange,
-                                min: 2010,
-                                max: DateTime.now().year.toDouble(),
-                                divisions: DateTime.now().year - 2010,
-                                labels: RangeLabels(
-                                  _yearRange.start.toInt().toString(),
-                                  _stillUsing
-                                      ? 'Present'
-                                      : _yearRange.end.toInt().toString(),
+                              // Clock icon background - subtle
+                              Positioned(
+                                top: 12,
+                                right: 12,
+                                child: Icon(
+                                  Icons.access_time,
+                                  size: 40,
+                                  color: _categoryColor.withOpacity(0.08),
                                 ),
-                                activeColor: isDark ? Colors.white : theme.colorScheme.primary,
-                                inactiveColor: (isDark ? Colors.white : theme.colorScheme.primary).withOpacity(0.3),
-                                onChanged: _stillUsing
-                                    ? (range) {
+                              ),
+                              // Content
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    // Label
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.schedule_outlined,
+                                          size: 16,
+                                          color: isDark
+                                              ? theme.colorScheme.onSurface.withOpacity(0.5)
+                                              : Colors.grey.shade600,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          'TIME',
+                                          style: TextStyle(
+                                            color: isDark
+                                                ? theme.colorScheme.onSurface.withOpacity(0.5)
+                                                : Colors.grey.shade600,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                            letterSpacing: 1.2,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 20),
+                                    // Precise Mode Toggle
+                                    InkWell(
+                                      onTap: () {
                                         setState(() {
-                                          _yearRange = RangeValues(range.start, DateTime.now().year.toDouble());
-                                        });
-                                      }
-                                    : (range) {
-                                        setState(() {
-                                          _yearRange = range;
+                                          _isPreciseMode = !_isPreciseMode;
+                                          if (_isPreciseMode) {
+                                            if (_startDate == null) {
+                                              _startDate = DateTime(_yearRange.start.toInt(), 1, 1);
+                                            }
+                                            if (!_stillUsing && _endDate == null) {
+                                              _endDate = DateTime(_yearRange.end.toInt(), 12, 31);
+                                            }
+                                          } else {
+                                            if (_startDate != null) {
+                                              _yearRange = RangeValues(
+                                                _startDate!.year.toDouble(),
+                                                _stillUsing ? DateTime.now().year.toDouble() : (_endDate?.year.toDouble() ?? DateTime.now().year.toDouble()),
+                                              );
+                                            }
+                                          }
                                         });
                                       },
-                              ),
-                            ],
-                          ),
-                          secondChild: // Date Range UI
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Date Range',
-                                style: TextStyle(
-                                  color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.9),
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                decoration: BoxDecoration(
-                                  color: (isDark ? Colors.white : Colors.black).withOpacity(0.06),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Row(
-                                  children: [
-                                    // Calendar Icon Prefix
-                                    Icon(
-                                      Icons.calendar_today,
-                                      size: 20,
-                                      color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.7),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    // Start Date Button
-                                    Expanded(
-                                      child: InkWell(
-                                        onTap: _selectStartDate,
-                                        borderRadius: BorderRadius.circular(8),
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                                          decoration: BoxDecoration(
-                                            color: (isDark ? Colors.white : Colors.black).withOpacity(0.04),
-                                            borderRadius: BorderRadius.circular(8),
-                                          ),
-                                          child: Text(
-                                            _startDate != null
-                                                ? '${_startDate!.year}/${_startDate!.month}/${_startDate!.day}'
-                                                : 'Start Date',
-                                            style: TextStyle(
-                                              color: (isDark ? Colors.white : theme.colorScheme.onSurface),
-                                              fontSize: 14,
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(vertical: 4),
+                                        child: Row(
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                'Precise Mode',
+                                                style: TextStyle(
+                                                  color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.9),
+                                                  fontSize: 16,
+                                                ),
+                                              ),
                                             ),
-                                            textAlign: TextAlign.center,
-                                          ),
+                                            Checkbox(
+                                              value: _isPreciseMode,
+                                              onChanged: (value) {
+                                                setState(() {
+                                                  _isPreciseMode = value ?? false;
+                                                  if (_isPreciseMode) {
+                                                    if (_startDate == null) {
+                                                      _startDate = DateTime(_yearRange.start.toInt(), 1, 1);
+                                                    }
+                                                    if (!_stillUsing && _endDate == null) {
+                                                      _endDate = DateTime(_yearRange.end.toInt(), 12, 31);
+                                                    }
+                                                  } else {
+                                                    if (_startDate != null) {
+                                                      _yearRange = RangeValues(
+                                                        _startDate!.year.toDouble(),
+                                                        _stillUsing ? DateTime.now().year.toDouble() : (_endDate?.year.toDouble() ?? DateTime.now().year.toDouble()),
+                                                      );
+                                                    }
+                                                  }
+                                                });
+                                              },
+                                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                              activeColor: isDark ? Colors.white70 : theme.colorScheme.primary,
+                                              fillColor: WidgetStateProperty.resolveWith<Color>((states) {
+                                                if (states.contains(WidgetState.selected)) {
+                                                  return (isDark ? Colors.white70 : theme.colorScheme.primary).withOpacity(0.2);
+                                                }
+                                                return Colors.transparent;
+                                              }),
+                                            ),
+                                          ],
                                         ),
                                       ),
                                     ),
-                                    const SizedBox(width: 12),
-                                    // Separator
-                                    Icon(
-                                      Icons.arrow_forward,
-                                      size: 18,
-                                      color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.5),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    // End Date Button
-                                    Expanded(
-                                      child: InkWell(
-                                        onTap: _stillUsing ? null : _selectEndDate,
-                                        borderRadius: BorderRadius.circular(8),
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                                          decoration: BoxDecoration(
-                                            color: _stillUsing
-                                                ? Colors.transparent
-                                                : (isDark ? Colors.white : Colors.black).withOpacity(0.04),
-                                            borderRadius: BorderRadius.circular(8),
+                                    const SizedBox(height: 20),
+                                    // Animated transition between Year Range Slider and Date Range UI
+                                    AnimatedCrossFade(
+                                      duration: const Duration(milliseconds: 300),
+                                      crossFadeState: _isPreciseMode
+                                          ? CrossFadeState.showSecond
+                                          : CrossFadeState.showFirst,
+                                      firstChild: // Year Range Slider
+                                      Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Text(
+                                                'Year Range',
+                                                style: TextStyle(
+                                                  color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.9),
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                              Text(
+                                                _stillUsing
+                                                    ? '${_yearRange.start.toInt()} - Present'
+                                                    : '${_yearRange.start.toInt()} - ${_yearRange.end.toInt()}',
+                                                style: TextStyle(
+                                                  color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.7),
+                                                  fontSize: 14,
+                                                ),
+                                              ),
+                                            ],
                                           ),
-                                          child: Text(
-                                            _stillUsing
-                                                ? 'Present'
-                                                : (_endDate != null
-                                                    ? '${_endDate!.year}/${_endDate!.month}/${_endDate!.day}'
-                                                    : 'End Date'),
-                                            style: TextStyle(
-                                              color: _stillUsing
-                                                  ? (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.5)
-                                                  : (isDark ? Colors.white : theme.colorScheme.onSurface),
-                                              fontSize: 14,
+                                          const SizedBox(height: 8),
+                                          RangeSlider(
+                                            values: _yearRange,
+                                            min: 2010,
+                                            max: DateTime.now().year.toDouble(),
+                                            divisions: DateTime.now().year - 2010,
+                                            labels: RangeLabels(
+                                              _yearRange.start.toInt().toString(),
+                                              _stillUsing
+                                                  ? 'Present'
+                                                  : _yearRange.end.toInt().toString(),
                                             ),
-                                            textAlign: TextAlign.center,
+                                            activeColor: isDark ? Colors.white : theme.colorScheme.primary,
+                                            inactiveColor: (isDark ? Colors.white : theme.colorScheme.primary).withOpacity(0.3),
+                                            onChanged: _stillUsing
+                                                ? (range) {
+                                                    setState(() {
+                                                      _yearRange = RangeValues(range.start, DateTime.now().year.toDouble());
+                                                    });
+                                                  }
+                                                : (range) {
+                                                    setState(() {
+                                                      _yearRange = range;
+                                                    });
+                                                  },
                                           ),
+                                        ],
+                                      ),
+                                      secondChild: // Date Range UI
+                                      Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Date Range',
+                                            style: TextStyle(
+                                              color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.9),
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 12),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                            decoration: BoxDecoration(
+                                              color: (isDark ? Colors.white : Colors.black).withOpacity(0.06),
+                                              borderRadius: BorderRadius.circular(12),
+                                            ),
+                                            child: Row(
+                                              children: [
+                                                // Calendar Icon Prefix
+                                                Icon(
+                                                  Icons.calendar_today,
+                                                  size: 20,
+                                                  color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.7),
+                                                ),
+                                                const SizedBox(width: 12),
+                                                // Start Date Button
+                                                Expanded(
+                                                  child: InkWell(
+                                                    onTap: _selectStartDate,
+                                                    borderRadius: BorderRadius.circular(8),
+                                                    child: Container(
+                                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                                      decoration: BoxDecoration(
+                                                        color: (isDark ? Colors.white : Colors.black).withOpacity(0.04),
+                                                        borderRadius: BorderRadius.circular(8),
+                                                      ),
+                                                      child: Text(
+                                                        _startDate != null
+                                                            ? '${_startDate!.year}/${_startDate!.month}/${_startDate!.day}'
+                                                            : 'Start Date',
+                                                        style: TextStyle(
+                                                          color: (isDark ? Colors.white : theme.colorScheme.onSurface),
+                                                          fontSize: 14,
+                                                        ),
+                                                        textAlign: TextAlign.center,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 12),
+                                                // Separator
+                                                Icon(
+                                                  Icons.arrow_forward,
+                                                  size: 18,
+                                                  color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.5),
+                                                ),
+                                                const SizedBox(width: 12),
+                                                // End Date Button
+                                                Expanded(
+                                                  child: InkWell(
+                                                    onTap: _stillUsing ? null : _selectEndDate,
+                                                    borderRadius: BorderRadius.circular(8),
+                                                    child: Container(
+                                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                                      decoration: BoxDecoration(
+                                                        color: _stillUsing
+                                                            ? Colors.transparent
+                                                            : (isDark ? Colors.white : Colors.black).withOpacity(0.04),
+                                                        borderRadius: BorderRadius.circular(8),
+                                                      ),
+                                                      child: Text(
+                                                        _stillUsing
+                                                            ? 'Present'
+                                                            : (_endDate != null
+                                                                ? '${_endDate!.year}/${_endDate!.month}/${_endDate!.day}'
+                                                                : 'End Date'),
+                                                        style: TextStyle(
+                                                          color: _stillUsing
+                                                              ? (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.5)
+                                                              : (isDark ? Colors.white : theme.colorScheme.onSurface),
+                                                          fontSize: 14,
+                                                        ),
+                                                        textAlign: TextAlign.center,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(height: 20),
+                                    // Still Using Toggle
+                                    InkWell(
+                                      onTap: () {
+                                        setState(() {
+                                          _stillUsing = !_stillUsing;
+                                          if (_stillUsing) {
+                                            if (_isPreciseMode) _endDate = null;
+                                            else _yearRange = RangeValues(_yearRange.start, DateTime.now().year.toDouble());
+                                          } else {
+                                            if (_isPreciseMode && _endDate == null) _endDate = DateTime.now();
+                                          }
+                                        });
+                                      },
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(vertical: 4),
+                                        child: Row(
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                'Still Using',
+                                                style: TextStyle(
+                                                  color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.9),
+                                                  fontSize: 16,
+                                                ),
+                                              ),
+                                            ),
+                                            Checkbox(
+                                              value: _stillUsing,
+                                              onChanged: (value) {
+                                                setState(() {
+                                                  _stillUsing = value ?? false;
+                                                  if (_stillUsing) {
+                                                    if (_isPreciseMode) _endDate = null;
+                                                    else _yearRange = RangeValues(_yearRange.start, DateTime.now().year.toDouble());
+                                                  } else {
+                                                    if (_isPreciseMode && _endDate == null) _endDate = DateTime.now();
+                                                  }
+                                                });
+                                              },
+                                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                              activeColor: isDark ? Colors.white70 : theme.colorScheme.primary,
+                                              fillColor: WidgetStateProperty.resolveWith<Color>((states) {
+                                                if (states.contains(WidgetState.selected)) {
+                                                  return (isDark ? Colors.white70 : theme.colorScheme.primary).withOpacity(0.2);
+                                                }
+                                                return Colors.transparent;
+                                              }),
+                                            ),
+                                          ],
                                         ),
                                       ),
                                     ),
@@ -934,55 +1071,6 @@ class _AddDevicePageState extends State<AddDevicePage> {
                               ),
                             ],
                           ),
-                        ),
-                        const SizedBox(height: 20),
-                        // Still Using Toggle
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                'Still Using',
-                                style: TextStyle(
-                                  color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.9),
-                                  fontSize: 16,
-                                ),
-                              ),
-                            ),
-                            Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(20),
-                                boxShadow: _stillUsing && !isDark
-                                    ? [
-                                        BoxShadow(
-                                          color: theme.colorScheme.primary.withOpacity(0.3),
-                                          blurRadius: 8,
-                                          spreadRadius: 1,
-                                        ),
-                                      ]
-                                    : null,
-                              ),
-                              child: Switch(
-                                value: _stillUsing,
-                                onChanged: (value) {
-                                  setState(() {
-                                    _stillUsing = value;
-                                    if (value) {
-                                      if (_isPreciseMode) {
-                                        _endDate = null;
-                                      } else {
-                                        _yearRange = RangeValues(_yearRange.start, DateTime.now().year.toDouble());
-                                      }
-                                    } else {
-                                      if (_isPreciseMode && _endDate == null) {
-                                        _endDate = DateTime.now();
-                                      }
-                                    }
-                                  });
-                                },
-                                activeColor: isDark ? Colors.white : theme.colorScheme.primary,
-                              ),
-                            ),
-                          ],
                         ),
                         const SizedBox(height: 20),
                         // Note
