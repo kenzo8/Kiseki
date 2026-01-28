@@ -577,7 +577,7 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
                       ],
                     ),
                   ),
-                  // 返回按钮 - 浮动在左上角 with glassmorphism
+                  // Back button — floating top-left with glassmorphism
                   Positioned(
                     top: 8,
                     left: 8,

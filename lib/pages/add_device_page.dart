@@ -724,7 +724,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
                           ],
                         ),
                         const SizedBox(height: 36),
-                        // 构造时间区 (Construction Time Section)
+                        // Construction Time Section
                         Container(
                           decoration: BoxDecoration(
                             color: isDark 
