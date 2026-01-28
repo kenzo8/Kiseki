@@ -128,12 +128,13 @@ class TimelineSekiItem extends StatelessWidget {
               SizedBox(
                 width: 40,
                 child: Stack(
+                  clipBehavior: Clip.none,
                   children: [
-                    // Vertical line (full height, continuous)
+                    // Vertical line (starts below icon, continuous)
                     Positioned(
                       left: 19.25, // Center of 40px width (20 - 0.75)
-                      top: 0,
-                      bottom: 0,
+                      top: 24, // Start below the icon (icon height is 24)
+                      bottom: -32.0, // Extend into padding area to connect with next item
                       child: Container(
                         width: 1.5,
                         color: isLast ? Colors.transparent : timelineColor,
