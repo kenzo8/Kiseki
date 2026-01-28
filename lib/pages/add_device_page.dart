@@ -236,13 +236,13 @@ class _AddDevicePageState extends State<AddDevicePage> {
         return 'e.g., Canon EOS R5';
       case 'Gaming':
         return 'e.g., PlayStation 5';
-      case 'Accessory':
+      case 'Keyboard':
         return 'e.g., Magic Keyboard';
-      case 'Smart Home':
+      case 'SmartHome':
         return 'e.g., HomePod mini';
       case 'VR/AR':
         return 'e.g., Apple Vision Pro';
-      case 'Gaming Peripherals':
+      case 'Mouse':
         return 'e.g., Logitech MX Master 3';
       case 'Drone':
         return 'e.g., DJI Mavic 3';
@@ -654,12 +654,18 @@ class _AddDevicePageState extends State<AddDevicePage> {
                                     color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.5),
                                   ),
                                   alignLabelWithHint: true,
-                                  prefixIcon: Padding(
-                                    padding: const EdgeInsets.only(left: 16, right: 12),
-                                    child: Icon(
-                                      _selectedIcon,
-                                      size: 24,
-                                      color: (isDark ? Colors.white : _categoryColor).withOpacity(0.8),
+                                  prefixIcon: InkWell(
+                                    onTap: () {
+                                      setState(() => _showCategoryPicker = !_showCategoryPicker);
+                                    },
+                                    borderRadius: BorderRadius.circular(24),
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(left: 16, right: 12),
+                                      child: Icon(
+                                        _selectedIcon,
+                                        size: 24,
+                                        color: (isDark ? Colors.white : _categoryColor).withOpacity(0.8),
+                                      ),
                                     ),
                                   ),
                                   enabledBorder: OutlineInputBorder(

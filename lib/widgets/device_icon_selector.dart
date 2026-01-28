@@ -26,10 +26,10 @@ const List<DeviceCategory> deviceCategories = [
   DeviceCategory(icon: Icons.headphones, label: 'Headphones', deviceType: 'Headphones'),
   DeviceCategory(icon: Icons.photo_camera, label: 'Camera', deviceType: 'Camera'),
   DeviceCategory(icon: Icons.videogame_asset, label: 'Gaming', deviceType: 'Gaming'),
-  DeviceCategory(icon: Icons.keyboard, label: 'Accessory', deviceType: 'Accessory'),
-  DeviceCategory(icon: Icons.home, label: 'Smart Home', deviceType: 'Smart Home'),
+  DeviceCategory(icon: Icons.keyboard, label: 'Keyboard', deviceType: 'Keyboard'),
+  DeviceCategory(icon: Icons.home, label: 'SmartHome', deviceType: 'SmartHome'),
   DeviceCategory(icon: Icons.view_in_ar, label: 'VR/AR', deviceType: 'VR/AR'),
-  DeviceCategory(icon: Icons.mouse, label: 'Gaming Peripherals', deviceType: 'Gaming Peripherals'),
+  DeviceCategory(icon: Icons.mouse, label: 'Mouse', deviceType: 'Mouse'),
   DeviceCategory(icon: Icons.flight_takeoff, label: 'Drone', deviceType: 'Drone'),
   DeviceCategory(icon: Icons.menu_book, label: 'e-Reader', deviceType: 'e-Reader'),
 ];
@@ -57,13 +57,13 @@ Color getCategoryColor(String deviceType) {
       return Colors.teal;
     case 'VR/AR':
       return Colors.indigo;
-    case 'Smart Home':
+    case 'SmartHome':
       return Colors.brown;
-    case 'Gaming Peripherals':
+    case 'Mouse':
       return Colors.pink;
     case 'e-Reader':
       return Colors.deepOrange;
-    case 'Accessory':
+    case 'Keyboard':
       return Colors.grey;
     default:
       return Colors.grey;

@@ -200,7 +200,7 @@ String suggestDeviceTypeFromName(String deviceName) {
     return 'Earbuds';
   }
 
-  // Smart Home
+  // SmartHome
   if (lowerName.contains('nest') ||
       lowerName.contains('echo') ||
       lowerName.contains('alexa') ||
@@ -211,7 +211,7 @@ String suggestDeviceTypeFromName(String deviceName) {
       lowerName.contains('thermostat') ||
       lowerName.contains('ring ') ||
       lowerName.contains('philips hue')) {
-    return 'Smart Home';
+    return 'SmartHome';
   }
 
   // VR/AR
@@ -226,14 +226,14 @@ String suggestDeviceTypeFromName(String deviceName) {
     return 'VR/AR';
   }
 
-  // Gaming Peripherals
+  // Mouse
   if (lowerName.contains('mouse') ||
       lowerName.contains('keyboard') ||
       lowerName.contains('hhkb') ||
       lowerName.contains('mechanical') ||
       lowerName.contains('gaming mouse') ||
       lowerName.contains('gaming keyboard')) {
-    return 'Gaming Peripherals';
+    return 'Mouse';
   }
 
   // Drone
@@ -257,11 +257,11 @@ String suggestDeviceTypeFromName(String deviceName) {
     return 'e-Reader';
   }
 
-  // Vintage/old → Accessory
+  // Vintage/old → Keyboard
   if (lowerName.contains('vintage') ||
       lowerName.contains('old') ||
       lowerName.contains('retro')) {
-    return 'Accessory';
+    return 'Keyboard';
   }
 
   return 'Laptop';
@@ -292,13 +292,13 @@ IconData deviceTypeToIcon(String deviceType) {
       return Icons.photo_camera;
     case 'Gaming':
       return Icons.videogame_asset;
-    case 'Accessory':
+    case 'Keyboard':
       return Icons.keyboard;
-    case 'Smart Home':
+    case 'SmartHome':
       return Icons.home;
     case 'VR/AR':
       return Icons.view_in_ar;
-    case 'Gaming Peripherals':
+    case 'Mouse':
       return Icons.mouse;
     case 'Drone':
       return Icons.flight_takeoff;
@@ -335,7 +335,7 @@ IconData deviceTypeToIcon(String deviceType) {
   }
 
   // Keyword fallback (order matters: more specific matches first)
-  // Check Gaming Peripherals before Gaming to avoid false matches
+  // Check Mouse before Gaming to avoid false matches
   if (lowerType.contains('peripheral') || 
       (lowerType.contains('gaming') && (lowerType.contains('mouse') || lowerType.contains('keyboard'))) ||
       lowerType.contains('mouse') || 
