@@ -790,7 +790,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
                               ),
                               // Content
                               Padding(
-                                padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+                                padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -818,7 +818,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
                                         ),
                                       ],
                                     ),
-                                    const SizedBox(height: 20),
+                                    const SizedBox(height: 14),
                                     // Exact Date Toggle
                                     InkWell(
                                       onTap: () {
@@ -890,7 +890,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
                                         ),
                                       ),
                                     ),
-                                    const SizedBox(height: 20),
+                                    const SizedBox(height: 14),
                                     // Animated transition between Year Range Slider and Date Range UI
                                     AnimatedCrossFade(
                                       duration: const Duration(milliseconds: 300),
@@ -923,7 +923,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
                                               ),
                                             ],
                                           ),
-                                          const SizedBox(height: 8),
+                                          const SizedBox(height: 6),
                                           RangeSlider(
                                             values: _yearRange,
                                             min: 2010,
@@ -963,7 +963,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
                                               fontWeight: FontWeight.w500,
                                             ),
                                           ),
-                                          const SizedBox(height: 12),
+                                          const SizedBox(height: 8),
                                           Container(
                                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                                             decoration: BoxDecoration(
@@ -1047,7 +1047,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
                                         ],
                                       ),
                                     ),
-                                    const SizedBox(height: 20),
+                                    const SizedBox(height: 14),
                                     // In Use Toggle
                                     InkWell(
                                       onTap: () {
