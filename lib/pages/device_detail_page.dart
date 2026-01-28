@@ -277,7 +277,7 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
     final isActive = seki.isPreciseMode 
         ? (seki.endTime == null) 
         : (seki.endYear == null);
-    return isActive ? 'Active' : 'Vintage';
+    return isActive ? 'Active' : 'Retired';
   }
   
   String _getPeriod(Seki seki) {
