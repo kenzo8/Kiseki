@@ -800,6 +800,13 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> with Single
           isDark: isDark,
           isLast: isLast,
           showYear: shouldShowYear[index],
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => DeviceDetailPage(seki: seki),
+              ),
+            );
+          },
         );
       },
     );

@@ -95,13 +95,11 @@ class TimelineSekiItem extends StatelessWidget {
     final deviceIconColor = categoryColor;
 
     return IntrinsicHeight(
-      child: GestureDetector(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.only(bottom: 32.0),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 32.0),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
               // Left side: Start Year/Date (Fixed width for 4-digit year or date)
               SizedBox(
                 width: 50,
@@ -169,58 +167,61 @@ class TimelineSekiItem extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 16),
-              // Right side: Content (Expanded)
+              // Right side: Content (Expanded) - Expanded hit area for tap
               Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Usage duration text (grey, small font)
-                      Text(
-                        _usageDurationText,
-                        style: TextStyle(
-                          color: yearColor,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w400,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      // Device Name (bold, larger font)
-                      Text(
-                        seki.deviceName,
-                        style: TextStyle(
-                          color: theme.colorScheme.onSurface,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          height: 1.3,
-                        ),
-                      ),
-                      // Note (regular font, subtle grey)
-                      if (seki.note.isNotEmpty) ...[
-                        const SizedBox(height: 8),
+                child: InkWell(
+                  onTap: onTap,
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Usage duration text (grey, small font)
                         Text(
-                          seki.note,
+                          _usageDurationText,
                           style: TextStyle(
-                            color: theme.colorScheme.onSurface.withOpacity(0.7),
-                            fontSize: 15,
-                            height: 1.5,
+                            color: yearColor,
+                            fontSize: 12,
                             fontWeight: FontWeight.w400,
+                            letterSpacing: 0.5,
                           ),
-                          maxLines: 4,
-                          overflow: TextOverflow.ellipsis,
                         ),
+                        const SizedBox(height: 6),
+                        // Device Name (bold, larger font)
+                        Text(
+                          seki.deviceName,
+                          style: TextStyle(
+                            color: theme.colorScheme.onSurface,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            height: 1.3,
+                          ),
+                        ),
+                        // Note (regular font, subtle grey)
+                        if (seki.note.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          Text(
+                            seki.note,
+                            style: TextStyle(
+                              color: theme.colorScheme.onSurface.withOpacity(0.7),
+                              fontSize: 15,
+                              height: 1.5,
+                              fontWeight: FontWeight.w400,
+                            ),
+                            maxLines: 4,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
                 ),
               ),
             ],
           ),
         ),
-      ),
-    );
+      );
   }
 }
