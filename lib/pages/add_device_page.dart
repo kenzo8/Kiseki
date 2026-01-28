@@ -784,7 +784,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
                                       ],
                                     ),
                                     const SizedBox(height: 20),
-                                    // Precise Mode Toggle
+                                    // Exact Date Toggle
                                     InkWell(
                                       onTap: () {
                                         setState(() {
@@ -813,7 +813,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
                                           children: [
                                             Expanded(
                                               child: Text(
-                                                'Precise Mode',
+                                                'Exact Date',
                                                 style: TextStyle(
                                                   color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.9),
                                                   fontSize: 16,
@@ -862,7 +862,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
                                       crossFadeState: _isPreciseMode
                                           ? CrossFadeState.showSecond
                                           : CrossFadeState.showFirst,
-                                      firstChild: // Year Range Slider
+                                      firstChild: // Period (Year Range)
                                       Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
@@ -870,7 +870,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
                                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                             children: [
                                               Text(
-                                                'Year Range',
+                                                'Period',
                                                 style: TextStyle(
                                                   color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.9),
                                                   fontSize: 16,
@@ -916,12 +916,12 @@ class _AddDevicePageState extends State<AddDevicePage> {
                                           ),
                                         ],
                                       ),
-                                      secondChild: // Date Range UI
+                                      secondChild: // Date Range UI (Period)
                                       Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            'Date Range',
+                                            'Period',
                                             style: TextStyle(
                                               color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.9),
                                               fontSize: 16,
@@ -1013,7 +1013,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
                                       ),
                                     ),
                                     const SizedBox(height: 20),
-                                    // Still Using Toggle
+                                    // In Use Toggle
                                     InkWell(
                                       onTap: () {
                                         setState(() {
@@ -1033,7 +1033,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
                                           children: [
                                             Expanded(
                                               child: Text(
-                                                'Still Using',
+                                                'In Use',
                                                 style: TextStyle(
                                                   color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.9),
                                                   fontSize: 16,
