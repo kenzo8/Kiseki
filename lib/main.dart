@@ -7,6 +7,7 @@ import 'firebase_options.dart';
 import 'pages/explore_page.dart';
 import 'pages/profile_page.dart';
 import 'pages/add_device_page.dart';
+import 'pages/login_page.dart';
 import 'services/system_ui_service.dart';
 
 // Global theme state
@@ -114,6 +115,13 @@ class _MainNavigationContentState extends State<_MainNavigationContent> {
   final ValueNotifier<bool> _exploreRefreshNotifier = ValueNotifier<bool>(false);
 
   void _showSendSekiBottomSheet() async {
+    // Intercept at plus tap: require login before opening add-device sheet
+    if (widget.user == null) {
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (context) => const LoginPage()),
+      );
+      return;
+    }
     final result = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
