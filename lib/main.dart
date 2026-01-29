@@ -161,7 +161,10 @@ class _MainNavigationContentState extends State<_MainNavigationContent> {
         index: _currentIndex,
         children: [
           ExplorePage(refreshNotifier: _exploreRefreshNotifier, user: widget.user),
-          ProfilePage(user: widget.user),
+          ProfilePage(
+            user: widget.user,
+            onGoToExplore: () => setState(() => _currentIndex = 0),
+          ),
         ],
       ),
       bottomNavigationBar: Container(

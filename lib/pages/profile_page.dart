@@ -53,8 +53,9 @@ class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
 
 class ProfilePage extends StatefulWidget {
   final User? user;
+  final VoidCallback? onGoToExplore;
 
-  const ProfilePage({super.key, required this.user});
+  const ProfilePage({super.key, required this.user, this.onGoToExplore});
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
@@ -684,7 +685,7 @@ class _ProfilePageState extends State<ProfilePage>
                   // Owned tab
                   _OwnedTab(theme: theme, isDark: isDark),
                   // Wants tab
-                  _WantsTab(theme: theme, isDark: isDark),
+                  _WantsTab(theme: theme, isDark: isDark, onGoToExplore: widget.onGoToExplore),
                 ],
               ),
             );
@@ -872,8 +873,9 @@ class _OwnedTabState extends State<_OwnedTab> with AutomaticKeepAliveClientMixin
 class _WantsTab extends StatefulWidget {
   final ThemeData theme;
   final bool isDark;
+  final VoidCallback? onGoToExplore;
 
-  const _WantsTab({required this.theme, required this.isDark});
+  const _WantsTab({required this.theme, required this.isDark, this.onGoToExplore});
 
   @override
   State<_WantsTab> createState() => _WantsTabState();
@@ -965,7 +967,7 @@ class _WantsTabState extends State<_WantsTab> with AutomaticKeepAliveClientMixin
 
         final wants = _dataService.cachedWants ?? [];
         if (wants.isEmpty) {
-          return _buildEmptyState(context, widget.theme);
+          return _buildEmptyState(context, widget.theme, onGoToExplore: widget.onGoToExplore);
         }
 
         return RefreshIndicator(
@@ -1052,7 +1054,7 @@ class _WantsTabState extends State<_WantsTab> with AutomaticKeepAliveClientMixin
     );
   }
 
-  Widget _buildEmptyState(BuildContext context, ThemeData theme) {
+  Widget _buildEmptyState(BuildContext context, ThemeData theme, {VoidCallback? onGoToExplore}) {
     return RefreshIndicator(
       onRefresh: () => _dataService.refresh(),
       color: theme.colorScheme.primary,
@@ -1080,6 +1082,17 @@ class _WantsTabState extends State<_WantsTab> with AutomaticKeepAliveClientMixin
                       fontSize: 16,
                     ),
                   ),
+                  if (onGoToExplore != null) ...[
+                    const SizedBox(height: 24),
+                    FilledButton.icon(
+                      onPressed: onGoToExplore,
+                      icon: const Icon(Icons.explore, size: 20),
+                      label: const Text('Back to Explore'),
+                      style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
