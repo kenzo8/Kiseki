@@ -69,25 +69,30 @@ class _LoginPageState extends State<LoginPage> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    OutlinedButton.icon(
+                    FilledButton.icon(
                       onPressed: _isLoading ? null : _handleGoogleSignIn,
-                      icon: Icon(Icons.g_mobiledata_rounded, size: 20, color: _isLoading ? const Color(0xFF9CA3AF) : const Color(0xFF1A1A1A)),
+                      icon: Icon(
+                        Icons.g_mobiledata_rounded,
+                        size: 20,
+                        color: _isLoading ? const Color(0xFF9CA3AF) : Colors.white,
+                      ),
                       label: Text(
                         'Continue with Google',
                         style: TextStyle(
                           fontSize: 15,
-                          color: _isLoading ? const Color(0xFF9CA3AF) : const Color(0xFF1A1A1A),
+                          color: _isLoading ? const Color(0xFF9CA3AF) : Colors.white,
                         ),
                       ),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF1A1A1A),
-                        side: const BorderSide(color: Color(0xFFE5E7EB)),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: _isLoading ? const Color(0xFFE5E7EB) : const Color(0xFF1A1A1A),
+                        foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        elevation: 0,
                       ),
                     ),
                     const SizedBox(height: 12),
-                    OutlinedButton(
+                    FilledButton(
                       onPressed: _isLoading
                           ? null
                           : () {
@@ -97,11 +102,12 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                               );
                             },
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF1A1A1A),
-                        side: const BorderSide(color: Color(0xFFE5E7EB)),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: _isLoading ? const Color(0xFFE5E7EB) : const Color(0xFF6B7280),
+                        foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        elevation: 0,
                       ),
                       child: const Text(
                         'Sign up',
@@ -109,7 +115,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    OutlinedButton(
+                    FilledButton(
                       onPressed: _isLoading
                           ? null
                           : () {
@@ -119,11 +125,13 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                               );
                             },
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF1A1A1A),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: _isLoading ? const Color(0xFF9CA3AF) : const Color(0xFF1A1A1A),
                         side: const BorderSide(color: Color(0xFFE5E7EB)),
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        elevation: 0,
                       ),
                       child: const Text(
                         'Log in',
