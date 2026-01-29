@@ -1,9 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
 
   // Get current user
   User? get currentUser => _auth.currentUser;
@@ -119,6 +121,44 @@ class AuthService {
       throw _handleAuthException(e);
     } catch (e) {
       throw 'An unexpected error occurred: $e';
+    }
+  }
+
+  // Sign in with Google
+  Future<UserCredential?> signInWithGoogle() async {
+    try {
+      final googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) return null;
+
+      final googleAuth = await googleUser.authentication;
+      final credential = GoogleAuthProvider.credential(
+        idToken: googleAuth.idToken,
+        accessToken: googleAuth.accessToken,
+      );
+
+      final userCredential = await _auth.signInWithCredential(credential);
+      final user = userCredential.user;
+      if (user == null) return userCredential;
+
+      // Create or update Firestore user doc for Google sign-in
+      final userRef = _firestore.collection('users').doc(user.uid);
+      final doc = await userRef.get();
+      if (!doc.exists) {
+        final username = user.displayName?.isNotEmpty == true
+            ? user.displayName!
+            : generateDefaultUsername(user.email ?? '');
+        await userRef.set({
+          'uid': user.uid,
+          'username': username,
+          'email': user.email ?? '',
+          'createdAt': DateTime.now(),
+        });
+      }
+      return userCredential;
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
+    } catch (e) {
+      throw 'Google sign-in failed: $e';
     }
   }
 
