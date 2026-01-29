@@ -27,30 +27,25 @@ class ImportExportService {
         final deviceName = _escapeCsvField(device.deviceName);
         final deviceType = _escapeCsvField(device.deviceType);
         
-        // Unified date format: use precise date if available, otherwise convert from year
+        // ISO-style date for compatibility (YYYY-MM-DD or YYYY for year-only)
         String startDate;
         if (device.startTime != null) {
           final date = device.startTime!.toDate();
-          startDate = '${date.year}/${date.month}/${date.day}';
+          startDate = '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
         } else {
-          // Convert year to date format: year/-/-
-          startDate = '${device.startYear}/-/-';
+          startDate = '${device.startYear}';
         }
-        
         String endDate;
         if (device.endTime != null) {
           final date = device.endTime!.toDate();
-          endDate = '${date.year}/${date.month}/${date.day}';
+          endDate = '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
         } else if (device.endYear != null) {
-          // Convert year to date format: year/-/-
-          endDate = '${device.endYear}/-/-';
+          endDate = '${device.endYear}';
         } else {
           endDate = 'Present';
         }
-        
         final note = _escapeCsvField(device.note);
-        final createdAt = device.createdAt.toDate().toString();
-        
+        final createdAt = device.createdAt.toDate().toIso8601String();
         csvBuffer.writeln('$deviceName,$deviceType,$startDate,$endDate,$note,$createdAt');
       }
       
@@ -71,8 +66,13 @@ class ImportExportService {
   static Future<String?> exportToXLSX(List<Seki> devices) async {
     try {
       final excel = Excel.createExcel();
-      excel.delete('Sheet1'); // Delete default sheet
+      // Create Devices sheet first, then remove default sheet(s) so only Devices remains
       final sheet = excel['Devices'];
+      for (final name in excel.tables.keys.toList()) {
+        if (name != 'Devices') {
+          excel.delete(name);
+        }
+      }
       
       // Add header row using TextCellValue
       sheet.appendRow([
@@ -99,31 +99,25 @@ class ImportExportService {
         debugPrint('Header styling not available: $e');
       }
       
-      // Add data rows
+      // Add data rows - ISO date format for compatibility
       for (final device in devices) {
-        // Unified date format: use precise date if available, otherwise convert from year
         String startDate;
         if (device.startTime != null) {
           final date = device.startTime!.toDate();
-          startDate = '${date.year}/${date.month}/${date.day}';
+          startDate = '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
         } else {
-          // Convert year to date format: year/-/-
-          startDate = '${device.startYear}/-/-';
+          startDate = '${device.startYear}';
         }
-        
         String endDate;
         if (device.endTime != null) {
           final date = device.endTime!.toDate();
-          endDate = '${date.year}/${date.month}/${date.day}';
+          endDate = '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
         } else if (device.endYear != null) {
-          // Convert year to date format: year/-/-
-          endDate = '${device.endYear}/-/-';
+          endDate = '${device.endYear}';
         } else {
           endDate = 'Present';
         }
-        
-        final createdAt = device.createdAt.toDate().toString();
-        
+        final createdAt = device.createdAt.toDate().toIso8601String();
         sheet.appendRow([
           TextCellValue(device.deviceName),
           TextCellValue(device.deviceType),
@@ -263,91 +257,42 @@ class ImportExportService {
             continue;
           }
           
-          // Unified date parsing - always use precise mode
+          // Unified date parsing with time compatibility (ISO, YYYY-MM-DD, Excel serial, year-only)
           int startYear;
           int? endYear;
           Timestamp? startTime;
           Timestamp? endTime;
           
-          try {
-            // Parse start date
-            if (startDateStr.isEmpty) {
-              failCount++;
-              errors.add('Row ${i + 2}: Start date cannot be empty');
-              continue;
-            }
-            
-            // Try parsing as date (YYYY/MM/DD), year with dashes (YYYY/-/-), or year (YYYY)
-            final startParts = startDateStr.split('/');
-            if (startParts.length == 3) {
-              // Check if it's YYYY/-/- format
-              if (startParts[1] == '-' && startParts[2] == '-') {
-                // Year format: YYYY/-/-
-                startYear = int.parse(startParts[0]);
-                startTime = Timestamp.fromDate(DateTime(startYear, 1, 1));
-              } else {
-                // Date format: YYYY/MM/DD
-                startYear = int.parse(startParts[0]);
-                final startMonth = int.parse(startParts[1]);
-                final startDay = int.parse(startParts[2]);
-                startTime = Timestamp.fromDate(DateTime(startYear, startMonth, startDay));
-              }
-            } else if (startParts.length == 1) {
-              // Year format: YYYY
-              startYear = int.parse(startParts[0]);
-              startTime = Timestamp.fromDate(DateTime(startYear, 1, 1));
-            } else {
-              throw Exception('Invalid start date format');
-            }
-            
-            // Parse end date
-            if (endDateStr.isEmpty || endDateStr == 'Present') {
-              endTime = null;
-              endYear = null;
-            } else {
-              final endParts = endDateStr.split('/');
-              if (endParts.length == 3) {
-                // Check if it's YYYY/-/- format
-                if (endParts[1] == '-' && endParts[2] == '-') {
-                  // Year format: YYYY/-/-
-                  endYear = int.parse(endParts[0]);
-                  endTime = Timestamp.fromDate(DateTime(endYear, 12, 31));
-                } else {
-                  // Date format: YYYY/MM/DD
-                  endYear = int.parse(endParts[0]);
-                  final endMonth = int.parse(endParts[1]);
-                  final endDay = int.parse(endParts[2]);
-                  endTime = Timestamp.fromDate(DateTime(endYear, endMonth, endDay));
-                }
-              } else if (endParts.length == 1) {
-                // Year format: YYYY
-                endYear = int.parse(endParts[0]);
-                endTime = Timestamp.fromDate(DateTime(endYear, 12, 31));
-              } else {
-                throw Exception('Invalid end date format');
-              }
-            }
-          } catch (e) {
+          final startDt = _parseDateString(startDateStr, forEndDate: false);
+          if (startDt == null) {
             failCount++;
-            errors.add('Row ${i + 2}: Date parsing error - $e');
+            errors.add(startDateStr.isEmpty
+                ? 'Row ${i + 2}: Start date cannot be empty'
+                : 'Row ${i + 2}: Invalid start date format: $startDateStr');
             continue;
           }
-          
-          // Parse Created At - use provided timestamp or default to current time
-          dynamic createdAt;
-          if (createdAtStr.isNotEmpty) {
-            try {
-              // Try to parse ISO 8601 format (e.g., "2020-03-15 10:30:00.000")
-              final parsedDate = DateTime.parse(createdAtStr);
-              createdAt = Timestamp.fromDate(parsedDate);
-            } catch (e) {
-              // If parsing fails, use server timestamp
-              createdAt = FieldValue.serverTimestamp();
-            }
+          startYear = startDt.year;
+          startTime = Timestamp.fromDate(startDt);
+
+          if (endDateStr.isEmpty || endDateStr.trim().toLowerCase() == 'present') {
+            endTime = null;
+            endYear = null;
           } else {
-            // Empty or not provided, use server timestamp
-            createdAt = FieldValue.serverTimestamp();
+            final endDt = _parseDateString(endDateStr, forEndDate: true);
+            if (endDt == null) {
+              failCount++;
+              errors.add('Row ${i + 2}: Invalid end date format: $endDateStr');
+              continue;
+            }
+            endYear = endDt.year;
+            endTime = Timestamp.fromDate(endDt);
           }
+
+          dynamic createdAt;
+          final createdAtParsed = _parseCreatedAtString(createdAtStr);
+          createdAt = createdAtParsed != null
+              ? Timestamp.fromDate(createdAtParsed)
+              : FieldValue.serverTimestamp();
           
           // Create device data - always use precise mode
           final Map<String, dynamic> deviceData = {
@@ -462,79 +407,42 @@ class ImportExportService {
             continue;
           }
 
-          // Unified date parsing - same logic as CSV import
+          // Unified date parsing with time compatibility (ISO, Excel serial, year-only)
           int startYear;
           int? endYear;
           Timestamp? startTime;
           Timestamp? endTime;
 
-          try {
-            // Parse start date
-            if (startDateStr.isEmpty) {
-              failCount++;
-              errors.add('Row ${i + 1}: Start date cannot be empty');
-              continue;
-            }
-
-            final startParts = startDateStr.split('/');
-            if (startParts.length == 3) {
-              if (startParts[1] == '-' && startParts[2] == '-') {
-                startYear = int.parse(startParts[0]);
-                startTime = Timestamp.fromDate(DateTime(startYear, 1, 1));
-              } else {
-                startYear = int.parse(startParts[0]);
-                final startMonth = int.parse(startParts[1]);
-                final startDay = int.parse(startParts[2]);
-                startTime = Timestamp.fromDate(DateTime(startYear, startMonth, startDay));
-              }
-            } else if (startParts.length == 1) {
-              startYear = int.parse(startParts[0]);
-              startTime = Timestamp.fromDate(DateTime(startYear, 1, 1));
-            } else {
-              throw Exception('Invalid start date format');
-            }
-
-            // Parse end date
-            if (endDateStr.isEmpty || endDateStr == 'Present') {
-              endTime = null;
-              endYear = null;
-            } else {
-              final endParts = endDateStr.split('/');
-              if (endParts.length == 3) {
-                if (endParts[1] == '-' && endParts[2] == '-') {
-                  endYear = int.parse(endParts[0]);
-                  endTime = Timestamp.fromDate(DateTime(endYear, 12, 31));
-                } else {
-                  endYear = int.parse(endParts[0]);
-                  final endMonth = int.parse(endParts[1]);
-                  final endDay = int.parse(endParts[2]);
-                  endTime = Timestamp.fromDate(DateTime(endYear, endMonth, endDay));
-                }
-              } else if (endParts.length == 1) {
-                endYear = int.parse(endParts[0]);
-                endTime = Timestamp.fromDate(DateTime(endYear, 12, 31));
-              } else {
-                throw Exception('Invalid end date format');
-              }
-            }
-          } catch (e) {
+          final startDt = _parseDateString(startDateStr, forEndDate: false);
+          if (startDt == null) {
             failCount++;
-            errors.add('Row ${i + 1}: Date parsing error - $e');
+            errors.add(startDateStr.isEmpty
+                ? 'Row ${i + 1}: Start date cannot be empty'
+                : 'Row ${i + 1}: Invalid start date format: $startDateStr');
             continue;
           }
+          startYear = startDt.year;
+          startTime = Timestamp.fromDate(startDt);
 
-          // Parse Created At
-          dynamic createdAt;
-          if (createdAtStr.isNotEmpty) {
-            try {
-              final parsedDate = DateTime.parse(createdAtStr);
-              createdAt = Timestamp.fromDate(parsedDate);
-            } catch (e) {
-              createdAt = FieldValue.serverTimestamp();
-            }
+          if (endDateStr.isEmpty || endDateStr.trim().toLowerCase() == 'present') {
+            endTime = null;
+            endYear = null;
           } else {
-            createdAt = FieldValue.serverTimestamp();
+            final endDt = _parseDateString(endDateStr, forEndDate: true);
+            if (endDt == null) {
+              failCount++;
+              errors.add('Row ${i + 1}: Invalid end date format: $endDateStr');
+              continue;
+            }
+            endYear = endDt.year;
+            endTime = Timestamp.fromDate(endDt);
           }
+
+          dynamic createdAt;
+          final createdAtParsed = _parseCreatedAtString(createdAtStr);
+          createdAt = createdAtParsed != null
+              ? Timestamp.fromDate(createdAtParsed)
+              : FieldValue.serverTimestamp();
 
           // Create device data
           final Map<String, dynamic> deviceData = {
@@ -579,6 +487,84 @@ class ImportExportService {
     } else {
       return await importFromCSV(filePath);
     }
+  }
+
+  /// Parse date string with multiple format compatibility (ISO, YYYY/MM/DD, YYYY-MM-DD, Excel serial, year-only).
+  /// [forEndDate] true: year-only becomes Dec 31; false: year-only becomes Jan 1.
+  static DateTime? _parseDateString(String s, {bool forEndDate = false}) {
+    final raw = s.trim();
+    if (raw.isEmpty) return null;
+    // Excel serial number (1 = 1900-01-01; fractional part = time of day)
+    final serial = double.tryParse(raw);
+    if (serial != null && serial >= 1 && serial < 300000) {
+      final excelEpoch = DateTime(1899, 12, 31);
+      final days = serial.floor();
+      final fraction = serial - days;
+      final duration = Duration(
+        days: days,
+        microseconds: (fraction * 24 * 60 * 60 * 1000000).round(),
+      );
+      return excelEpoch.add(duration);
+    }
+    // DateTime.parse handles ISO 8601 and many formats
+    try {
+      final dt = DateTime.parse(raw);
+      if (dt.year > 1900 && dt.year < 2100) return dt;
+    } catch (_) {}
+    // YYYY/MM/DD or YYYY/-/- or YYYY
+    final slashParts = raw.split('/');
+    if (slashParts.length == 3) {
+      final y = int.tryParse(slashParts[0].trim());
+      if (y == null) return null;
+      if (slashParts[1].trim() == '-' && slashParts[2].trim() == '-') {
+        return forEndDate ? DateTime(y, 12, 31) : DateTime(y, 1, 1);
+      }
+      final m = int.tryParse(slashParts[1].trim());
+      final d = int.tryParse(slashParts[2].trim());
+      if (m != null && d != null && m >= 1 && m <= 12 && d >= 1 && d <= 31) {
+        return DateTime(y, m, d);
+      }
+    } else if (slashParts.length == 1) {
+      final y = int.tryParse(slashParts[0].trim());
+      if (y != null && y > 1900 && y < 2100) {
+        return forEndDate ? DateTime(y, 12, 31) : DateTime(y, 1, 1);
+      }
+    }
+    // YYYY-MM-DD or YYYY.MM.DD
+    final dashParts = raw.split(RegExp(r'[-.]'));
+    if (dashParts.length == 3) {
+      final y = int.tryParse(dashParts[0].trim());
+      final m = int.tryParse(dashParts[1].trim());
+      final d = int.tryParse(dashParts[2].trim());
+      if (y != null && m != null && d != null && y > 1900 && y < 2100 && m >= 1 && m <= 12 && d >= 1 && d <= 31) {
+        return DateTime(y, m, d);
+      }
+      if (y != null && dashParts[1].trim() == '-' && dashParts[2].trim() == '-') {
+        return forEndDate ? DateTime(y, 12, 31) : DateTime(y, 1, 1);
+      }
+    }
+    return null;
+  }
+
+  /// Parse Created At string (ISO 8601, date-only, Excel serial).
+  static DateTime? _parseCreatedAtString(String s) {
+    final t = s.trim();
+    if (t.isEmpty) return null;
+    final serial = double.tryParse(t);
+    if (serial != null && serial >= 1 && serial < 300000) {
+      final excelEpoch = DateTime(1899, 12, 31);
+      final days = serial.floor();
+      final fraction = serial - days;
+      final duration = Duration(
+        days: days,
+        microseconds: (fraction * 24 * 60 * 60 * 1000000).round(),
+      );
+      return excelEpoch.add(duration);
+    }
+    try {
+      return DateTime.parse(t);
+    } catch (_) {}
+    return _parseDateString(t, forEndDate: false);
   }
 
   /// Get cell value as string from Excel row
