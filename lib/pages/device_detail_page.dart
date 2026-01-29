@@ -147,8 +147,8 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
 
         if (querySnapshot.docs.isNotEmpty) {
           await querySnapshot.docs.first.reference.delete();
-          // Refresh ProfileDataService to update want list immediately
-          ProfileDataService.instance.refresh();
+          // Optimistic update: remove from cache so profile page list refreshes immediately
+          ProfileDataService.instance.removeWantByDeviceName(widget.seki.deviceName);
         }
 
         if (mounted) {
@@ -223,8 +223,7 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
 
       if (querySnapshot.docs.isNotEmpty) {
         await querySnapshot.docs.first.reference.delete();
-        // Refresh ProfileDataService to update want list immediately
-        ProfileDataService.instance.refresh();
+        ProfileDataService.instance.removeWantByDeviceName(widget.seki.deviceName);
       }
 
       if (mounted && _isWantingDevice == true) {

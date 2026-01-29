@@ -105,9 +105,24 @@ class ProfileDataService extends ChangeNotifier {
     final userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId == null) return;
 
-    // Force refresh by re-initializing
+    // Clear cache and notify so UI doesn't show stale data until new stream emits
     _disposeSubscriptions();
+    _cachedSekis = null;
+    _cachedWants = null;
+    _cachedUserData = null;
+    notifyListeners();
     initialize(userId);
+  }
+
+  /// Optimistic update: remove a want from cache by device name (e.g. when user cancels want).
+  /// Call this so the profile page list updates immediately without waiting for Firestore.
+  void removeWantByDeviceName(String deviceName) {
+    if (_cachedWants == null) return;
+    final before = _cachedWants!.length;
+    _cachedWants = _cachedWants!.where((w) => w.deviceName != deviceName).toList();
+    if (_cachedWants!.length != before) {
+      notifyListeners();
+    }
   }
 
   /// Clear cache (useful when user logs out)
