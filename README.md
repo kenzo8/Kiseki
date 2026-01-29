@@ -2,6 +2,10 @@
 
 A new Flutter project.
 
+## App size optimization
+
+Android R8 code shrinking and resource shrinking are enabled. See [BUILD_OPTIMIZATION.md](BUILD_OPTIMIZATION.md) for recommended build commands and details.
+
 ## Getting Started
 
 This project is a starting point for a Flutter application.
