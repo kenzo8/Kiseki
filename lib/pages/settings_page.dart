@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -22,6 +23,15 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _isExporting = false;
   bool _isImporting = false;
   bool _isDeletingAccount = false;
+  PackageInfo? _packageInfo;
+
+  @override
+  void initState() {
+    super.initState();
+    PackageInfo.fromPlatform().then((info) {
+      if (mounted) setState(() => _packageInfo = info);
+    });
+  }
 
   Future<void> _handleExport() async {
     final currentUser = FirebaseAuth.instance.currentUser;
@@ -448,6 +458,19 @@ class _SettingsPageState extends State<SettingsPage> {
           child: ListView(
             padding: const EdgeInsets.all(16.0),
             children: [
+              // Current account (when logged in)
+              if (FirebaseAuth.instance.currentUser?.email != null) ...[
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Text(
+                    'Logged in as ${FirebaseAuth.instance.currentUser!.email}',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurface.withOpacity(0.7),
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ],
               Builder(
                 builder: (context) {
                   final tileStyle = TextStyle(
@@ -529,6 +552,48 @@ class _SettingsPageState extends State<SettingsPage> {
                         ),
                       ),
                       const SizedBox(height: 12),
+                      // Terms of Service
+                      Card(
+                        color: theme.colorScheme.surface.withOpacity(0.1),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: ListTile(
+                          contentPadding: tilePadding,
+                          leading: Icon(Icons.description_outlined, color: leadingColor, size: 24),
+                          title: Text('Terms of Service', style: tileStyle),
+                          trailing: Icon(Icons.open_in_new, color: leadingColor.withOpacity(0.6), size: 20),
+                          onTap: () async {
+                            final uri = Uri.parse('https://kenzo8.github.io/kien-privacy/terms');
+                            if (await canLaunchUrl(uri)) {
+                              await launchUrl(uri, mode: LaunchMode.externalApplication);
+                            }
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      // Feedback / Contact
+                      Card(
+                        color: theme.colorScheme.surface.withOpacity(0.1),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: ListTile(
+                          contentPadding: tilePadding,
+                          leading: Icon(Icons.feedback_outlined, color: leadingColor, size: 24),
+                          title: Text('Feedback & Support', style: tileStyle),
+                          trailing: Icon(Icons.open_in_new, color: leadingColor.withOpacity(0.6), size: 20),
+                          onTap: () async {
+                            final uri = Uri.parse('mailto:support@example.com?subject=Kien%20App%20Feedback');
+                            if (await canLaunchUrl(uri)) {
+                              await launchUrl(uri, mode: LaunchMode.externalApplication);
+                            }
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 12),
                       // Logout
                       Card(
                         color: theme.colorScheme.surface.withOpacity(0.1),
@@ -567,6 +632,20 @@ class _SettingsPageState extends State<SettingsPage> {
                           onTap: _isDeletingAccount ? null : () => _handleDeleteAccount(context),
                         ),
                       ),
+                      const SizedBox(height: 24),
+                      // About / App version
+                      Center(
+                        child: Text(
+                          _packageInfo != null
+                              ? '${_packageInfo!.appName} v${_packageInfo!.version} (${_packageInfo!.buildNumber})'
+                              : 'Loading…',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurface.withOpacity(0.5),
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
                     ],
                   );
                 },
