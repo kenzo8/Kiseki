@@ -10,6 +10,7 @@ import '../services/import_export_service.dart' show ImportExportService, Export
 import '../services/profile_data_service.dart';
 import '../main.dart';
 import 'login_page.dart';
+import 'feedback_page.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -558,7 +559,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      // Feedback / Contact
+                      // Feedback
                       Card(
                         color: theme.colorScheme.surface.withOpacity(0.1),
                         elevation: 0,
@@ -568,13 +569,14 @@ class _SettingsPageState extends State<SettingsPage> {
                         child: ListTile(
                           contentPadding: tilePadding,
                           leading: Icon(Icons.feedback_outlined, color: leadingColor, size: 24),
-                          title: Text('Feedback & Support', style: tileStyle),
-                          trailing: Icon(Icons.open_in_new, color: leadingColor.withOpacity(0.6), size: 20),
-                          onTap: () async {
-                            final uri = Uri.parse('mailto:p32392530%2Bkien@gmail.com?subject=Kien%20App%20Feedback');
-                            if (await canLaunchUrl(uri)) {
-                              await launchUrl(uri, mode: LaunchMode.externalApplication);
-                            }
+                          title: Text('Feedback', style: tileStyle),
+                          trailing: Icon(Icons.chevron_right, color: leadingColor.withOpacity(0.6), size: 24),
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => const FeedbackPage(),
+                              ),
+                            );
                           },
                         ),
                       ),
