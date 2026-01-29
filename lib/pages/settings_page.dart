@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/auth_service.dart';
 import '../services/system_ui_service.dart';
@@ -504,6 +505,27 @@ class _SettingsPageState extends State<SettingsPage> {
                               : Icon(Icons.download, color: leadingColor, size: 24),
                           title: Text('Import Data', style: tileStyle),
                           onTap: _isImporting ? null : _handleImport,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      // Privacy Policy
+                      Card(
+                        color: theme.colorScheme.surface.withOpacity(0.1),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: ListTile(
+                          contentPadding: tilePadding,
+                          leading: Icon(Icons.privacy_tip_outlined, color: leadingColor, size: 24),
+                          title: Text('Privacy Policy', style: tileStyle),
+                          trailing: Icon(Icons.open_in_new, color: leadingColor.withOpacity(0.6), size: 20),
+                          onTap: () async {
+                            final uri = Uri.parse('https://kenzo8.github.io/kien-privacy/');
+                            if (await canLaunchUrl(uri)) {
+                              await launchUrl(uri, mode: LaunchMode.externalApplication);
+                            }
+                          },
                         ),
                       ),
                       const SizedBox(height: 12),
