@@ -21,6 +21,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
   bool _isExporting = false;
   bool _isImporting = false;
+  bool _isDeletingAccount = false;
   ExportFormat _exportFormat = ExportFormat.xlsx;
 
   Future<void> _handleExport() async {
@@ -276,6 +277,91 @@ class _SettingsPageState extends State<SettingsPage> {
     }
   }
 
+  Future<void> _handleDeleteAccount(BuildContext context) async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please log in first'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Account'),
+        content: const Text(
+          'After deletion, your account and all device and wishlist data will be permanently removed and cannot be recovered. Are you sure you want to delete your account?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.red,
+            ),
+            child: const Text('Delete Account'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    setState(() {
+      _isDeletingAccount = true;
+    });
+
+    try {
+      final authService = AuthService();
+      ProfileDataService.instance.clearCache();
+      await authService.deleteAccount();
+      if (!mounted) return;
+      Navigator.of(context).pushAndRemoveUntil(
+        PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) => const MainNavigationScreen(),
+          transitionDuration: Duration.zero,
+          reverseTransitionDuration: Duration.zero,
+        ),
+        (route) => false,
+      );
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+      final message = e.code == 'requires-recent-login'
+          ? 'For security, please log out, log back in, and try again to delete your account.'
+          : AuthService().authExceptionMessage(e);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to delete account: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isDeletingAccount = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -495,6 +581,48 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                   ),
                   onTap: () => _handleLogout(context),
+                ),
+              ),
+              const SizedBox(height: 12),
+              // Delete Account
+              Card(
+                color: theme.colorScheme.surface.withOpacity(0.1),
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: ListTile(
+                  leading: _isDeletingAccount
+                      ? SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              theme.colorScheme.onSurface,
+                            ),
+                          ),
+                        )
+                      : Icon(
+                          Icons.person_off,
+                          color: theme.colorScheme.error,
+                        ),
+                  title: Text(
+                    'Delete Account',
+                    style: TextStyle(
+                      color: theme.colorScheme.error,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  subtitle: Text(
+                    'Permanently delete your account and all data. This cannot be undone.',
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurface.withOpacity(0.6),
+                      fontSize: 12,
+                    ),
+                  ),
+                  onTap: _isDeletingAccount ? null : () => _handleDeleteAccount(context),
                 ),
               ),
             ],

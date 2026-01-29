@@ -171,6 +171,56 @@ class AuthService {
     }
   }
 
+  /// Delete account: remove user data from Firestore and delete Firebase Auth user.
+  /// May throw [FirebaseAuthException] with code [requires-recent-login] if user
+  /// has not signed in recently — in that case re-authenticate and try again.
+  Future<void> deleteAccount() async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw 'No user logged in';
+    }
+    final uid = user.uid;
+
+    // 1. Delete user data from Firestore (batch max 500 ops)
+    const batchMax = 500;
+    WriteBatch batch = _firestore.batch();
+    int opCount = 0;
+
+    final sekiSnap = await _firestore.collection('seki').where('uid', isEqualTo: uid).get();
+    for (final doc in sekiSnap.docs) {
+      batch.delete(doc.reference);
+      opCount++;
+      if (opCount >= batchMax) {
+        await batch.commit();
+        batch = _firestore.batch();
+        opCount = 0;
+      }
+    }
+
+    final wantsSnap = await _firestore.collection('wants').where('uid', isEqualTo: uid).get();
+    for (final doc in wantsSnap.docs) {
+      batch.delete(doc.reference);
+      opCount++;
+      if (opCount >= batchMax) {
+        await batch.commit();
+        batch = _firestore.batch();
+        opCount = 0;
+      }
+    }
+
+    batch.delete(_firestore.collection('users').doc(uid));
+    await batch.commit();
+
+    // 2. Sign out Google if used (so token is revoked)
+    await _googleSignIn.signOut();
+
+    // 3. Delete Firebase Auth user (must be signed in; removes account and signs out)
+    await user.delete();
+  }
+
+  /// User-friendly message for Firebase Auth exceptions (for UI).
+  String authExceptionMessage(FirebaseAuthException e) => _handleAuthException(e);
+
   // Handle Firebase Auth exceptions and return user-friendly messages
   String _handleAuthException(FirebaseAuthException e) {
     switch (e.code) {
