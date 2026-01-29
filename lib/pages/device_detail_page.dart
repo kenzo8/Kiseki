@@ -370,6 +370,148 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
     }
   }
 
+  static const _reportReasons = [
+    'Spam',
+    'Inappropriate content',
+    'Harassment or bullying',
+    'Fake or impersonation',
+    'Other',
+  ];
+
+  Future<void> _onReportTapped(Seki seki) async {
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+    if (currentUserId == null) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => const LoginPage(),
+        ),
+      );
+      return;
+    }
+    await _showReportDialog(seki);
+  }
+
+  Future<void> _showReportDialog(Seki seki) async {
+    String? selectedReason;
+    final detailsController = TextEditingController();
+    final theme = Theme.of(context);
+    final pageContext = context;
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            title: const Text('Report'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Report this device entry for violating our guidelines. Your report will be reviewed.',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurface.withOpacity(0.7),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Reason',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  ..._reportReasons.map((r) => RadioListTile<String>(
+                    value: r,
+                    groupValue: selectedReason,
+                    onChanged: (v) => setDialogState(() => selectedReason = v),
+                    title: Text(
+                      r,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                    ),
+                  )),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Additional details (optional)',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  TextField(
+                    controller: detailsController,
+                    maxLines: 2,
+                    decoration: InputDecoration(
+                      hintText: 'Provide more context if needed',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      filled: true,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: Text(
+                  'Cancel',
+                  style: TextStyle(color: theme.colorScheme.onSurface),
+                ),
+              ),
+              FilledButton(
+                onPressed: selectedReason == null
+                    ? null
+                    : () async {
+                        final navigator = Navigator.of(dialogContext);
+                        final messenger = ScaffoldMessenger.of(pageContext);
+                        try {
+                          await FirebaseFirestore.instance
+                              .collection('reports')
+                              .add({
+                            'reporterUid': FirebaseAuth.instance.currentUser!.uid,
+                            'reportedSekiId': seki.id,
+                            'reportedUid': seki.uid,
+                            'deviceName': seki.deviceName,
+                            'reason': selectedReason,
+                            'details': detailsController.text.trim().isEmpty
+                                ? null
+                                : detailsController.text.trim(),
+                            'createdAt': FieldValue.serverTimestamp(),
+                          });
+                          navigator.pop();
+                          messenger.showSnackBar(
+                            const SnackBar(
+                              content: Text('Report submitted. Thank you.'),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                        } catch (e) {
+                          messenger.showSnackBar(
+                            SnackBar(
+                              content: Text('Failed to submit report: $e'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      },
+                child: const Text('Submit'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+    detailsController.dispose();
+  }
+
   Future<void> _removeUserDevice() async {
     final userDevice = _userDeviceEntry;
     if (userDevice == null) return;
@@ -624,6 +766,43 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
                       ),
                     ),
                   ),
+                  // Report button — top-right, for non-owner (Google Play UGC compliance)
+                  if (!isOwner)
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () => _onReportTapped(seki),
+                          borderRadius: BorderRadius.circular(24),
+                          child: Tooltip(
+                            message: 'Report',
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(24),
+                              child: BackdropFilter(
+                                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                                child: Container(
+                                  width: 48,
+                                  height: 48,
+                                  decoration: BoxDecoration(
+                                    color: isDark
+                                        ? Colors.white.withOpacity(0.15)
+                                        : Colors.white.withOpacity(0.3),
+                                    borderRadius: BorderRadius.circular(24),
+                                  ),
+                                  child: Icon(
+                                    Icons.flag_outlined,
+                                    color: isDark ? Colors.white : const Color(0xFF333333),
+                                    size: 22,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),
