@@ -334,23 +334,10 @@ class _AddDevicePageState extends State<AddDevicePage> {
     
     if (uid == null) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Please sign in to add a device'),
-            action: SnackBarAction(
-              label: 'Sign In',
-              textColor: Colors.white,
-              onPressed: () {
-                Navigator.pop(context); // Close the bottom sheet first
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => const LoginPage(),
-                  ),
-                );
-              },
-            ),
-            backgroundColor: Colors.orange,
-            duration: const Duration(seconds: 4),
+        Navigator.pop(context); // Close the bottom sheet first
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => const LoginPage(),
           ),
         );
       }

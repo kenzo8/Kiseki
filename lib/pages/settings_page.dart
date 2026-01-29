@@ -7,6 +7,7 @@ import '../services/system_ui_service.dart';
 import '../services/import_export_service.dart' show ImportExportService, ExportFormat;
 import '../services/profile_data_service.dart';
 import '../main.dart';
+import 'login_page.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -25,10 +26,9 @@ class _SettingsPageState extends State<SettingsPage> {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please login first'),
-            backgroundColor: Colors.red,
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => const LoginPage(),
           ),
         );
       }

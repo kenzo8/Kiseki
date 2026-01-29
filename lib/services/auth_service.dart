@@ -106,7 +106,7 @@ class AuthService {
     }
   }
 
-  // Sign in with email and password
+  // Log in with email and password
   Future<UserCredential?> signIn({
     required String email,
     required String password,
@@ -124,7 +124,7 @@ class AuthService {
     }
   }
 
-  // Sign in with Google
+  // Log in with Google
   Future<UserCredential?> signInWithGoogle() async {
     try {
       final googleUser = await _googleSignIn.signIn();

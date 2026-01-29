@@ -12,6 +12,7 @@ import '../services/profile_data_service.dart';
 import 'add_device_page.dart';
 import 'profile_page.dart';
 import 'other_user_profile_page.dart';
+import 'login_page.dart';
 
 class DeviceDetailPage extends StatefulWidget {
   final Seki seki;
@@ -97,8 +98,10 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
   Future<void> _toggleWant() async {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
     if (currentUserId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please sign in to use this feature')),
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => const LoginPage(),
+        ),
       );
       return;
     }
@@ -235,8 +238,10 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
   Future<void> _openDeviceSheet({required bool stillUsing}) async {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
     if (currentUserId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please sign in to add a device')),
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => const LoginPage(),
+        ),
       );
       return;
     }
