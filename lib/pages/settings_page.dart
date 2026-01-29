@@ -6,7 +6,6 @@ import '../services/auth_service.dart';
 import '../services/system_ui_service.dart';
 import '../services/import_export_service.dart' show ImportExportService, ExportFormat;
 import '../services/profile_data_service.dart';
-import '../services/ab_test_service.dart';
 import '../main.dart';
 import 'login_page.dart';
 
@@ -24,7 +23,6 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _isDeletingAccount = false;
 
   Future<void> _handleExport() async {
-    if (!AbTestService.isImportExportEnabled()) return;
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) {
       if (mounted) {
@@ -127,7 +125,6 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<void> _handleImport() async {
-    if (!AbTestService.isImportExportEnabled()) return;
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) {
       if (mounted) {
@@ -462,7 +459,6 @@ class _SettingsPageState extends State<SettingsPage> {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      if (AbTestService.isImportExportEnabled()) ...[
                       // Export
                       Card(
                         color: theme.colorScheme.surface.withOpacity(0.1),
@@ -511,7 +507,6 @@ class _SettingsPageState extends State<SettingsPage> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      ],
                       // Logout
                       Card(
                         color: theme.colorScheme.surface.withOpacity(0.1),

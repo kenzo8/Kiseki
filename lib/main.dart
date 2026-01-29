@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'firebase_options.dart';
-import 'services/ab_test_service.dart';
 import 'pages/explore_page.dart';
 import 'pages/profile_page.dart';
 import 'pages/add_device_page.dart';
@@ -20,7 +19,6 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  await AbTestService.init();
 
   // Always use light mode
   themeModeNotifier = ValueNotifier<ThemeMode>(ThemeMode.light);
