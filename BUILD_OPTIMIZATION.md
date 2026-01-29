@@ -7,7 +7,7 @@ This project enables Android R8 code shrinking and resource shrinking. You can f
 - **R8 code shrinking** (`isMinifyEnabled`): Remove unused code, obfuscate class/method names
 - **Resource shrinking** (`isShrinkResources`): Remove unreferenced resources
 - **ProGuard rules** (`android/app/proguard-rules.pro`): Keep Firebase, Google Sign In, Flutter plugins, etc.
-- **Language resources** (`resConfigs("en", "zh")`): Keep only English and Chinese; drop other locales
+- **Language resources** (`resConfigs("en", "zh", "ja")`): Keep only English, Chinese, and Japanese; drop other locales
 - **ABI filtering** (arm only): Release builds include only `armeabi-v7a` and `arm64-v8a`; x86_64 is excluded (~10MB+ savings). x86 emulators cannot install release builds.
 
 ## Recommended Build Commands
@@ -71,7 +71,7 @@ You upload an **AAB**. Google Play serves **APKs** per device ABI, so users down
 
 ### Effect of Current Optimizations
 
-With `resConfigs("en", "zh")`, arm-only release builds, and R8/resource shrinking, the AAB went from ~**44 MB** to ~**31 MB**. You can reduce further by compressing `app_icon`, fixing the toolchain to strip debug symbols, or removing `excel` if unused.
+With `resConfigs("en", "zh", "ja")`, arm-only release builds, and R8/resource shrinking, the AAB went from ~**44 MB** to ~**31 MB**. You can reduce further by compressing `app_icon`, fixing the toolchain to strip debug symbols, or removing `excel` if unused.
 
 ---
 

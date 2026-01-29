@@ -31,8 +31,8 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
-        // App size: keep only en, zh; drop other language resources
-        resConfigs("en", "zh")
+        // App size: keep only en, zh, ja; drop other language resources
+        resConfigs("en", "zh", "ja")
     }
 
     buildTypes {
