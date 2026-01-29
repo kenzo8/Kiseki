@@ -122,17 +122,7 @@ class _LoginPageState extends State<LoginPage> {
                       fit: BoxFit.contain,
                     ),
                   ),
-                  const SizedBox(height: 56),
-                  Text(
-                    _isLoginMode ? 'Welcome back' : 'Create Account',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Color(0xFF1A1A1A),
-                      fontSize: 28,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 48),
                     // Username field (only in register mode)
                     if (!_isLoginMode) ...[
                       AnimatedContainer(
