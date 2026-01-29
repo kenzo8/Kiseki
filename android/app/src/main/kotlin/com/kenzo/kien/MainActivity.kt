@@ -1,4 +1,4 @@
-package com.example.kiseki
+package com.kenzo.kien
 
 import io.flutter.embedding.android.FlutterActivity
 

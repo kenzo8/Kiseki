@@ -48,6 +48,42 @@
           ]
         }
       }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:413677641769:android:db1fded09e9d076c8abc38",
+        "android_client_info": {
+          "package_name": "com.kenzo.kien"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "413677641769-dhma37df0cq0ushs2fo7sitjos739knk.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBw1cY3Ly9GG6JsbtnFxhP102_4i_5EsYw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "413677641769-dhma37df0cq0ushs2fo7sitjos739knk.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "413677641769-fj3b3luul9d5thgc4ja0adf4tjfqf2g8.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.kiseki"
+              }
+            }
+          ]
+        }
+      }
     }
   ],
   "configuration_version": "1"

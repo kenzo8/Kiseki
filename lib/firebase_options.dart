@@ -63,6 +63,6 @@ class DefaultFirebaseOptions {
     messagingSenderId: '413677641769',
     projectId: 'kiseki-34cd7',
     storageBucket: 'kiseki-34cd7.firebasestorage.app',
-    iosBundleId: 'com.example.kiseki',
+    iosBundleId: 'com.kenzo.kien',
   );
 }

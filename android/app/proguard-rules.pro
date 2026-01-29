@@ -25,4 +25,4 @@
 -keep class * implements com.google.gson.JsonDeserializer
 
 # Data models: add if Firestore deserializes into custom models, e.g.:
-# -keep class com.example.kiseki.models.** { *; }
+# -keep class com.kenzo.kien.models.** { *; }
