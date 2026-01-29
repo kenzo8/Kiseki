@@ -22,7 +22,6 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _isExporting = false;
   bool _isImporting = false;
   bool _isDeletingAccount = false;
-  ExportFormat _exportFormat = ExportFormat.xlsx;
 
   Future<void> _handleExport() async {
     if (!AbTestService.isImportExportEnabled()) return;
@@ -37,6 +36,31 @@ class _SettingsPageState extends State<SettingsPage> {
       }
       return;
     }
+
+    // Ask for format: Cancel, CSV, or XLSX
+    final format = await showDialog<ExportFormat>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Export Data'),
+        content: const Text('Choose export format:'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(ExportFormat.csv),
+            child: const Text('CSV'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(ExportFormat.xlsx),
+            child: const Text('XLSX'),
+          ),
+        ],
+      ),
+    );
+
+    if (format == null || !mounted) return;
 
     setState(() {
       _isExporting = true;
@@ -58,7 +82,7 @@ class _SettingsPageState extends State<SettingsPage> {
       }
 
       // Export to selected format
-      final filePath = await ImportExportService.export(dataService.cachedSekis!, _exportFormat);
+      final filePath = await ImportExportService.export(dataService.cachedSekis!, format);
       
       if (filePath != null && mounted) {
         // Share the file
@@ -122,7 +146,9 @@ class _SettingsPageState extends State<SettingsPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Import Data'),
-        content: const Text('Importing data will add new devices to your account. Continue?'),
+        content: const Text(
+          'Importing data will add new devices to your account. Supported formats: CSV, XLSX. Continue?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -424,206 +450,109 @@ class _SettingsPageState extends State<SettingsPage> {
           child: ListView(
             padding: const EdgeInsets.all(16.0),
             children: [
-              if (AbTestService.isImportExportEnabled()) ...[
-              // Export Button
-              Card(
-                color: theme.colorScheme.surface.withOpacity(0.1),
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: ListTile(
-                  leading: _isExporting
-                      ? SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              theme.colorScheme.onSurface,
-                            ),
-                          ),
-                        )
-                      : Icon(
-                          Icons.upload_file,
-                          color: theme.colorScheme.onSurface,
-                        ),
-                  title: Text(
-                    'Export Data',
-                    style: TextStyle(
-                      color: theme.colorScheme.onSurface,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  subtitle: Text(
-                    'Export device data as ${_exportFormat == ExportFormat.xlsx ? 'XLSX' : 'CSV'} table',
-                    style: TextStyle(
-                      color: theme.colorScheme.onSurface.withOpacity(0.6),
-                      fontSize: 12,
-                    ),
-                  ),
-                  onTap: _isExporting ? null : _handleExport,
-                ),
-              ),
-              const SizedBox(height: 8),
-              // Format selector
-              Card(
-                color: theme.colorScheme.surface.withOpacity(0.1),
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  child: Row(
+              Builder(
+                builder: (context) {
+                  final tileStyle = TextStyle(
+                    color: theme.colorScheme.onSurface,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  );
+                  final leadingColor = theme.colorScheme.onSurface;
+                  const tilePadding = EdgeInsets.symmetric(horizontal: 16, vertical: 4);
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Icon(
-                        Icons.table_chart,
-                        color: theme.colorScheme.onSurface.withOpacity(0.7),
-                        size: 20,
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        'Export Format:',
-                        style: TextStyle(
-                          color: theme.colorScheme.onSurface,
-                          fontSize: 14,
+                      if (AbTestService.isImportExportEnabled()) ...[
+                      // Export
+                      Card(
+                        color: theme.colorScheme.surface.withOpacity(0.1),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: ListTile(
+                          contentPadding: tilePadding,
+                          leading: _isExporting
+                              ? SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(leadingColor),
+                                  ),
+                                )
+                              : Icon(Icons.upload_file, color: leadingColor, size: 24),
+                          title: Text('Export Data', style: tileStyle),
+                          onTap: _isExporting ? null : _handleExport,
                         ),
                       ),
-                      const Spacer(),
-                      SegmentedButton<ExportFormat>(
-                        segments: const [
-                          ButtonSegment<ExportFormat>(
-                            value: ExportFormat.csv,
-                            label: Text('CSV'),
-                            icon: Icon(Icons.description, size: 16),
-                          ),
-                          ButtonSegment<ExportFormat>(
-                            value: ExportFormat.xlsx,
-                            label: Text('XLSX'),
-                            icon: Icon(Icons.table_chart, size: 16),
-                          ),
-                        ],
-                        selected: {_exportFormat},
-                        onSelectionChanged: (Set<ExportFormat> newSelection) {
-                          setState(() {
-                            _exportFormat = newSelection.first;
-                          });
-                        },
+                      const SizedBox(height: 12),
+                      // Import
+                      Card(
+                        color: theme.colorScheme.surface.withOpacity(0.1),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: ListTile(
+                          contentPadding: tilePadding,
+                          leading: _isImporting
+                              ? SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(leadingColor),
+                                  ),
+                                )
+                              : Icon(Icons.download, color: leadingColor, size: 24),
+                          title: Text('Import Data', style: tileStyle),
+                          onTap: _isImporting ? null : _handleImport,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      ],
+                      // Logout
+                      Card(
+                        color: theme.colorScheme.surface.withOpacity(0.1),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: ListTile(
+                          contentPadding: tilePadding,
+                          leading: Icon(Icons.logout, color: leadingColor, size: 24),
+                          title: Text('Logout', style: tileStyle),
+                          onTap: () => _handleLogout(context),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      // Delete Account
+                      Card(
+                        color: theme.colorScheme.surface.withOpacity(0.1),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: ListTile(
+                          contentPadding: tilePadding,
+                          leading: _isDeletingAccount
+                              ? SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(leadingColor),
+                                  ),
+                                )
+                              : Icon(Icons.person_off, color: leadingColor, size: 24),
+                          title: Text('Delete Account', style: tileStyle),
+                          onTap: _isDeletingAccount ? null : () => _handleDeleteAccount(context),
+                        ),
                       ),
                     ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              // Import Button
-              Card(
-                color: theme.colorScheme.surface.withOpacity(0.1),
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: ListTile(
-                  leading: _isImporting
-                      ? SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              theme.colorScheme.onSurface,
-                            ),
-                          ),
-                        )
-                      : Icon(
-                          Icons.download,
-                          color: theme.colorScheme.onSurface,
-                        ),
-                  title: Text(
-                    'Import Data',
-                    style: TextStyle(
-                      color: theme.colorScheme.onSurface,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  subtitle: Text(
-                    'Import device data from CSV or XLSX table',
-                    style: TextStyle(
-                      color: theme.colorScheme.onSurface.withOpacity(0.6),
-                      fontSize: 12,
-                    ),
-                  ),
-                  onTap: _isImporting ? null : _handleImport,
-                ),
-              ),
-              ],
-              const SizedBox(height: 24),
-              // Logout Button
-              Card(
-                color: theme.colorScheme.surface.withOpacity(0.1),
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: ListTile(
-                  leading: Icon(
-                    Icons.logout,
-                    color: theme.colorScheme.onSurface,
-                  ),
-                  title: Text(
-                    'Logout',
-                    style: TextStyle(
-                      color: theme.colorScheme.onSurface,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  onTap: () => _handleLogout(context),
-                ),
-              ),
-              const SizedBox(height: 12),
-              // Delete Account
-              Card(
-                color: theme.colorScheme.surface.withOpacity(0.1),
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: ListTile(
-                  leading: _isDeletingAccount
-                      ? SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              theme.colorScheme.onSurface,
-                            ),
-                          ),
-                        )
-                      : Icon(
-                          Icons.person_off,
-                          color: theme.colorScheme.error,
-                        ),
-                  title: Text(
-                    'Delete Account',
-                    style: TextStyle(
-                      color: theme.colorScheme.error,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  subtitle: Text(
-                    'Permanently delete your account and all data. This cannot be undone.',
-                    style: TextStyle(
-                      color: theme.colorScheme.onSurface.withOpacity(0.6),
-                      fontSize: 12,
-                    ),
-                  ),
-                  onTap: _isDeletingAccount ? null : () => _handleDeleteAccount(context),
-                ),
+                  );
+                },
               ),
             ],
           ),
