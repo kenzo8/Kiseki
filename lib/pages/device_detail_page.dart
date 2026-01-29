@@ -16,8 +16,9 @@ import 'login_page.dart';
 
 class DeviceDetailPage extends StatefulWidget {
   final Seki seki;
+  final ValueNotifier<bool>? exploreRefreshNotifier;
 
-  const DeviceDetailPage({super.key, required this.seki});
+  const DeviceDetailPage({super.key, required this.seki, this.exploreRefreshNotifier});
 
   @override
   State<DeviceDetailPage> createState() => _DeviceDetailPageState();
@@ -345,9 +346,11 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
             .collection('seki')
             .doc(seki.id)
             .delete();
-        
+
         if (mounted) {
-          Navigator.of(context).pop();
+          // Trigger Explore refresh so home page removes deleted item (whether we came from Profile or Explore)
+          widget.exploreRefreshNotifier?.value = true;
+          Navigator.of(context).pop(true);
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Device deleted successfully'),
@@ -545,7 +548,7 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
             .collection('seki')
             .doc(userDevice.id)
             .delete();
-        
+
         if (mounted) {
           await _checkUserDeviceStatus();
           ScaffoldMessenger.of(context).showSnackBar(

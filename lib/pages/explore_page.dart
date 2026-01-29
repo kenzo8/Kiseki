@@ -66,12 +66,8 @@ class _ExplorePageState extends State<ExplorePage> {
 
   void _onRefreshRequested() {
     if (widget.refreshNotifier?.value == true) {
-      // If we have cached data, do partial refresh; otherwise full refresh
-      if (_cachedDocs != null && _cachedDocs!.isNotEmpty) {
-        _refreshPartial();
-      } else {
-        _loadData(forceRefresh: true);
-      }
+      // Always full refresh so deletes are reflected (partial refresh would re-add deleted docs from cache)
+      _loadData(forceRefresh: true);
       // Reset the notifier
       widget.refreshNotifier?.value = false;
     }
@@ -318,7 +314,7 @@ class _ExplorePageState extends State<ExplorePage> {
                             // Navigate to DeviceDetailPage with the device object
                             final result = await Navigator.of(context).push(
                               MaterialPageRoute(
-                                builder: (context) => DeviceDetailPage(seki: seki),
+                                builder: (context) => DeviceDetailPage(seki: seki, exploreRefreshNotifier: widget.refreshNotifier),
                               ),
                             );
                             // If device was edited, do partial refresh
@@ -452,7 +448,7 @@ class _ExplorePageState extends State<ExplorePage> {
                     // Navigate to DeviceDetailPage with the device object
                     final result = await Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (context) => DeviceDetailPage(seki: seki),
+                        builder: (context) => DeviceDetailPage(seki: seki, exploreRefreshNotifier: widget.refreshNotifier),
                       ),
                     );
                     // If device was edited, do partial refresh

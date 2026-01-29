@@ -519,7 +519,7 @@ class _ProfilePageState extends State<ProfilePage>
                                                       onTap: () {
                                                         Navigator.of(context).push(
                                                           MaterialPageRoute(
-                                                            builder: (context) => DeviceDetailPage(seki: seki),
+                                                            builder: (context) => DeviceDetailPage(seki: seki, exploreRefreshNotifier: widget.exploreRefreshNotifier),
                                                           ),
                                                         );
                                                       },
@@ -664,9 +664,9 @@ class _ProfilePageState extends State<ProfilePage>
                 controller: _tabController,
                 children: [
                   // Owned tab
-                  _OwnedTab(theme: theme, isDark: isDark),
+                  _OwnedTab(theme: theme, isDark: isDark, exploreRefreshNotifier: widget.exploreRefreshNotifier),
                   // Wants tab
-                  _WantsTab(theme: theme, isDark: isDark, onGoToExplore: widget.onGoToExplore),
+                  _WantsTab(theme: theme, isDark: isDark, onGoToExplore: widget.onGoToExplore, exploreRefreshNotifier: widget.exploreRefreshNotifier),
                 ],
               ),
             );
@@ -681,8 +681,9 @@ class _ProfilePageState extends State<ProfilePage>
 class _OwnedTab extends StatefulWidget {
   final ThemeData theme;
   final bool isDark;
+  final ValueNotifier<bool>? exploreRefreshNotifier;
 
-  const _OwnedTab({required this.theme, required this.isDark});
+  const _OwnedTab({required this.theme, required this.isDark, this.exploreRefreshNotifier});
 
   @override
   State<_OwnedTab> createState() => _OwnedTabState();
@@ -761,7 +762,7 @@ class _OwnedTabState extends State<_OwnedTab> with AutomaticKeepAliveClientMixin
                 onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (context) => DeviceDetailPage(seki: seki),
+                      builder: (context) => DeviceDetailPage(seki: seki, exploreRefreshNotifier: widget.exploreRefreshNotifier),
                     ),
                   );
                 },
@@ -833,8 +834,9 @@ class _WantsTab extends StatefulWidget {
   final ThemeData theme;
   final bool isDark;
   final VoidCallback? onGoToExplore;
+  final ValueNotifier<bool>? exploreRefreshNotifier;
 
-  const _WantsTab({required this.theme, required this.isDark, this.onGoToExplore});
+  const _WantsTab({required this.theme, required this.isDark, this.onGoToExplore, this.exploreRefreshNotifier});
 
   @override
   State<_WantsTab> createState() => _WantsTabState();
@@ -993,7 +995,7 @@ class _WantsTabState extends State<_WantsTab> with AutomaticKeepAliveClientMixin
                       final seki = Seki.fromFirestore(querySnapshot.docs.first);
                       Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (context) => DeviceDetailPage(seki: seki),
+                          builder: (context) => DeviceDetailPage(seki: seki, exploreRefreshNotifier: widget.exploreRefreshNotifier),
                         ),
                       );
                     } else {
