@@ -28,6 +28,11 @@ class _ExplorePageState extends State<ExplorePage> {
   Set<String> _updatedItemIds = {}; // Track items that were updated in partial refresh
   // Cache data for each device type to avoid reloading when switching tabs
   final Map<String?, List<QueryDocumentSnapshot>> _deviceTypeCache = {};
+  // Search
+  bool _showSearchBar = false;
+  String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
 
   @override
   void initState() {
@@ -40,7 +45,23 @@ class _ExplorePageState extends State<ExplorePage> {
   @override
   void dispose() {
     widget.refreshNotifier?.removeListener(_onRefreshRequested);
+    _searchController.dispose();
+    _searchFocusNode.dispose();
     super.dispose();
+  }
+
+  /// Filter docs by search query (deviceName, note, username).
+  List<QueryDocumentSnapshot> _getFilteredDocs([List<QueryDocumentSnapshot>? source]) {
+    final list = source ?? _cachedDocs ?? [];
+    if (_searchQuery.trim().isEmpty) return list;
+    final q = _searchQuery.trim().toLowerCase();
+    return list.where((doc) {
+      final d = doc.data() as Map<String, dynamic>;
+      final name = (d['deviceName'] as String? ?? '').toLowerCase();
+      final note = (d['note'] as String? ?? '').toLowerCase();
+      final username = (d['username'] as String? ?? '').toLowerCase();
+      return name.contains(q) || note.contains(q) || username.contains(q);
+    }).toList();
   }
 
   void _onRefreshRequested() {
@@ -228,15 +249,31 @@ class _ExplorePageState extends State<ExplorePage> {
   Widget _buildContent(ThemeData theme, bool isDark) {
     // If we have cached docs, use them directly for faster UI updates
     if (_cachedDocs != null && _cachedDocs!.isNotEmpty) {
+      final filteredDocs = _getFilteredDocs();
+      if (filteredDocs.isEmpty && _searchQuery.trim().isNotEmpty) {
+        return Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text(
+              'No results for "$_searchQuery"',
+              style: TextStyle(
+                color: theme.colorScheme.onSurface.withOpacity(0.6),
+                fontSize: 16,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        );
+      }
       return RefreshIndicator(
         onRefresh: _handleRefresh,
         color: theme.colorScheme.primary,
         child: ListView.builder(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          itemCount: _cachedDocs!.length,
+          itemCount: filteredDocs.length,
           itemBuilder: (context, index) {
-            final doc = _cachedDocs![index];
+            final doc = filteredDocs[index];
             final seki = Seki.fromFirestore(doc);
             final currentUserId = FirebaseAuth.instance.currentUser?.uid;
             final publisherId = seki.publisherId;
@@ -377,15 +414,31 @@ class _ExplorePageState extends State<ExplorePage> {
           });
         }
 
+        final filteredDocs = _getFilteredDocs(snapshot.data!.docs);
+        if (filteredDocs.isEmpty && _searchQuery.trim().isNotEmpty) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Text(
+                'No results for "$_searchQuery"',
+                style: TextStyle(
+                  color: theme.colorScheme.onSurface.withOpacity(0.6),
+                  fontSize: 16,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          );
+        }
         return RefreshIndicator(
           onRefresh: _handleRefresh,
           color: theme.colorScheme.primary,
           child: ListView.builder(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            itemCount: snapshot.data!.docs.length,
+            itemCount: filteredDocs.length,
             itemBuilder: (context, index) {
-              final doc = snapshot.data!.docs[index];
+              final doc = filteredDocs[index];
               final seki = Seki.fromFirestore(doc);
               final currentUserId = FirebaseAuth.instance.currentUser?.uid;
               final publisherId = seki.publisherId;
@@ -453,7 +506,8 @@ class _ExplorePageState extends State<ExplorePage> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 7.0),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Text(
                     'Explore',
@@ -464,9 +518,28 @@ class _ExplorePageState extends State<ExplorePage> {
                       letterSpacing: 4,
                     ),
                   ),
+                  IconButton(
+                    icon: Icon(
+                      _showSearchBar ? Icons.close : Icons.search,
+                      color: theme.colorScheme.onSurface,
+                      size: 24,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _showSearchBar = !_showSearchBar;
+                        if (!_showSearchBar) {
+                          _searchQuery = '';
+                          _searchController.clear();
+                        } else {
+                          _searchFocusNode.requestFocus();
+                        }
+                      });
+                    },
+                  ),
                 ],
               ),
             ),
+            if (_showSearchBar) _buildSearchBar(theme, isDark),
             const SizedBox(height: 4),
             // Filter bar
             _buildFilterBar(theme, isDark),
@@ -476,6 +549,49 @@ class _ExplorePageState extends State<ExplorePage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildSearchBar(ThemeData theme, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      child: TextField(
+        controller: _searchController,
+        focusNode: _searchFocusNode,
+        decoration: InputDecoration(
+          hintText: 'Search device, note, username...',
+          hintStyle: TextStyle(
+            color: theme.colorScheme.onSurface.withOpacity(0.5),
+            fontSize: 14,
+          ),
+          prefixIcon: Icon(
+            Icons.search,
+            size: 20,
+            color: theme.colorScheme.onSurface.withOpacity(0.6),
+          ),
+          suffixIcon: _searchQuery.isNotEmpty
+              ? IconButton(
+                  icon: Icon(Icons.clear, size: 20, color: theme.colorScheme.onSurface.withOpacity(0.6)),
+                  onPressed: () {
+                    _searchController.clear();
+                    setState(() => _searchQuery = '');
+                  },
+                )
+              : null,
+          filled: true,
+          fillColor: (isDark ? Colors.white : Colors.black).withOpacity(0.06),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(24),
+            borderSide: BorderSide.none,
+          ),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        ),
+        style: TextStyle(
+          color: theme.colorScheme.onSurface,
+          fontSize: 14,
+        ),
+        onChanged: (value) => setState(() => _searchQuery = value),
       ),
     );
   }
