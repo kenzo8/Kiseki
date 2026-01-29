@@ -17,9 +17,9 @@ service cloud.firestore {
       allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
     }
     
-    // Wants collection: users can read/write their own wants
+    // Wants collection: anyone can read (for viewing others' wants), but only authenticated users can create/delete their own
     match /wants/{wantId} {
-      allow read: if request.auth != null && resource.data.uid == request.auth.uid;
+      allow read: if true; // Allow anyone to read wants
       allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
       allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
     }
