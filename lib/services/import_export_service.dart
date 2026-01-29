@@ -208,8 +208,10 @@ class ImportExportService {
       
       int successCount = 0;
       int failCount = 0;
+      int updatedCount = 0;
       final errors = <String>[];
-      
+      Map<String, String> existingMap = await _getExistingDeviceIdsByMergeKey(uid);
+
       for (int i = 0; i < dataLines.length; i++) {
         try {
           final line = dataLines[i];
@@ -293,35 +295,46 @@ class ImportExportService {
           createdAt = createdAtParsed != null
               ? Timestamp.fromDate(createdAtParsed)
               : FieldValue.serverTimestamp();
-          
-          // Create device data - always use precise mode
+
           final Map<String, dynamic> deviceData = {
             'uid': uid,
             'username': username,
             'deviceName': deviceName,
             'deviceType': deviceType,
-            'isPreciseMode': true, // Always use precise mode
+            'isPreciseMode': true,
             'startTime': startTime,
             'endTime': endTime,
-            'startYear': startYear, // Also save for backward compatibility
+            'startYear': startYear,
             'endYear': endYear,
             'createdAt': createdAt,
             'note': note,
           };
-          
-          await FirebaseFirestore.instance.collection('seki').add(deviceData);
-          successCount++;
+
+          final mergeKey = _mergeKey(deviceName, startTime);
+          final existingId = existingMap[mergeKey];
+          if (existingId != null) {
+            await FirebaseFirestore.instance.collection('seki').doc(existingId).set(deviceData);
+            updatedCount++;
+          } else {
+            final ref = await FirebaseFirestore.instance.collection('seki').add(deviceData);
+            existingMap[mergeKey] = ref.id;
+            successCount++;
+          }
         } catch (e) {
           failCount++;
-            errors.add('Row ${i + 2}: $e');
+          errors.add('Row ${i + 2}: $e');
         }
       }
-      
+
+      final msg = updatedCount > 0
+          ? 'Added $successCount, updated $updatedCount, failed $failCount'
+          : 'Successfully imported $successCount, failed $failCount';
       return ImportResult(
-        success: successCount > 0,
-        message: 'Successfully imported $successCount, failed $failCount',
+        success: successCount > 0 || updatedCount > 0,
+        message: msg,
         successCount: successCount,
         failCount: failCount,
+        updatedCount: updatedCount,
         errors: errors,
       );
     } catch (e) {
@@ -381,7 +394,9 @@ class ImportExportService {
 
       int successCount = 0;
       int failCount = 0;
+      int updatedCount = 0;
       final errors = <String>[];
+      Map<String, String> existingMap = await _getExistingDeviceIdsByMergeKey(uid);
 
       // Skip header row (row 0)
       for (int i = 1; i < sheet.rows.length; i++) {
@@ -444,7 +459,6 @@ class ImportExportService {
               ? Timestamp.fromDate(createdAtParsed)
               : FieldValue.serverTimestamp();
 
-          // Create device data
           final Map<String, dynamic> deviceData = {
             'uid': uid,
             'username': username,
@@ -459,24 +473,59 @@ class ImportExportService {
             'note': note,
           };
 
-          await FirebaseFirestore.instance.collection('seki').add(deviceData);
-          successCount++;
+          final mergeKey = _mergeKey(deviceName, startTime);
+          final existingId = existingMap[mergeKey];
+          if (existingId != null) {
+            await FirebaseFirestore.instance.collection('seki').doc(existingId).set(deviceData);
+            updatedCount++;
+          } else {
+            final ref = await FirebaseFirestore.instance.collection('seki').add(deviceData);
+            existingMap[mergeKey] = ref.id;
+            successCount++;
+          }
         } catch (e) {
           failCount++;
           errors.add('Row ${i + 1}: $e');
         }
       }
 
+      final msgX = updatedCount > 0
+          ? 'Added $successCount, updated $updatedCount, failed $failCount'
+          : 'Successfully imported $successCount, failed $failCount';
       return ImportResult(
-        success: successCount > 0,
-        message: 'Successfully imported $successCount, failed $failCount',
+        success: successCount > 0 || updatedCount > 0,
+        message: msgX,
         successCount: successCount,
         failCount: failCount,
+        updatedCount: updatedCount,
         errors: errors,
       );
     } catch (e) {
       return ImportResult(success: false, message: 'Import error: $e');
     }
+  }
+
+  /// Merge key: same device = same name + same start date (for import merge).
+  static String _mergeKey(String deviceName, Timestamp startTime) {
+    return '${deviceName.trim()}|${startTime.millisecondsSinceEpoch}';
+  }
+
+  /// Fetch existing devices for current user: merge key -> document id (for import merge).
+  static Future<Map<String, String>> _getExistingDeviceIdsByMergeKey(String uid) async {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('seki')
+        .where('uid', isEqualTo: uid)
+        .get();
+    final map = <String, String>{};
+    for (final doc in snapshot.docs) {
+      final d = doc.data();
+      final name = (d['deviceName'] as String? ?? '').trim();
+      final start = d['startTime'] as Timestamp?;
+      if (start != null) {
+        map[_mergeKey(name, start)] = doc.id;
+      }
+    }
+    return map;
   }
 
   /// Import devices from file (auto-detect format by extension)
@@ -658,13 +707,15 @@ class ImportResult {
   final String message;
   final int successCount;
   final int failCount;
+  final int updatedCount;
   final List<String> errors;
-  
+
   ImportResult({
     required this.success,
     required this.message,
     this.successCount = 0,
     this.failCount = 0,
+    this.updatedCount = 0,
     this.errors = const [],
   });
 }
