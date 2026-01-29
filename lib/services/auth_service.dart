@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthService {
@@ -157,6 +158,15 @@ class AuthService {
       return userCredential;
     } on FirebaseAuthException catch (e) {
       throw _handleAuthException(e);
+    } on PlatformException catch (e) {
+      // ApiException 10 = DEVELOPER_ERROR: SHA-1 not in Firebase or OAuth client missing
+      if (e.code == 'sign_in_failed' &&
+          (e.message?.contains('ApiException') == true &&
+              e.message?.contains('10') == true)) {
+        throw 'Google 登录不可用：请在 Firebase 控制台为 Android 应用添加 SHA-1 指纹，'
+            '并重新下载 google-services.json。详见项目根目录 GOOGLE_SIGNIN_SETUP.md';
+      }
+      throw 'Google 登录失败: ${e.message ?? e.code}';
     } catch (e) {
       throw 'Google sign-in failed: $e';
     }
