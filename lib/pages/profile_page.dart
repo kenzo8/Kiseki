@@ -814,11 +814,10 @@ class _OwnedTabState extends State<_OwnedTab> with AutomaticKeepAliveClientMixin
                   ),
                   const SizedBox(height: 20),
                   Text(
-                    "Add a device you've used",
+                    "Add one you've used to get started.",
                     style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: theme.colorScheme.onSurface,
+                      fontSize: 14,
+                      color: theme.colorScheme.onSurface.withOpacity(0.6),
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -1055,11 +1054,10 @@ class _WantsTabState extends State<_WantsTab> with AutomaticKeepAliveClientMixin
                   ),
                   const SizedBox(height: 20),
                   Text(
-                    'No wants yet',
+                    'Browse Explore and add devices here.',
                     style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: theme.colorScheme.onSurface,
+                      fontSize: 14,
+                      color: theme.colorScheme.onSurface.withOpacity(0.6),
                     ),
                     textAlign: TextAlign.center,
                   ),
