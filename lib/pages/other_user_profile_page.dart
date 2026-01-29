@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../models/seki_model.dart';
@@ -7,6 +8,7 @@ import '../services/system_ui_service.dart';
 import '../widgets/timeline_seki_item.dart';
 import '../widgets/seki_card.dart';
 import '../pages/device_detail_page.dart';
+import 'login_page.dart';
 
 /// Custom delegate for pinned TabBar in NestedScrollView
 class _OtherUserSliverAppBarDelegate extends SliverPersistentHeaderDelegate {
@@ -98,6 +100,146 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> with Single
       baseHeight += 60.0;
     }
     return baseHeight.clamp(200.0, 400.0); // Clamp between 200 and 400
+  }
+
+  static const _reportReasons = [
+    'Spam',
+    'Inappropriate content',
+    'Harassment or bullying',
+    'Fake or impersonation',
+    'Other',
+  ];
+
+  Future<void> _onReportUserTapped(String reportedUserId, String reportedUsername) async {
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+    if (currentUserId == null) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => const LoginPage(),
+        ),
+      );
+      return;
+    }
+    await _showReportUserDialog(reportedUserId, reportedUsername);
+  }
+
+  Future<void> _showReportUserDialog(String reportedUserId, String reportedUsername) async {
+    String? selectedReason;
+    final detailsController = TextEditingController();
+    final theme = Theme.of(context);
+    final pageContext = context;
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            title: const Text('Report user'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Report this user for violating our guidelines. Your report will be reviewed.',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurface.withOpacity(0.7),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Reason',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  ..._reportReasons.map((r) => RadioListTile<String>(
+                    value: r,
+                    groupValue: selectedReason,
+                    onChanged: (v) => setDialogState(() => selectedReason = v),
+                    title: Text(
+                      r,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                    ),
+                  )),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Additional details (optional)',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  TextField(
+                    controller: detailsController,
+                    maxLines: 2,
+                    decoration: InputDecoration(
+                      hintText: 'Provide more context if needed',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      filled: true,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: Text(
+                  'Cancel',
+                  style: TextStyle(color: theme.colorScheme.onSurface),
+                ),
+              ),
+              FilledButton(
+                onPressed: selectedReason == null
+                    ? null
+                    : () async {
+                        final navigator = Navigator.of(dialogContext);
+                        final messenger = ScaffoldMessenger.of(pageContext);
+                        try {
+                          await FirebaseFirestore.instance
+                              .collection('reports')
+                              .add({
+                            'type': 'user',
+                            'reporterUid': FirebaseAuth.instance.currentUser!.uid,
+                            'reportedUserId': reportedUserId,
+                            'reportedUsername': reportedUsername,
+                            'reason': selectedReason,
+                            'details': detailsController.text.trim().isEmpty
+                                ? null
+                                : detailsController.text.trim(),
+                            'createdAt': FieldValue.serverTimestamp(),
+                          });
+                          navigator.pop();
+                          messenger.showSnackBar(
+                            const SnackBar(
+                              content: Text('Report submitted. Thank you.'),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                        } catch (e) {
+                          messenger.showSnackBar(SnackBar(
+                            content: Text('Failed to submit report: $e'),
+                            backgroundColor: Colors.red,
+                          ));
+                        }
+                      },
+                child: const Text('Submit'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+    detailsController.dispose();
   }
 
   @override
@@ -267,6 +409,14 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> with Single
                 Navigator.of(context).pop();
               },
             ),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.flag_outlined),
+                color: theme.colorScheme.onSurface.withOpacity(0.7),
+                tooltip: 'Report',
+                onPressed: () => _onReportUserTapped(widget.publisherId, username),
+              ),
+            ],
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
                 decoration: BoxDecoration(
