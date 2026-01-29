@@ -286,6 +286,11 @@ class ImportExportService {
               errors.add('Row ${i + 2}: Invalid end date format: $endDateStr');
               continue;
             }
+            if (endDt.isBefore(startDt)) {
+              failCount++;
+              errors.add('Row ${i + 2}: End date cannot be earlier than start date');
+              continue;
+            }
             endYear = endDt.year;
             endTime = Timestamp.fromDate(endDt);
           }
@@ -449,6 +454,11 @@ class ImportExportService {
               errors.add('Row ${i + 1}: Invalid end date format: $endDateStr');
               continue;
             }
+            if (endDt.isBefore(startDt)) {
+              failCount++;
+              errors.add('Row ${i + 1}: End date cannot be earlier than start date');
+              continue;
+            }
             endYear = endDt.year;
             endTime = Timestamp.fromDate(endDt);
           }
@@ -543,6 +553,13 @@ class ImportExportService {
   static DateTime? _parseDateString(String s, {bool forEndDate = false}) {
     final raw = s.trim();
     if (raw.isEmpty) return null;
+    // Year-only first: 4 digits in valid range (so "2025" is not treated as Excel serial)
+    if (raw.length == 4) {
+      final y = int.tryParse(raw);
+      if (y != null && y >= 1900 && y <= 2099) {
+        return forEndDate ? DateTime(y, 12, 31) : DateTime(y, 1, 1);
+      }
+    }
     // Excel serial number (1 = 1900-01-01; fractional part = time of day)
     final serial = double.tryParse(raw);
     if (serial != null && serial >= 1 && serial < 300000) {
