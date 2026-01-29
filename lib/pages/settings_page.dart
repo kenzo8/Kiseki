@@ -47,11 +47,20 @@ class _SettingsPageState extends State<SettingsPage> {
     }
 
     // Ask for format: Cancel, CSV, or XLSX
+    final userLabel = currentUser.email ?? currentUser.uid;
     final format = await showDialog<ExportFormat>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Export Data'),
-        content: const Text('Choose export format:'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Account: $userLabel'),
+            const SizedBox(height: 12),
+            const Text('Choose export format:'),
+          ],
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -94,17 +103,19 @@ class _SettingsPageState extends State<SettingsPage> {
       final filePath = await ImportExportService.export(dataService.cachedSekis!, format);
       
       if (filePath != null && mounted) {
-        // Share the file
+        // Share the file (include account in share text)
+        final currentUserForShare = FirebaseAuth.instance.currentUser;
+        final shareUserLabel = currentUserForShare?.email ?? currentUserForShare?.uid ?? '';
         await Share.shareXFiles(
           [XFile(filePath)],
-          text: 'Device Data Export',
+          text: 'Device Data Export (${shareUserLabel.isNotEmpty ? shareUserLabel : "account"})',
         );
         
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Export successful!'),
+          SnackBar(
+            content: Text('Export successful! ($userLabel)'),
             backgroundColor: Colors.green,
-            duration: Duration(seconds: 2),
+            duration: const Duration(seconds: 2),
           ),
         );
       } else {
@@ -325,27 +336,11 @@ class _SettingsPageState extends State<SettingsPage> {
       return;
     }
 
+    final email = currentUser.email ?? currentUser.uid;
+
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Account'),
-        content: const Text(
-          'After deletion, your account and all device and wishlist data will be permanently removed and cannot be recovered. Are you sure you want to delete your account?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.red,
-            ),
-            child: const Text('Delete Account'),
-          ),
-        ],
-      ),
+      builder: (context) => _DeleteAccountDialog(email: email),
     );
 
     if (confirmed != true || !mounted) return;
@@ -458,19 +453,6 @@ class _SettingsPageState extends State<SettingsPage> {
           child: ListView(
             padding: const EdgeInsets.all(16.0),
             children: [
-              // Current account (when logged in)
-              if (FirebaseAuth.instance.currentUser?.email != null) ...[
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: Text(
-                    'Logged in as ${FirebaseAuth.instance.currentUser!.email}',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.7),
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
-              ],
               Builder(
                 builder: (context) {
                   final tileStyle = TextStyle(
@@ -483,6 +465,18 @@ class _SettingsPageState extends State<SettingsPage> {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      // Section: Data
+                      Padding(
+                        padding: const EdgeInsets.only(left: 4, bottom: 8),
+                        child: Text(
+                          'Data',
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            color: theme.colorScheme.onSurface.withOpacity(0.6),
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 1,
+                          ),
+                        ),
+                      ),
                       // Export
                       Card(
                         color: theme.colorScheme.surface.withOpacity(0.1),
@@ -530,7 +524,19 @@ class _SettingsPageState extends State<SettingsPage> {
                           onTap: _isImporting ? null : _handleImport,
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 24),
+                      // Section: Legal & Support
+                      Padding(
+                        padding: const EdgeInsets.only(left: 4, bottom: 8),
+                        child: Text(
+                          'Legal & Support',
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            color: theme.colorScheme.onSurface.withOpacity(0.6),
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 1,
+                          ),
+                        ),
+                      ),
                       // Privacy Policy
                       Card(
                         color: theme.colorScheme.surface.withOpacity(0.1),
@@ -552,27 +558,6 @@ class _SettingsPageState extends State<SettingsPage> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      // Terms of Service
-                      Card(
-                        color: theme.colorScheme.surface.withOpacity(0.1),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: ListTile(
-                          contentPadding: tilePadding,
-                          leading: Icon(Icons.description_outlined, color: leadingColor, size: 24),
-                          title: Text('Terms of Service', style: tileStyle),
-                          trailing: Icon(Icons.open_in_new, color: leadingColor.withOpacity(0.6), size: 20),
-                          onTap: () async {
-                            final uri = Uri.parse('https://kenzo8.github.io/kien-privacy/terms');
-                            if (await canLaunchUrl(uri)) {
-                              await launchUrl(uri, mode: LaunchMode.externalApplication);
-                            }
-                          },
-                        ),
-                      ),
-                      const SizedBox(height: 12),
                       // Feedback / Contact
                       Card(
                         color: theme.colorScheme.surface.withOpacity(0.1),
@@ -586,14 +571,26 @@ class _SettingsPageState extends State<SettingsPage> {
                           title: Text('Feedback & Support', style: tileStyle),
                           trailing: Icon(Icons.open_in_new, color: leadingColor.withOpacity(0.6), size: 20),
                           onTap: () async {
-                            final uri = Uri.parse('mailto:support@example.com?subject=Kien%20App%20Feedback');
+                            final uri = Uri.parse('mailto:p32392530%2Bkien@gmail.com?subject=Kien%20App%20Feedback');
                             if (await canLaunchUrl(uri)) {
                               await launchUrl(uri, mode: LaunchMode.externalApplication);
                             }
                           },
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 24),
+                      // Section: Account
+                      Padding(
+                        padding: const EdgeInsets.only(left: 4, bottom: 8),
+                        child: Text(
+                          'Account',
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            color: theme.colorScheme.onSurface.withOpacity(0.6),
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 1,
+                          ),
+                        ),
+                      ),
                       // Logout
                       Card(
                         color: theme.colorScheme.surface.withOpacity(0.1),
@@ -654,6 +651,79 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Dialog for delete-account confirmation. Owns [TextEditingController] and
+/// disposes it in [State.dispose] so cancel does not dispose while TextField is still mounted.
+class _DeleteAccountDialog extends StatefulWidget {
+  const _DeleteAccountDialog({required this.email});
+
+  final String email;
+
+  @override
+  State<_DeleteAccountDialog> createState() => _DeleteAccountDialogState();
+}
+
+class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final email = widget.email;
+    return AlertDialog(
+      title: const Text('Delete Account'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'After deletion, your account and all device and wishlist data will be permanently removed and cannot be recovered.',
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Your account: $email',
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _controller,
+              decoration: InputDecoration(
+                labelText: 'Type your email to confirm',
+                hintText: email,
+                border: const OutlineInputBorder(),
+              ),
+              onChanged: (_) => setState(() {}),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(false),
+          child: const Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: _controller.text.trim() == email
+              ? () => Navigator.of(context).pop(true)
+              : null,
+          child: const Text('Delete Account'),
+        ),
+      ],
     );
   }
 }
