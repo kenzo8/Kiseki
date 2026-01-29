@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/auth_service.dart';
 import '../services/system_ui_service.dart';
 
@@ -28,12 +29,23 @@ class _EmailAuthPageState extends State<EmailAuthPage> {
   bool _isLoading = false;
   bool _obscurePassword = true;
 
+  static const _kLastLoginAccountKey = 'last_login_account';
+
   @override
   void initState() {
     super.initState();
     _emailFocusNode.addListener(() => setState(() {}));
     _passwordFocusNode.addListener(() => setState(() {}));
     _usernameFocusNode.addListener(() => setState(() {}));
+    _loadLastAccount();
+  }
+
+  Future<void> _loadLastAccount() async {
+    final prefs = await SharedPreferences.getInstance();
+    final last = prefs.getString(_kLastLoginAccountKey);
+    if (last != null && last.trim().isNotEmpty && mounted) {
+      setState(() => _emailController.text = last);
+    }
   }
 
   @override

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/auth_service.dart';
@@ -295,6 +296,16 @@ class _SettingsPageState extends State<SettingsPage> {
     if (shouldLogout == true && context.mounted) {
       final authService = AuthService();
       try {
+        // Save last login account (email) for pre-fill on next login — only for email/password, not Google
+        final user = authService.currentUser;
+        if (user != null &&
+            user.providerData.any((info) => info.providerId == 'password')) {
+          final lastAccount = user.email;
+          if (lastAccount != null && lastAccount.isNotEmpty) {
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setString('last_login_account', lastAccount);
+          }
+        }
         // Clear authentication tokens/sessions
         await authService.signOut();
         
