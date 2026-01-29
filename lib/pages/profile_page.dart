@@ -801,33 +801,29 @@ class _OwnedTabState extends State<_OwnedTab> with AutomaticKeepAliveClientMixin
         child: Container(
           width: double.infinity,
           height: MediaQuery.of(context).size.height * 0.6,
-          color: Colors.white,
           child: Center(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              padding: const EdgeInsets.all(32.0),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Opacity(
-                    opacity: 0.4,
-                    child: Icon(
-                      Icons.devices_outlined,
-                      size: 72,
-                      color: theme.colorScheme.onSurface.withOpacity(0.3),
-                    ),
+                  Icon(
+                    Icons.devices_outlined,
+                    size: 72,
+                    color: theme.colorScheme.onSurface.withOpacity(0.3),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
                   Text(
                     "Add a device you've used",
                     style: TextStyle(
-                      fontSize: 19,
+                      fontSize: 18,
                       fontWeight: FontWeight.w600,
                       color: theme.colorScheme.onSurface,
                     ),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 20),
-                  OutlinedButton(
+                  const SizedBox(height: 24),
+                  FilledButton.icon(
                     onPressed: () {
                       showModalBottomSheet(
                         context: context,
@@ -836,27 +832,10 @@ class _OwnedTabState extends State<_OwnedTab> with AutomaticKeepAliveClientMixin
                         builder: (context) => const AddDevicePage(),
                       );
                     },
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 32,
-                        vertical: 12,
-                      ),
-                      minimumSize: const Size(0, 46),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      side: BorderSide(
-                        color: theme.colorScheme.onSurface.withOpacity(0.2),
-                        width: 1,
-                      ),
-                    ),
-                    child: Text(
-                      'Add',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                        color: theme.colorScheme.onSurface,
-                      ),
+                    icon: const Icon(Icons.add, size: 20),
+                    label: const Text('Add device'),
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                     ),
                   ),
                 ],
@@ -1074,13 +1053,15 @@ class _WantsTabState extends State<_WantsTab> with AutomaticKeepAliveClientMixin
                     size: 72,
                     color: theme.colorScheme.onSurface.withOpacity(0.3),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
                   Text(
                     'No wants yet',
                     style: TextStyle(
-                      color: theme.colorScheme.onSurface.withOpacity(0.7),
-                      fontSize: 16,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onSurface,
                     ),
+                    textAlign: TextAlign.center,
                   ),
                   if (onGoToExplore != null) ...[
                     const SizedBox(height: 24),
