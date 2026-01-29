@@ -53,8 +53,14 @@ class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
 class ProfilePage extends StatefulWidget {
   final User? user;
   final VoidCallback? onGoToExplore;
+  final ValueNotifier<bool>? exploreRefreshNotifier;
 
-  const ProfilePage({super.key, required this.user, this.onGoToExplore});
+  const ProfilePage({
+    super.key,
+    required this.user,
+    this.onGoToExplore,
+    this.exploreRefreshNotifier,
+  });
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
@@ -355,7 +361,9 @@ class _ProfilePageState extends State<ProfilePage>
                         onPressed: () {
                           Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (context) => const SettingsPage(),
+                              builder: (context) => SettingsPage(
+                                exploreRefreshNotifier: widget.exploreRefreshNotifier,
+                              ),
                             ),
                           );
                         },

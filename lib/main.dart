@@ -164,6 +164,7 @@ class _MainNavigationContentState extends State<_MainNavigationContent> {
           ProfilePage(
             user: widget.user,
             onGoToExplore: () => setState(() => _currentIndex = 0),
+            exploreRefreshNotifier: _exploreRefreshNotifier,
           ),
         ],
       ),

@@ -14,7 +14,9 @@ import 'login_page.dart';
 import 'feedback_page.dart';
 
 class SettingsPage extends StatefulWidget {
-  const SettingsPage({super.key});
+  const SettingsPage({super.key, this.exploreRefreshNotifier});
+
+  final ValueNotifier<bool>? exploreRefreshNotifier;
 
   @override
   State<SettingsPage> createState() => _SettingsPageState();
@@ -112,14 +114,6 @@ class _SettingsPageState extends State<SettingsPage> {
           [XFile(filePath)],
           text: 'Device Data Export (${shareUserLabel.isNotEmpty ? shareUserLabel : "account"})',
         );
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Export successful! ($userLabel)'),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 2),
-          ),
-        );
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -211,9 +205,9 @@ class _SettingsPageState extends State<SettingsPage> {
       final importResult = await ImportExportService.importFromFile(filePath);
       
       if (mounted) {
-        // Refresh data
-        await ProfileDataService.instance.refresh();
-        
+        // Same as add device: only trigger explore refresh (profile updates via Firestore stream)
+        widget.exploreRefreshNotifier?.value = true;
+
         // Show result dialog
         showDialog(
           context: context,
