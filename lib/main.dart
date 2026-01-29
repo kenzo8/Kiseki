@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'firebase_options.dart';
-import 'pages/login_page.dart';
 import 'pages/explore_page.dart';
 import 'pages/profile_page.dart';
 import 'pages/add_device_page.dart';
@@ -93,13 +92,8 @@ class MainNavigationScreen extends StatelessWidget {
           );
         }
 
-        // Show login page if not authenticated
+        // Always show main navigation, even if not authenticated
         final user = snapshot.data;
-        if (user == null) {
-          return const LoginPage();
-        }
-
-        // Show main navigation if authenticated
         return _MainNavigationContent(user: user);
       },
     );
@@ -107,9 +101,9 @@ class MainNavigationScreen extends StatelessWidget {
 }
 
 class _MainNavigationContent extends StatefulWidget {
-  final User user;
+  final User? user;
 
-  const _MainNavigationContent({required this.user});
+  const _MainNavigationContent({this.user});
 
   @override
   State<_MainNavigationContent> createState() => _MainNavigationContentState();

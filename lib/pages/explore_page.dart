@@ -445,18 +445,6 @@ class _ExplorePageState extends State<ExplorePage> {
     // Set immersive status bar
     SystemUIService.setImmersiveStatusBar(context, backgroundColor: scaffoldBg);
 
-    if (widget.user == null) {
-      return Scaffold(
-        backgroundColor: scaffoldBg,
-        body: Center(
-          child: Text(
-            'Please sign in to view Explore',
-            style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.7)),
-          ),
-        ),
-      );
-    }
-
     return Scaffold(
       backgroundColor: scaffoldBg,
       body: SafeArea(

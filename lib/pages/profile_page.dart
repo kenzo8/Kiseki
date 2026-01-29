@@ -9,6 +9,7 @@ import '../services/profile_data_service.dart';
 import '../pages/settings_page.dart';
 import '../pages/device_detail_page.dart';
 import '../pages/add_device_page.dart';
+import '../pages/login_page.dart';
 import '../widgets/timeline_seki_item.dart';
 import '../widgets/seki_card.dart';
 import '../widgets/device_icon_selector.dart';
@@ -232,13 +233,49 @@ class _ProfilePageState extends State<ProfilePage>
     // Set immersive status bar
     SystemUIService.setImmersiveStatusBar(context, backgroundColor: scaffoldBg);
 
+    // If user is not logged in, show login prompt
     if (widget.user == null) {
       return Scaffold(
         backgroundColor: scaffoldBg,
-        body: Center(
-          child: Text(
-            'Please sign in to view profile',
-            style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.7)),
+        body: SafeArea(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.person_outline,
+                    size: 72,
+                    color: theme.colorScheme.onSurface.withOpacity(0.3),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'Sign in to view your profile',
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurface.withOpacity(0.7),
+                      fontSize: 18,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 32),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const LoginPage(),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                    ),
+                    child: const Text('Sign In'),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       );
@@ -859,7 +896,30 @@ class _WantsTabState extends State<_WantsTab> with AutomaticKeepAliveClientMixin
 
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
     if (currentUserId == null) {
-      return const Center(child: Text('Please sign in'));
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.star_outline,
+                size: 72,
+                color: widget.theme.colorScheme.onSurface.withOpacity(0.3),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Sign in to view your wants',
+                style: TextStyle(
+                  color: widget.theme.colorScheme.onSurface.withOpacity(0.7),
+                  fontSize: 16,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      );
     }
 
     return ListenableBuilder(

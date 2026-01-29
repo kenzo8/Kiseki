@@ -1,17 +1,17 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Users collection: users can read/write their own document
+    // Users collection: anyone can read (for viewing profiles), but only authenticated users can write their own
     match /users/{userId} {
-      allow read: if request.auth != null && request.auth.uid == userId;
+      allow read: if true; // Allow anyone to read user profiles
       allow create: if request.auth != null && request.auth.uid == userId;
       allow update: if request.auth != null && request.auth.uid == userId;
       allow delete: if request.auth != null && request.auth.uid == userId;
     }
     
-    // Seki collection: authenticated users can read all, but only create/update/delete their own
+    // Seki collection: anyone can read, but only authenticated users can create/update/delete their own
     match /seki/{sekiId} {
-      allow read: if request.auth != null;
+      allow read: if true; // Allow anyone to read
       allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
       allow update: if request.auth != null && resource.data.uid == request.auth.uid;
       allow delete: if request.auth != null && resource.data.uid == request.auth.uid;

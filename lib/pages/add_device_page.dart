@@ -9,6 +9,7 @@ import '../widgets/device_icon_selector.dart';
 import '../widgets/seki_card.dart';
 import '../services/auth_service.dart';
 import '../services/profile_data_service.dart';
+import '../pages/login_page.dart';
 
 class AddDevicePage extends StatefulWidget {
   final Seki? seki;
@@ -334,7 +335,23 @@ class _AddDevicePageState extends State<AddDevicePage> {
     if (uid == null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error: Not signed in')),
+          SnackBar(
+            content: const Text('Please sign in to add a device'),
+            action: SnackBarAction(
+              label: 'Sign In',
+              textColor: Colors.white,
+              onPressed: () {
+                Navigator.pop(context); // Close the bottom sheet first
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const LoginPage(),
+                  ),
+                );
+              },
+            ),
+            backgroundColor: Colors.orange,
+            duration: const Duration(seconds: 4),
+          ),
         );
       }
       setState(() {
