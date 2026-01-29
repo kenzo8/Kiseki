@@ -19,7 +19,7 @@ class LoginScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              'Welcome to Kiseki',
+              'Welcome to kien',
               textAlign: TextAlign.center,
               style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.w600,

@@ -24,11 +24,11 @@ Future<void> main() async {
   // Always use light mode
   themeModeNotifier = ValueNotifier<ThemeMode>(ThemeMode.light);
   
-  runApp(const KisekiApp());
+  runApp(const KienApp());
 }
 
-class KisekiApp extends StatelessWidget {
-  const KisekiApp({super.key});
+class KienApp extends StatelessWidget {
+  const KienApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +46,7 @@ class KisekiApp extends StatelessWidget {
         });
         
         return MaterialApp(
-          title: 'Kiseki',
+          title: 'kien',
           debugShowCheckedModeBanner: false,
           theme: ThemeData(
             useMaterial3: true,

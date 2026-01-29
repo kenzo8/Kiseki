@@ -100,7 +100,7 @@ class _LoginPageState extends State<LoginPage> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const Text(
-                      'Kiseki',
+                      'kien',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Colors.white,

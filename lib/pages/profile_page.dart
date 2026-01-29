@@ -203,7 +203,7 @@ class _ProfilePageState extends State<ProfilePage>
 
   /// Share profile information
   Future<void> _shareProfile(BuildContext context, String username, int deviceCount, int wantCount) async {
-    final shareText = 'Check out $username\'s profile on Kiseki!\n\n'
+    final shareText = 'Check out $username\'s profile on kien!\n\n'
         'Owned: $deviceCount devices\n'
         'Wants: $wantCount items';
     
