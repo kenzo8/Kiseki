@@ -60,9 +60,13 @@ class _EmailAuthPageState extends State<EmailAuthPage> {
           email: _emailController.text,
           password: _passwordController.text,
         );
-        // Navigation will be handled by auth state listener in main.dart
+        // Close EmailAuthPage and LoginPage if LoginPage was pushed
         if (mounted) {
-          Navigator.of(context).pop();
+          Navigator.of(context).pop(); // Close EmailAuthPage
+          // Check if we can pop again (meaning LoginPage was pushed)
+          if (Navigator.canPop(context)) {
+            Navigator.of(context).pop(); // Close LoginPage
+          }
         }
       } else {
         await _authService.signUp(
@@ -72,9 +76,13 @@ class _EmailAuthPageState extends State<EmailAuthPage> {
               ? null
               : _usernameController.text.trim(),
         );
-        // Navigation will be handled automatically by StreamBuilder in main.dart
+        // Close EmailAuthPage and LoginPage if LoginPage was pushed
         if (mounted) {
-          Navigator.of(context).pop();
+          Navigator.of(context).pop(); // Close EmailAuthPage
+          // Check if we can pop again (meaning LoginPage was pushed)
+          if (Navigator.canPop(context)) {
+            Navigator.of(context).pop(); // Close LoginPage
+          }
         }
       }
     } catch (e) {

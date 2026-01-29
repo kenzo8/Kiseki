@@ -20,7 +20,10 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => _isLoading = true);
     try {
       await _authService.signInWithGoogle();
-      // Navigation handled by auth state in main.dart
+      // Close LoginPage if it was pushed (not the root route)
+      if (mounted && Navigator.canPop(context)) {
+        Navigator.of(context).pop();
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
