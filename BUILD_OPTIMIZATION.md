@@ -36,6 +36,25 @@ This produces `app-armeabi-v7a-release.apk`, `app-arm64-v8a-release.apk`, etc., 
 flutter build apk --tree-shake-icons --split-debug-info=build/app/outputs/symbols --obfuscate
 ```
 
+## Android Release Signing
+
+Release builds use a **release keystore** when configured; otherwise they fall back to the debug keystore (not for Play Store upload).
+
+**1. Generate a keystore** (once):
+
+```bash
+keytool -genkey -v -keystore android/upload-keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+```
+
+**2. Configure `key.properties`:**
+
+- Copy `android/key.properties.example` to `android/key.properties`
+- Set `storePassword`, `keyPassword`, `keyAlias`, and `storeFile` (path to your `.jks` relative to `android/app/`, e.g. `../upload-keystore.jks`)
+
+**3. Build:** Use the App Bundle or APK commands above. The release output will be signed with your keystore.
+
+`key.properties` and `*.jks` are git-ignored. Never commit them. Add the release keystore’s **SHA-1/SHA-256** to Firebase (see [GOOGLE_SIGNIN_SETUP.md](GOOGLE_SIGNIN_SETUP.md)) for Google Sign-In to work in release builds.
+
 ## Debug Symbols & Crash Stack Traces
 
 When using `--split-debug-info`, keep the `build/app/outputs/symbols` directory and use `dart symbolize` or Flutter’s symbolize workflow to deobfuscate release crash stack traces.
