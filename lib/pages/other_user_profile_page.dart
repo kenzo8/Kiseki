@@ -7,6 +7,7 @@ import '../models/want_model.dart';
 import '../services/system_ui_service.dart';
 import '../widgets/timeline_seki_item.dart';
 import '../widgets/seki_card.dart';
+import '../widgets/device_icon_selector.dart';
 import '../pages/device_detail_page.dart';
 import 'login_page.dart';
 
@@ -100,6 +101,34 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> with Single
       baseHeight += 60.0;
     }
     return baseHeight.clamp(200.0, 400.0); // Clamp between 200 and 400
+  }
+
+  /// Format createdAt timestamp to a readable string
+  String _formatCreatedAt(Timestamp createdAt) {
+    final now = DateTime.now();
+    final created = createdAt.toDate();
+    final difference = now.difference(created);
+
+    if (difference.inDays == 0) {
+      if (difference.inHours == 0) {
+        if (difference.inMinutes == 0) {
+          return 'Just now';
+        }
+        return '${difference.inMinutes} ${difference.inMinutes == 1 ? 'minute' : 'minutes'} ago';
+      }
+      return '${difference.inHours} ${difference.inHours == 1 ? 'hour' : 'hours'} ago';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays} ${difference.inDays == 1 ? 'day' : 'days'} ago';
+    } else if (difference.inDays < 30) {
+      final weeks = (difference.inDays / 7).floor();
+      return '$weeks ${weeks == 1 ? 'week' : 'weeks'} ago';
+    } else if (difference.inDays < 365) {
+      final months = (difference.inDays / 30).floor();
+      return '$months ${months == 1 ? 'month' : 'months'} ago';
+    } else {
+      final years = (difference.inDays / 365).floor();
+      return '$years ${years == 1 ? 'year' : 'years'} ago';
+    }
   }
 
   static const _reportReasons = [
@@ -603,7 +632,7 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> with Single
             pinned: true,
             delegate: _OtherUserSliverAppBarDelegate(
               TabBar(
-                key: ValueKey('tabbar_${deviceCount}_${wantCount}'),
+                key: ValueKey('tabbar_${deviceCount}_$wantCount'),
                 controller: _tabController,
                 tabs: [
                   Tab(
@@ -802,20 +831,19 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> with Single
           itemCount: wants.length,
           itemBuilder: (context, index) {
             final want = wants[index];
+            final categoryColor = getCategoryColor(want.deviceType);
             return ListTile(
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               leading: Container(
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: isDark
-                      ? Colors.white.withOpacity(0.08)
-                      : Colors.grey.shade100,
+                  color: categoryColor.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
                   deviceTypeToIcon(want.deviceType),
-                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                  color: categoryColor,
                   size: 24,
                 ),
               ),
@@ -827,12 +855,25 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> with Single
                   fontWeight: FontWeight.w500,
                 ),
               ),
-              subtitle: Text(
-                want.deviceType,
-                style: TextStyle(
-                  color: theme.colorScheme.onSurface.withOpacity(0.6),
-                  fontSize: 14,
-                ),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    want.deviceType,
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurface.withOpacity(0.6),
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    _formatCreatedAt(want.createdAt),
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurface.withOpacity(0.5),
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
               ),
               onTap: () {
                 // Try to find the seki by device name and publisherId
