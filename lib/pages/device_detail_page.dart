@@ -971,10 +971,10 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
         filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
         child: Container(
           padding: EdgeInsets.only(
-            top: 10,
-            left: 20,
-            right: 20,
-            bottom: 10 + MediaQuery.of(context).padding.bottom,
+            top: 16,
+            left: 24,
+            right: 24,
+            bottom: 16 + MediaQuery.of(context).padding.bottom,
           ),
           decoration: BoxDecoration(
             color: (isDark 
@@ -989,6 +989,7 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
           ),
           child: SafeArea(
             top: false,
+            bottom: false,
             child: isOwner
                 ? _buildActionButtons(seki, theme)
                 : _buildUsageActionButtons(seki, theme),
@@ -1009,15 +1010,15 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF1A1A1B),
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 10),
+              padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(24),
               ),
               elevation: 0,
             ),
           ),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 12),
         Expanded(
           child: OutlinedButton.icon(
             onPressed: () => _deleteDevice(seki),
@@ -1026,9 +1027,9 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
             style: OutlinedButton.styleFrom(
               foregroundColor: Colors.red,
               side: const BorderSide(color: Colors.red, width: 1.5),
-              padding: const EdgeInsets.symmetric(vertical: 10),
+              padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(24),
               ),
             ),
           ),
@@ -1057,70 +1058,70 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
           child: isUsedActive
               ? ElevatedButton.icon(
                   onPressed: _removeUserDevice,
-                  icon: const Icon(Icons.check_circle, size: 18),
+                  icon: const Icon(Icons.check_circle, size: 20),
                   label: const Text('Used'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF1A1A1B),
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(24),
                     ),
                     elevation: 0,
                   ),
                 )
               : OutlinedButton.icon(
                   onPressed: () => _openDeviceSheet(stillUsing: false),
-                  icon: const Icon(Icons.history, size: 18),
+                  icon: const Icon(Icons.history, size: 20),
                   label: const Text('Used'),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.grey,
                     side: const BorderSide(color: Colors.grey, width: 1.5),
-                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(24),
                     ),
                   ),
                 ),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 12),
         Expanded(
           child: isUsingActive
               ? ElevatedButton.icon(
                   onPressed: _removeUserDevice,
-                  icon: const Icon(Icons.check_circle, size: 18),
+                  icon: const Icon(Icons.check_circle, size: 20),
                   label: const Text('Using'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF1A1A1B),
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(24),
                     ),
                     elevation: 0,
                   ),
                 )
               : OutlinedButton.icon(
                   onPressed: () => _openDeviceSheet(stillUsing: true),
-                  icon: const Icon(Icons.circle, size: 18),
+                  icon: const Icon(Icons.circle, size: 20),
                   label: const Text('Using'),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.grey,
                     side: const BorderSide(color: Colors.grey, width: 1.5),
-                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(24),
                     ),
                   ),
                 ),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 12),
         Expanded(
           child: OutlinedButton.icon(
             onPressed: _toggleWant,
             icon: Icon(
               isWanting ? Icons.star : Icons.star_outline,
-              size: 18,
+              size: 20,
             ),
             label: const Text('Want'),
             style: OutlinedButton.styleFrom(
@@ -1129,9 +1130,9 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
                 color: isWanting ? Colors.orange : Colors.grey,
                 width: 1.5,
               ),
-              padding: const EdgeInsets.symmetric(vertical: 10),
+              padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(24),
               ),
             ),
           ),
