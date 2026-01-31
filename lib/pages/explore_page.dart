@@ -505,43 +505,8 @@ class _ExplorePageState extends State<ExplorePage> {
       body: SafeArea(
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 7.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Text(
-                    'Explore',
-                    style: TextStyle(
-                      color: theme.colorScheme.onSurface,
-                      fontSize: 24,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 4,
-                    ),
-                  ),
-                  IconButton(
-                    icon: Icon(
-                      _showSearchBar ? Icons.close : Icons.search,
-                      color: theme.colorScheme.onSurface,
-                      size: 24,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _showSearchBar = !_showSearchBar;
-                        if (!_showSearchBar) {
-                          _searchQuery = '';
-                          _searchController.clear();
-                        } else {
-                          _searchFocusNode.requestFocus();
-                        }
-                      });
-                    },
-                  ),
-                ],
-              ),
-            ),
-            if (_showSearchBar) _buildSearchBar(theme, isDark),
+            const SizedBox(height: 8),
+            _buildSearchBar(theme, isDark),
             const SizedBox(height: 4),
             // Filter bar
             _buildFilterBar(theme, isDark),
