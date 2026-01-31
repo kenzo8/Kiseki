@@ -74,14 +74,19 @@ class _ExplorePageState extends State<ExplorePage> {
   }
 
   Future<void> _loadData({bool forceRefresh = false}) async {
-    // Check cache first if not forcing refresh
+    // Check cache first if not forcing refresh. Empty cache (e.g. from offline load)
+    // should not skip refetch so that when user comes back online and switches tab,
+    // we automatically reload.
     if (!forceRefresh && _deviceTypeCache.containsKey(_selectedDeviceType)) {
-      setState(() {
-        _cachedDocs = _deviceTypeCache[_selectedDeviceType];
-        _isLoading = false;
-        _dataFuture = null; // Clear future since we're using cache
-      });
-      return;
+      final cached = _deviceTypeCache[_selectedDeviceType];
+      if (cached != null && cached.isNotEmpty) {
+        setState(() {
+          _cachedDocs = cached;
+          _isLoading = false;
+          _dataFuture = null; // Clear future since we're using cache
+        });
+        return;
+      }
     }
 
     setState(() {
