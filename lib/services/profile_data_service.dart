@@ -60,9 +60,10 @@ class ProfileDataService extends ChangeNotifier {
         .doc(userId)
         .snapshots()
         .listen((snapshot) {
+      final changed = !_userDataEqual(_cachedUserData, snapshot);
       _cachedUserData = snapshot;
       _isLoadingUserData = false;
-      notifyListeners();
+      if (changed) notifyListeners();
     }, onError: (error) {
       _isLoadingUserData = false;
       notifyListeners();
@@ -75,9 +76,11 @@ class ProfileDataService extends ChangeNotifier {
         .where('uid', isEqualTo: userId)
         .snapshots()
         .listen((snapshot) {
-      _cachedSekis = snapshot.docs.map((doc) => Seki.fromFirestore(doc)).toList();
+      final newSekis = snapshot.docs.map((doc) => Seki.fromFirestore(doc)).toList();
+      final changed = !_sekisEqual(_cachedSekis, newSekis);
+      _cachedSekis = newSekis;
       _isLoadingSekis = false;
-      notifyListeners();
+      if (changed) notifyListeners();
     }, onError: (error) {
       _isLoadingSekis = false;
       notifyListeners();
@@ -144,8 +147,24 @@ class ProfileDataService extends ChangeNotifier {
     _userSubscription = null;
   }
 
-  /// Compare wants lists by ids to avoid redundant notifyListeners (prevents flash
-  /// when Firestore emits cache-then-server with identical data).
+  bool _userDataEqual(DocumentSnapshot? a, DocumentSnapshot b) {
+    if (a == null) return false;
+    if (a.exists != b.exists) return false;
+    if (!a.exists) return true;
+    final ad = a.data() as Map<String, dynamic>?;
+    final bd = b.data() as Map<String, dynamic>?;
+    if (ad == null || bd == null) return ad == bd;
+    return ad.toString() == bd.toString();
+  }
+
+  bool _sekisEqual(List<Seki>? a, List<Seki> b) {
+    if (a == null || a.length != b.length) return false;
+    for (int i = 0; i < a.length; i++) {
+      if (a[i].id != b[i].id) return false;
+    }
+    return true;
+  }
+
   bool _wantsEqual(List<Want>? a, List<Want> b) {
     if (a == null || a.length != b.length) return false;
     for (int i = 0; i < a.length; i++) {
