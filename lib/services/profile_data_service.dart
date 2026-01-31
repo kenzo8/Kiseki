@@ -91,26 +91,26 @@ class ProfileDataService extends ChangeNotifier {
         .orderBy('createdAt', descending: true)
         .snapshots()
         .listen((snapshot) {
-      _cachedWants = snapshot.docs.map((doc) => Want.fromFirestore(doc)).toList();
+      final newWants = snapshot.docs.map((doc) => Want.fromFirestore(doc)).toList();
+      final changed = !_wantsEqual(_cachedWants, newWants);
+      _cachedWants = newWants;
       _isLoadingWants = false;
-      notifyListeners();
+      if (changed) notifyListeners();
     }, onError: (error) {
       _isLoadingWants = false;
       notifyListeners();
     });
   }
 
-  /// Manually refresh data (for pull-to-refresh)
+  /// Manually refresh data (for pull-to-refresh).
+  /// Keeps existing cache so UI shows partial/local update instead of full reload.
   Future<void> refresh() async {
     final userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId == null) return;
 
-    // Clear cache and notify so UI doesn't show stale data until new stream emits
+    // Re-subscribe streams without clearing cache - UI keeps showing current data
+    // until new stream data arrives, then updates in place (partial update)
     _disposeSubscriptions();
-    _cachedSekis = null;
-    _cachedWants = null;
-    _cachedUserData = null;
-    notifyListeners();
     initialize(userId);
   }
 
@@ -142,6 +142,16 @@ class ProfileDataService extends ChangeNotifier {
     _sekiSubscription = null;
     _wantSubscription = null;
     _userSubscription = null;
+  }
+
+  /// Compare wants lists by ids to avoid redundant notifyListeners (prevents flash
+  /// when Firestore emits cache-then-server with identical data).
+  bool _wantsEqual(List<Want>? a, List<Want> b) {
+    if (a == null || a.length != b.length) return false;
+    for (int i = 0; i < a.length; i++) {
+      if (a[i].id != b[i].id) return false;
+    }
+    return true;
   }
 
   @override
