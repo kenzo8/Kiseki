@@ -445,11 +445,12 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
             onPressed: () => Navigator.of(context).pop(),
           ),
+          centerTitle: true,
           title: Text(
             'Settings',
             style: TextStyle(
               color: theme.colorScheme.onSurface,
-              fontSize: 24,
+              fontSize: 18,
               fontWeight: FontWeight.w600,
               letterSpacing: 2,
             ),
