@@ -1,9 +1,5 @@
-import 'dart:async';
-
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart'
-    show FlutterError, TargetPlatform, defaultTargetPlatform, kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -19,39 +15,16 @@ late final ValueNotifier<ThemeMode> themeModeNotifier;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize Firebase
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
-  // 捕获未处理的 Flutter 框架错误，便于在 Xcode 控制台看到崩溃原因
-  FlutterError.onError = (details) {
-    FlutterError.presentError(details);
-    if (kDebugMode) {
-      debugPrint('FlutterError: ${details.exceptionAsString()}');
-      debugPrint(details.stack?.toString() ?? '');
-    }
-  };
-
-  runZonedGuarded(() async {
-    try {
-      // iOS: 已在 AppDelegate 中通过 GoogleService-Info.plist 调用 FirebaseApp.configure()
-      // 此处仅使用已创建好的 default app，不再传 options 避免重复创建
-      if (defaultTargetPlatform == TargetPlatform.iOS) {
-        await Firebase.initializeApp();
-      } else {
-        await Firebase.initializeApp(
-          options: DefaultFirebaseOptions.currentPlatform,
-        );
-      }
-    } catch (e, st) {
-      debugPrint('Firebase.initializeApp failed: $e');
-      debugPrint(st.toString());
-      rethrow;
-    }
-
-    themeModeNotifier = ValueNotifier<ThemeMode>(ThemeMode.light);
-    runApp(const KienApp());
-  }, (error, stack) {
-    debugPrint('Uncaught error: $error');
-    debugPrint(stack.toString());
-  });
+  // Always use light mode
+  themeModeNotifier = ValueNotifier<ThemeMode>(ThemeMode.light);
+  
+  runApp(const KienApp());
 }
 
 class KienApp extends StatelessWidget {
