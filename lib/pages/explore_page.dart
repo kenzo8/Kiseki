@@ -386,8 +386,9 @@ class _ExplorePageState extends State<ExplorePage> {
                 child: Center(
                   child: Text(
                     _selectedDeviceType == null
-                        ? 'No Seki posts yet. Be the first!'
-                        : 'No ${_selectedDeviceType} posts yet.',
+                        ? 'No devices shared yet.\nBe the first to add one!'
+                        : 'No $_selectedDeviceType devices yet.',
+                    textAlign: TextAlign.center,
                     style: TextStyle(
                       color: theme.colorScheme.onSurface.withOpacity(0.6),
                       fontSize: 16,
@@ -676,15 +677,9 @@ class _ExplorePageState extends State<ExplorePage> {
         ? categoryColor.withOpacity(0.2)
         : (isDark ? Colors.white : theme.colorScheme.primary).withOpacity(0.2);
     final Color unselectedBgColor = (isDark ? Colors.white : Colors.black).withOpacity(0.1);
-    final Color selectedBorderColor = categoryColor != null
-        ? categoryColor
-        : (isDark ? Colors.white : theme.colorScheme.primary).withOpacity(0.5);
-    final Color selectedTextColor = categoryColor != null
-        ? categoryColor
-        : (isDark ? Colors.white : theme.colorScheme.primary);
-    final Color selectedIconColor = categoryColor != null
-        ? categoryColor
-        : (isDark ? Colors.white : theme.colorScheme.primary);
+    final Color selectedBorderColor = categoryColor ?? (isDark ? Colors.white : theme.colorScheme.primary).withOpacity(0.5);
+    final Color selectedTextColor = categoryColor ?? (isDark ? Colors.white : theme.colorScheme.primary);
+    final Color selectedIconColor = categoryColor ?? (isDark ? Colors.white : theme.colorScheme.primary);
     
     return GestureDetector(
       onTap: onTap,
