@@ -739,9 +739,11 @@ class _ExplorePageState extends State<ExplorePage> {
           color: isDark ? const Color(0xFF1A1A2E) : Colors.white,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
+        child: SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
             // Handle bar
             Container(
               margin: const EdgeInsets.only(top: 12),
@@ -873,6 +875,7 @@ class _ExplorePageState extends State<ExplorePage> {
               ),
             ),
           ],
+        ),
         ),
       ),
     );

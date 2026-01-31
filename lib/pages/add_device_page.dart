@@ -545,9 +545,10 @@ class _AddDevicePageState extends State<AddDevicePage> {
         maxChildSize: 0.95,
         expand: false,
         builder: (context, scrollController) {
+          final mq = MediaQuery.of(context);
           return Padding(
             padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom,
+              bottom: mq.viewInsets.bottom + mq.padding.bottom,
             ),
             child: SingleChildScrollView(
               controller: scrollController,
@@ -829,9 +830,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
                                         setState(() {
                                           _isPreciseMode = !_isPreciseMode;
                                           if (_isPreciseMode) {
-                                            if (_startDate == null) {
-                                              _startDate = DateTime(_yearRange.start.toInt(), 1, 1);
-                                            }
+                                            _startDate ??= DateTime(_yearRange.start.toInt(), 1, 1);
                                             if (!_stillUsing && _endDate == null) {
                                               _endDate = DateTime(_yearRange.end.toInt(), 12, 31);
                                             }
@@ -865,9 +864,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
                                                 setState(() {
                                                   _isPreciseMode = value ?? false;
                                                   if (_isPreciseMode) {
-                                                    if (_startDate == null) {
-                                                      _startDate = DateTime(_yearRange.start.toInt(), 1, 1);
-                                                    }
+                                                    _startDate ??= DateTime(_yearRange.start.toInt(), 1, 1);
                                                     if (!_stillUsing && _endDate == null) {
                                                       _endDate = DateTime(_yearRange.end.toInt(), 12, 31);
                                                     }
@@ -1058,8 +1055,11 @@ class _AddDevicePageState extends State<AddDevicePage> {
                                         setState(() {
                                           _stillUsing = !_stillUsing;
                                           if (_stillUsing) {
-                                            if (_isPreciseMode) _endDate = null;
-                                            else _yearRange = RangeValues(_yearRange.start, DateTime.now().year.toDouble());
+                                            if (_isPreciseMode) {
+                                              _endDate = null;
+                                            } else {
+                                              _yearRange = RangeValues(_yearRange.start, DateTime.now().year.toDouble());
+                                            }
                                           } else {
                                             if (_isPreciseMode && _endDate == null) _endDate = DateTime.now();
                                           }
@@ -1085,8 +1085,11 @@ class _AddDevicePageState extends State<AddDevicePage> {
                                                 setState(() {
                                                   _stillUsing = value ?? false;
                                                   if (_stillUsing) {
-                                                    if (_isPreciseMode) _endDate = null;
-                                                    else _yearRange = RangeValues(_yearRange.start, DateTime.now().year.toDouble());
+                                                    if (_isPreciseMode) {
+                                                      _endDate = null;
+                                                    } else {
+                                                      _yearRange = RangeValues(_yearRange.start, DateTime.now().year.toDouble());
+                                                    }
                                                   } else {
                                                     if (_isPreciseMode && _endDate == null) _endDate = DateTime.now();
                                                   }

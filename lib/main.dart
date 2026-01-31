@@ -172,9 +172,11 @@ class _MainNavigationContentState extends State<_MainNavigationContent> {
         decoration: BoxDecoration(
           color: bottomBarColor,
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
+        child: SafeArea(
+          top: false,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
             _buildNavItem(
               icon: Icons.explore,
               iconOutlined: Icons.explore_outlined,
@@ -197,6 +199,7 @@ class _MainNavigationContentState extends State<_MainNavigationContent> {
               onTap: () => setState(() => _currentIndex = 1),
             ),
           ],
+        ),
         ),
       ),
       ),
