@@ -8,10 +8,69 @@
  */
 
 const { setGlobalOptions } = require("firebase-functions");
+const { onRequest } = require("firebase-functions/v2/https");
 const { onDocumentWritten } = require("firebase-functions/v2/firestore");
 const logger = require("firebase-functions/logger");
+const admin = require("firebase-admin");
+
+if (!admin.apps.length) admin.initializeApp();
+const db = admin.firestore();
 
 setGlobalOptions({ maxInstances: 10 });
+
+// --- Handle migration for existing users ---
+function generateHandleFromEmail(email) {
+  const prefix = (email || "").split("@")[0].toLowerCase();
+  const sanitized = prefix.replace(/[^a-z0-9_]/g, "");
+  if (!sanitized) return "u";
+  return sanitized.length > 12 ? sanitized.substring(0, 12) : sanitized;
+}
+
+async function ensureUniqueHandle(baseHandle, uid) {
+  let candidate = baseHandle;
+  const handleDoc = await db.collection("handles").doc(candidate).get();
+  if (!handleDoc.exists) return candidate;
+  const suffix = uid.length >= 5 ? uid.slice(-5) : uid;
+  return `${baseHandle}_${suffix}`;
+}
+
+/**
+ * HTTP: migrate existing users who lack a handle.
+ * Run once via:
+ *   Local:  curl "http://127.0.0.1:5001/kiseki-34cd7/us-central1/migrateHandles"
+ *   Deploy: curl "https://us-central1-kiseki-34cd7.cloudfunctions.net/migrateHandles"
+ */
+exports.migrateHandles = onRequest(async (req, res) => {
+  const usersSnap = await db.collection("users").get();
+  const toMigrate = [];
+  for (const doc of usersSnap.docs) {
+    const data = doc.data();
+    const handle = (data.handle || "").trim();
+    if (!handle) {
+      toMigrate.push({ uid: doc.id, email: (data.email || "").trim() });
+    }
+  }
+  let migrated = 0;
+  const batchMax = 500;
+  let batch = db.batch();
+  let opCount = 0;
+  for (const { uid, email } of toMigrate) {
+    const baseHandle = generateHandleFromEmail(email);
+    const handle = await ensureUniqueHandle(baseHandle, uid);
+    batch.update(db.collection("users").doc(uid), { handle });
+    batch.set(db.collection("handles").doc(handle), { uid });
+    opCount += 2;
+    migrated++;
+    if (opCount >= batchMax) {
+      await batch.commit();
+      batch = db.batch();
+      opCount = 0;
+    }
+  }
+  if (opCount > 0) await batch.commit();
+  logger.info("migrateHandles completed", { migrated, total: toMigrate.length });
+  res.json({ migrated, total: toMigrate.length });
+});
 
 // --- Content sanitization for Google Play compliance ---
 const REPLACEMENT = "***";
