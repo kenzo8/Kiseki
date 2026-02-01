@@ -145,8 +145,9 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> with Single
   }
 
   /// Calculate adaptive height based on content
-  double _calculateHeaderHeight(String bio, List<Seki> activeDevices) {
+  double _calculateHeaderHeight(String bio, List<Seki> activeDevices, [String? handle]) {
     double baseHeight = 110.0; // Base height for username (no email on profile)
+    if (handle != null && handle.isNotEmpty) baseHeight += 20.0;
     if (bio.isNotEmpty) {
       // Estimate bio height (approximate 1.5 line height * font size)
       final bioLines = (bio.length / 40).ceil(); // Rough estimate: ~40 chars per line
@@ -430,6 +431,7 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> with Single
 
             final userData = userSnapshot.data!.data() as Map<String, dynamic>;
             final username = userData['username'] as String? ?? 'Unknown';
+            final handle = userData['handle'] as String?;
             final bio = userData['bio'] as String? ?? '';
 
             return StreamBuilder<QuerySnapshot>(
@@ -488,6 +490,7 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> with Single
                       isDark,
                       scaffoldBg,
                       username,
+                      handle,
                       bio,
                       fallbackActiveDevices,
                       fallbackDeviceCount,
@@ -517,6 +520,7 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> with Single
                       isDark,
                       scaffoldBg,
                       username,
+                      handle,
                       bio,
                       activeDevices,
                       deviceCount,
@@ -540,6 +544,7 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> with Single
     bool isDark,
     Color scaffoldBg,
     String username,
+    String? handle,
     String bio,
     List<Seki> activeDevices,
     int deviceCount,
@@ -547,7 +552,7 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> with Single
     bool useUidQuery,
     List<Seki> sekis,
   ) {
-    final headerHeight = _calculateHeaderHeight(bio, activeDevices);
+    final headerHeight = _calculateHeaderHeight(bio, activeDevices, handle);
     final avatarBorderGradientColors = _getAvatarBorderGradientColors(sekis, theme);
     
     return NestedScrollView(
@@ -671,16 +676,34 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> with Single
                           ),
                           const SizedBox(width: 12),
                           Expanded(
-                            child: Text(
-                              username,
-                              style: theme.textTheme.headlineSmall?.copyWith(
-                                fontWeight: FontWeight.w600,
-                                color: theme.colorScheme.onSurface,
-                              ) ?? TextStyle(
-                                color: theme.colorScheme.onSurface,
-                                fontSize: 24,
-                                fontWeight: FontWeight.w600,
-                              ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  username,
+                                  style: theme.textTheme.headlineSmall?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                    color: theme.colorScheme.onSurface,
+                                  ) ?? TextStyle(
+                                    color: theme.colorScheme.onSurface,
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                if (handle != null && handle.isNotEmpty) ...[
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    '@$handle',
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      color: theme.colorScheme.onSurfaceVariant,
+                                    ) ?? TextStyle(
+                                      color: theme.colorScheme.onSurfaceVariant,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
                           ),
                         ],

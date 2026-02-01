@@ -27,6 +27,24 @@ class AuthService {
     return 'user${emailPrefix.length >= 4 ? emailPrefix.substring(0, 4) : emailPrefix}';
   }
 
+  /// Generate a short handle base from email (lowercase, alphanumeric + underscore, max 12 chars).
+  String generateHandleFromEmail(String email) {
+    final prefix = email.split('@').first.toLowerCase();
+    final sanitized = prefix.replaceAll(RegExp(r'[^a-z0-9_]'), '');
+    if (sanitized.isEmpty) return 'u';
+    return sanitized.length > 12 ? sanitized.substring(0, 12) : sanitized;
+  }
+
+  /// Ensure handle is unique; if base is taken, append _last5(uid). Returns the handle to use.
+  Future<String> ensureUniqueHandle(String baseHandle, String uid) async {
+    final handlesRef = _firestore.collection('handles');
+    var candidate = baseHandle;
+    final doc = await handlesRef.doc(candidate).get();
+    if (!doc.exists) return candidate;
+    candidate = '${baseHandle}_${uid.length >= 5 ? uid.substring(uid.length - 5) : uid}';
+    return candidate;
+  }
+
   // Sign up with email, password, and optional username
   Future<UserCredential?> signUp({
     required String email,
@@ -51,13 +69,19 @@ class AuthService {
           ? generateDefaultUsername(email)
           : username!.trim();
 
-      // Step 3: Firestore Second (MUST AWAIT) - Create user profile in Firestore
+      // Step 2b: Generate unique short handle from email
+      final baseHandle = generateHandleFromEmail(email.trim());
+      final handle = await ensureUniqueHandle(baseHandle, uid);
+
+      // Step 3: Firestore Second (MUST AWAIT) - Create user profile and handle
       await _firestore.collection('users').doc(uid).set({
         'uid': uid,
         'username': finalUsername,
+        'handle': handle,
         'email': email.trim(),
         'createdAt': DateTime.now(),
       });
+      await _firestore.collection('handles').doc(handle).set({'uid': uid});
 
       // Step 4: Check Success
       print('User profile created successfully');
@@ -88,7 +112,7 @@ class AuthService {
         // Ignore cleanup errors
       }
       if (e is String) {
-        throw e;
+        rethrow;
       }
       throw 'An unexpected error occurred: $e';
     }
@@ -148,12 +172,17 @@ class AuthService {
         final username = user.displayName?.isNotEmpty == true
             ? user.displayName!
             : generateDefaultUsername(user.email ?? '');
+        final email = user.email ?? '';
+        final baseHandle = generateHandleFromEmail(email);
+        final handle = await ensureUniqueHandle(baseHandle, user.uid);
         await userRef.set({
           'uid': user.uid,
           'username': username,
-          'email': user.email ?? '',
+          'handle': handle,
+          'email': email,
           'createdAt': DateTime.now(),
         });
+        await _firestore.collection('handles').doc(handle).set({'uid': user.uid});
       }
       return userCredential;
     } on FirebaseAuthException catch (e) {
@@ -163,10 +192,10 @@ class AuthService {
       if (e.code == 'sign_in_failed' &&
           (e.message?.contains('ApiException') == true &&
               e.message?.contains('10') == true)) {
-        throw 'Google 登录不可用：请在 Firebase 控制台为 Android 应用添加 SHA-1 指纹，'
-            '并重新下载 google-services.json。详见项目根目录 GOOGLE_SIGNIN_SETUP.md';
+        throw 'Google sign-in is not available. Add SHA-1 fingerprint for your Android app in Firebase Console, '
+            'then re-download google-services.json. See GOOGLE_SIGNIN_SETUP.md in the project root.';
       }
-      throw 'Google 登录失败: ${e.message ?? e.code}';
+      throw 'Google sign-in failed: ${e.message ?? e.code}';
     } catch (e) {
       throw 'Google sign-in failed: $e';
     }
@@ -218,6 +247,15 @@ class AuthService {
       }
     }
 
+    final userDoc = await _firestore.collection('users').doc(uid).get();
+    String? handle;
+    if (userDoc.exists) {
+      final data = userDoc.data();
+      handle = data is Map<String, dynamic> ? data['handle'] as String? : null;
+    }
+    if (handle != null && handle.isNotEmpty) {
+      batch.delete(_firestore.collection('handles').doc(handle));
+    }
     batch.delete(_firestore.collection('users').doc(uid));
     await batch.commit();
 

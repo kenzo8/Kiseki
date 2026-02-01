@@ -8,6 +8,13 @@ service cloud.firestore {
       allow update: if request.auth != null && request.auth.uid == userId;
       allow delete: if request.auth != null && request.auth.uid == userId;
     }
+
+    // Handles collection: doc id = handle, used for unique handle lookup. Read for existence check; only owner can create/delete.
+    match /handles/{handleId} {
+      allow read: if true;
+      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
+      allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
+    }
     
     // Seki collection: anyone can read, but only authenticated users can create/update/delete their own
     match /seki/{sekiId} {
