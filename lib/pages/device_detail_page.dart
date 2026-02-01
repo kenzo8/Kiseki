@@ -17,8 +17,10 @@ import 'login_page.dart';
 class DeviceDetailPage extends StatefulWidget {
   final Seki seki;
   final ValueNotifier<bool>? exploreRefreshNotifier;
+  /// When opening from Wants list, pass a hero tag that matches the list item so icon hero animation works.
+  final String? heroTag;
 
-  const DeviceDetailPage({super.key, required this.seki, this.exploreRefreshNotifier});
+  const DeviceDetailPage({super.key, required this.seki, this.exploreRefreshNotifier, this.heroTag});
 
   @override
   State<DeviceDetailPage> createState() => _DeviceDetailPageState();
@@ -634,7 +636,7 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
                         const SizedBox(height: 32),
                     // Hero Icon Section with white container, shadow, and glow
                     Hero(
-                      tag: 'device_icon_${seki.id}',
+                      tag: widget.heroTag ?? 'device_icon_${seki.id}',
                       child: Container(
                         width: 180,
                         height: 180,

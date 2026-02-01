@@ -515,11 +515,17 @@ class _ProfilePageState extends State<ProfilePage>
                                                   spacing: 8,
                                                   runSpacing: 6,
                                                   children: activeDevices.map((seki) {
+                                                    // Distinct tag so same device in "In Use" chips and "Owned" list doesn't duplicate Hero tag.
+                                                    final inUseHeroTag = 'device_icon_inuse_${seki.id}';
                                                     return InkWell(
                                                       onTap: () {
                                                         Navigator.of(context).push(
                                                           MaterialPageRoute(
-                                                            builder: (context) => DeviceDetailPage(seki: seki, exploreRefreshNotifier: widget.exploreRefreshNotifier),
+                                                            builder: (context) => DeviceDetailPage(
+                                                              seki: seki,
+                                                              exploreRefreshNotifier: widget.exploreRefreshNotifier,
+                                                              heroTag: inUseHeroTag,
+                                                            ),
                                                           ),
                                                         );
                                                       },
@@ -542,10 +548,13 @@ class _ProfilePageState extends State<ProfilePage>
                                                         child: Row(
                                                           mainAxisSize: MainAxisSize.min,
                                                           children: [
-                                                            Icon(
-                                                              deviceTypeToIcon(seki.deviceType),
-                                                              size: 16,
-                                                              color: theme.colorScheme.primary.withOpacity(0.7),
+                                                            Hero(
+                                                              tag: inUseHeroTag,
+                                                              child: Icon(
+                                                                deviceTypeToIcon(seki.deviceType),
+                                                                size: 16,
+                                                                color: theme.colorScheme.primary.withOpacity(0.7),
+                                                              ),
                                                             ),
                                                             const SizedBox(width: 6),
                                                             Text(
@@ -940,19 +949,23 @@ class _WantsTabState extends State<_WantsTab> with AutomaticKeepAliveClientMixin
             itemBuilder: (context, index) {
               final want = wants[index];
               final categoryColor = getCategoryColor(want.deviceType);
+              final wantHeroTag = 'device_icon_want_${want.id}';
               return ListTile(
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                leading: Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: categoryColor.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    deviceTypeToIcon(want.deviceType),
-                    color: categoryColor,
-                    size: 24,
+                leading: Hero(
+                  tag: wantHeroTag,
+                  child: Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: categoryColor.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      deviceTypeToIcon(want.deviceType),
+                      color: categoryColor,
+                      size: 24,
+                    ),
                   ),
                 ),
                 title: Text(
@@ -995,7 +1008,11 @@ class _WantsTabState extends State<_WantsTab> with AutomaticKeepAliveClientMixin
                       final seki = Seki.fromFirestore(querySnapshot.docs.first);
                       Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (context) => DeviceDetailPage(seki: seki, exploreRefreshNotifier: widget.exploreRefreshNotifier),
+                          builder: (context) => DeviceDetailPage(
+                            seki: seki,
+                            exploreRefreshNotifier: widget.exploreRefreshNotifier,
+                            heroTag: wantHeroTag,
+                          ),
                         ),
                       );
                     } else {
