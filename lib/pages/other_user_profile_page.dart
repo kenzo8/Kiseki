@@ -146,8 +146,8 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> with Single
 
   /// Calculate adaptive height based on content
   double _calculateHeaderHeight(String bio, List<Seki> activeDevices, [String? handle]) {
-    double baseHeight = 110.0; // Base height for username (no email on profile)
-    if (handle != null && handle.isNotEmpty) baseHeight += 20.0;
+    double baseHeight = 120.0; // Base height for avatar + username row
+    if (handle != null && handle.isNotEmpty) baseHeight += 22.0;
     if (bio.isNotEmpty) {
       // Estimate bio height (approximate 1.5 line height * font size)
       final bioLines = (bio.length / 40).ceil(); // Rough estimate: ~40 chars per line
@@ -649,10 +649,11 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> with Single
                           mainAxisSize: MainAxisSize.min,
                           children: [
                       Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Container(
-                            width: 28,
-                            height: 28,
+                            width: 44,
+                            height: 44,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               gradient: LinearGradient(
@@ -669,12 +670,12 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> with Single
                               ),
                               child: Icon(
                                 Icons.person,
-                                size: 24,
+                                size: 26,
                                 color: theme.colorScheme.primary,
                               ),
                             ),
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: 16),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -682,6 +683,8 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> with Single
                               children: [
                                 Text(
                                   username,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                   style: theme.textTheme.headlineSmall?.copyWith(
                                     fontWeight: FontWeight.w600,
                                     color: theme.colorScheme.onSurface,
@@ -692,11 +695,14 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> with Single
                                   ),
                                 ),
                                 if (handle != null && handle.isNotEmpty) ...[
-                                  const SizedBox(height: 2),
+                                  const SizedBox(height: 4),
                                   Text(
                                     '@$handle',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                     style: theme.textTheme.bodyMedium?.copyWith(
                                       color: theme.colorScheme.onSurfaceVariant,
+                                      fontSize: 14,
                                     ) ?? TextStyle(
                                       color: theme.colorScheme.onSurfaceVariant,
                                       fontSize: 14,
