@@ -13,6 +13,9 @@ enum ExportFormat {
 }
 
 class ImportExportService {
+  /// Maximum number of data rows to import (only first N rows are read).
+  static const int maxImportRows = 100;
+
   /// Export devices to CSV format
   static Future<String?> exportToCSV(List<Seki> devices) async {
     try {
@@ -169,9 +172,11 @@ class ImportExportService {
         return ImportResult(success: false, message: 'File is empty');
       }
       
-      // Skip header row
-      final dataLines = lines.skip(1).where((line) => line.trim().isNotEmpty).toList();
-      
+      // Skip header row; only take first [maxImportRows] data rows
+      final allDataLines = lines.skip(1).where((line) => line.trim().isNotEmpty).toList();
+      final dataLines = allDataLines.take(maxImportRows).toList();
+      final skippedCount = allDataLines.length - dataLines.length;
+
       if (dataLines.isEmpty) {
         return ImportResult(success: false, message: 'No data rows');
       }
@@ -331,9 +336,12 @@ class ImportExportService {
         }
       }
 
-      final msg = updatedCount > 0
+      String msg = updatedCount > 0
           ? 'Added $successCount, updated $updatedCount, failed $failCount'
           : 'Successfully imported $successCount, failed $failCount';
+      if (skippedCount > 0) {
+        msg += '. Skipped ${skippedCount} rows (limit: $maxImportRows rows per import)';
+      }
       return ImportResult(
         success: successCount > 0 || updatedCount > 0,
         message: msg,
@@ -403,8 +411,10 @@ class ImportExportService {
       final errors = <String>[];
       Map<String, String> existingMap = await _getExistingDeviceIdsByMergeKey(uid);
 
-      // Skip header row (row 0)
-      for (int i = 1; i < sheet.rows.length; i++) {
+      // Skip header row (row 0); only process first [maxImportRows] data rows
+      final totalDataRows = sheet.rows.length - 1;
+      final skippedCount = totalDataRows > maxImportRows ? totalDataRows - maxImportRows : 0;
+      for (int i = 1; i < sheet.rows.length && (i - 1) < maxImportRows; i++) {
         try {
           final row = sheet.rows[i];
           if (row.isEmpty || row.length < 6) {
@@ -499,9 +509,12 @@ class ImportExportService {
         }
       }
 
-      final msgX = updatedCount > 0
+      String msgX = updatedCount > 0
           ? 'Added $successCount, updated $updatedCount, failed $failCount'
           : 'Successfully imported $successCount, failed $failCount';
+      if (skippedCount > 0) {
+        msgX += '. Skipped ${skippedCount} rows (limit: $maxImportRows rows per import)';
+      }
       return ImportResult(
         success: successCount > 0 || updatedCount > 0,
         message: msgX,

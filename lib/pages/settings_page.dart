@@ -162,7 +162,8 @@ class _SettingsPageState extends State<SettingsPage> {
       builder: (context) => AlertDialog(
         title: const Text('Import Data'),
         content: const Text(
-          'Importing data will add new devices to your account. Supported formats: CSV, XLSX. Continue?',
+          'Importing data will add new devices to your account. Supported formats: CSV, XLSX.\n\n'
+          'Note: Only the first 100 data rows will be read. If your file has more rows, split it or import in batches.',
         ),
         actions: [
           TextButton(
