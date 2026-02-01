@@ -12,6 +12,7 @@ import '../services/profile_data_service.dart';
 import '../main.dart';
 import 'login_page.dart';
 import 'feedback_page.dart';
+import 'blocked_users_page.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key, this.exploreRefreshNotifier});
@@ -530,6 +531,39 @@ class _SettingsPageState extends State<SettingsPage> {
                               : Icon(Icons.download, color: leadingColor, size: 24),
                           title: Text('Import Data', style: tileStyle),
                           onTap: _isImporting ? null : _handleImport,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      // Section: Safety (blocked users for Google Play UGC)
+                      Padding(
+                        padding: const EdgeInsets.only(left: 4, bottom: 8),
+                        child: Text(
+                          'Safety',
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            color: theme.colorScheme.onSurface.withOpacity(0.6),
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 1,
+                          ),
+                        ),
+                      ),
+                      Card(
+                        color: theme.colorScheme.surface.withOpacity(0.1),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: ListTile(
+                          contentPadding: tilePadding,
+                          leading: Icon(Icons.block, color: leadingColor, size: 24),
+                          title: Text('Blocked users', style: tileStyle),
+                          trailing: Icon(Icons.chevron_right, color: leadingColor.withOpacity(0.6), size: 24),
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => const BlockedUsersPage(),
+                              ),
+                            );
+                          },
                         ),
                       ),
                       const SizedBox(height: 24),

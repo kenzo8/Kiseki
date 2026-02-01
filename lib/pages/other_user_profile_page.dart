@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../models/seki_model.dart';
 import '../models/want_model.dart';
+import '../services/block_service.dart';
 import '../services/system_ui_service.dart';
 import '../widgets/timeline_seki_item.dart';
 import '../widgets/seki_card.dart';
@@ -138,6 +139,72 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> with Single
     'Fake or impersonation',
     'Other',
   ];
+
+  final BlockService _blockService = BlockService();
+
+  Future<void> _onBlockUserTapped(String blockUserId, String blockUsername) async {
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+    if (currentUserId == null) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => const LoginPage(),
+        ),
+      );
+      return;
+    }
+    if (blockUserId == currentUserId) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Block user'),
+        content: Text(
+          'Block $blockUsername? You will no longer see their content in Explore. They will not be notified.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text('Cancel', style: TextStyle(color: Theme.of(ctx).colorScheme.onSurface)),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Block'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    try {
+      await _blockService.blockUser(blockUserId);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('User blocked. You will no longer see their content.')),
+      );
+      Navigator.of(context).pop();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to block: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  Future<void> _onUnblockUserTapped(String unblockUserId, String unblockUsername) async {
+    try {
+      await _blockService.unblockUser(unblockUserId);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$unblockUsername unblocked. You can see their content again.')),
+      );
+      setState(() {});
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to unblock: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
 
   Future<void> _onReportUserTapped(String reportedUserId, String reportedUsername) async {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
@@ -439,11 +506,60 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> with Single
               },
             ),
             actions: [
-              IconButton(
-                icon: const Icon(Icons.flag_outlined),
-                color: theme.colorScheme.onSurface.withOpacity(0.7),
-                tooltip: 'Report',
-                onPressed: () => _onReportUserTapped(widget.publisherId, username),
+              StreamBuilder<List<String>>(
+                stream: _blockService.blockedUserIdsStream,
+                builder: (context, blockedSnapshot) {
+                  final blockedIds = blockedSnapshot.data ?? [];
+                  final isBlocked = blockedIds.contains(widget.publisherId);
+                  final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+                  final isSelf = currentUserId == widget.publisherId;
+                  return PopupMenuButton<String>(
+                    icon: Icon(
+                      Icons.more_vert,
+                      color: theme.colorScheme.onSurface.withOpacity(0.7),
+                    ),
+                    tooltip: 'More',
+                    onSelected: (value) {
+                      if (value == 'report') {
+                        _onReportUserTapped(widget.publisherId, username);
+                      } else if (value == 'block') {
+                        _onBlockUserTapped(widget.publisherId, username);
+                      } else if (value == 'unblock') {
+                        _onUnblockUserTapped(widget.publisherId, username);
+                      }
+                    },
+                    itemBuilder: (context) => [
+                      const PopupMenuItem(
+                        value: 'report',
+                        child: ListTile(
+                          leading: Icon(Icons.flag_outlined),
+                          title: Text('Report user'),
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                      ),
+                      if (!isSelf) ...[
+                        if (isBlocked)
+                          const PopupMenuItem(
+                            value: 'unblock',
+                            child: ListTile(
+                              leading: Icon(Icons.person_remove_outlined),
+                              title: Text('Unblock user'),
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                          )
+                        else
+                          const PopupMenuItem(
+                            value: 'block',
+                            child: ListTile(
+                              leading: Icon(Icons.block),
+                              title: Text('Block user'),
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                          ),
+                      ],
+                    ],
+                  );
+                },
               ),
             ],
             flexibleSpace: FlexibleSpaceBar(

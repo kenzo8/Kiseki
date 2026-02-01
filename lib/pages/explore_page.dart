@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../models/seki_model.dart';
+import '../services/block_service.dart';
 import '../services/system_ui_service.dart';
 import '../pages/profile_page.dart';
 import '../pages/other_user_profile_page.dart';
@@ -41,11 +43,17 @@ class _ExplorePageState extends State<ExplorePage> {
   final ScrollController _scrollController = ScrollController();
   final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey = GlobalKey<RefreshIndicatorState>();
   final GlobalKey _searchRowKey = GlobalKey();
+  List<String> _blockedUserIds = [];
+  StreamSubscription<List<String>>? _blockedSubscription;
+  final BlockService _blockService = BlockService();
 
   @override
   void initState() {
     super.initState();
     _loadData();
+    _blockedSubscription = _blockService.blockedUserIdsStream.listen((ids) {
+      if (mounted) setState(() => _blockedUserIds = ids);
+    });
     // Listen to refresh notifications
     widget.refreshNotifier?.addListener(_onRefreshRequested);
     // Listen to scroll-to-top (and refresh) when same tab is tapped
@@ -70,6 +78,7 @@ class _ExplorePageState extends State<ExplorePage> {
 
   @override
   void dispose() {
+    _blockedSubscription?.cancel();
     widget.refreshNotifier?.removeListener(_onRefreshRequested);
     widget.scrollToTopNotifier?.removeListener(_onScrollToTopRequested);
     _searchController.dispose();
@@ -78,9 +87,16 @@ class _ExplorePageState extends State<ExplorePage> {
     super.dispose();
   }
 
-  /// Filter docs by search query (deviceName, note, username).
+  /// Filter docs by blocked users and search query (deviceName, note, username).
   List<QueryDocumentSnapshot> _getFilteredDocs([List<QueryDocumentSnapshot>? source]) {
-    final list = source ?? _cachedDocs ?? [];
+    var list = source ?? _cachedDocs ?? [];
+    if (_blockedUserIds.isNotEmpty) {
+      list = list.where((doc) {
+        final d = doc.data() as Map<String, dynamic>;
+        final publisherId = d['publisherId'] as String? ?? d['uid'] as String? ?? '';
+        return publisherId.isEmpty || !_blockedUserIds.contains(publisherId);
+      }).toList();
+    }
     if (_searchQuery.trim().isEmpty) return list;
     final q = _searchQuery.trim().toLowerCase();
     return list.where((doc) {
