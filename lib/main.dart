@@ -113,6 +113,8 @@ class _MainNavigationContent extends StatefulWidget {
 class _MainNavigationContentState extends State<_MainNavigationContent> {
   int _currentIndex = 0;
   final ValueNotifier<bool> _exploreRefreshNotifier = ValueNotifier<bool>(false);
+  final ValueNotifier<bool> _exploreScrollToTopNotifier = ValueNotifier<bool>(false);
+  final ValueNotifier<bool> _profileScrollToTopNotifier = ValueNotifier<bool>(false);
 
   void _showSendSekiBottomSheet() async {
     // Intercept at plus tap: require login before opening add-device sheet
@@ -160,11 +162,16 @@ class _MainNavigationContentState extends State<_MainNavigationContent> {
       body: IndexedStack(
         index: _currentIndex,
         children: [
-          ExplorePage(refreshNotifier: _exploreRefreshNotifier, user: widget.user),
+          ExplorePage(
+            refreshNotifier: _exploreRefreshNotifier,
+            scrollToTopNotifier: _exploreScrollToTopNotifier,
+            user: widget.user,
+          ),
           ProfilePage(
             user: widget.user,
             onGoToExplore: () => setState(() => _currentIndex = 0),
             exploreRefreshNotifier: _exploreRefreshNotifier,
+            scrollToTopNotifier: _profileScrollToTopNotifier,
           ),
         ],
       ),
@@ -185,7 +192,13 @@ class _MainNavigationContentState extends State<_MainNavigationContent> {
               isSelected: _currentIndex == 0,
               theme: theme,
               isDark: isDark,
-              onTap: () => setState(() => _currentIndex = 0),
+              onTap: () {
+                if (_currentIndex == 0) {
+                  _exploreScrollToTopNotifier.value = true;
+                } else {
+                  setState(() => _currentIndex = 0);
+                }
+              },
             ),
             _buildCenterButton(theme, isDark),
             _buildNavItem(
@@ -196,7 +209,13 @@ class _MainNavigationContentState extends State<_MainNavigationContent> {
               isSelected: _currentIndex == 1,
               theme: theme,
               isDark: isDark,
-              onTap: () => setState(() => _currentIndex = 1),
+              onTap: () {
+                if (_currentIndex == 1) {
+                  _profileScrollToTopNotifier.value = true;
+                } else {
+                  setState(() => _currentIndex = 1);
+                }
+              },
             ),
           ],
         ),

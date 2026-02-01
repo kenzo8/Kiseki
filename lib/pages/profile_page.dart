@@ -54,12 +54,14 @@ class ProfilePage extends StatefulWidget {
   final User? user;
   final VoidCallback? onGoToExplore;
   final ValueNotifier<bool>? exploreRefreshNotifier;
+  final ValueNotifier<bool>? scrollToTopNotifier;
 
   const ProfilePage({
     super.key,
     required this.user,
     this.onGoToExplore,
     this.exploreRefreshNotifier,
+    this.scrollToTopNotifier,
   });
 
   @override
@@ -70,6 +72,7 @@ class _ProfilePageState extends State<ProfilePage>
     with SingleTickerProviderStateMixin, AutomaticKeepAliveClientMixin {
   late TabController _tabController;
   final ProfileDataService _dataService = ProfileDataService.instance;
+  final ScrollController _scrollController = ScrollController();
 
   @override
   bool get wantKeepAlive => true;
@@ -78,6 +81,7 @@ class _ProfilePageState extends State<ProfilePage>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    widget.scrollToTopNotifier?.addListener(_onScrollToTopRequested);
     
     // Initialize data service if user is available
     if (widget.user?.uid != null) {
@@ -101,9 +105,23 @@ class _ProfilePageState extends State<ProfilePage>
     return baseHeight.clamp(200.0, 400.0); // Clamp between 200 and 400
   }
 
+  void _onScrollToTopRequested() {
+    if (widget.scrollToTopNotifier?.value != true) return;
+    widget.scrollToTopNotifier!.value = false;
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
+  }
+
   @override
   void dispose() {
+    widget.scrollToTopNotifier?.removeListener(_onScrollToTopRequested);
     _tabController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -334,6 +352,7 @@ class _ProfilePageState extends State<ProfilePage>
             final headerHeight = _calculateHeaderHeight(bio, activeDevices);
             
             return NestedScrollView(
+              controller: _scrollController,
               headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
                 return [
                   SliverAppBar(

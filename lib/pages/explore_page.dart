@@ -13,8 +13,14 @@ import '../widgets/device_icon_selector.dart';
 class ExplorePage extends StatefulWidget {
   final User? user;
   final ValueNotifier<bool>? refreshNotifier;
+  final ValueNotifier<bool>? scrollToTopNotifier;
 
-  const ExplorePage({super.key, required this.user, this.refreshNotifier});
+  const ExplorePage({
+    super.key,
+    required this.user,
+    this.refreshNotifier,
+    this.scrollToTopNotifier,
+  });
 
   @override
   State<ExplorePage> createState() => _ExplorePageState();
@@ -33,6 +39,8 @@ class _ExplorePageState extends State<ExplorePage> {
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
+  final ScrollController _scrollController = ScrollController();
+  final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey = GlobalKey<RefreshIndicatorState>();
 
   @override
   void initState() {
@@ -40,13 +48,33 @@ class _ExplorePageState extends State<ExplorePage> {
     _loadData();
     // Listen to refresh notifications
     widget.refreshNotifier?.addListener(_onRefreshRequested);
+    // Listen to scroll-to-top (and refresh) when same tab is tapped
+    widget.scrollToTopNotifier?.addListener(_onScrollToTopRequested);
+  }
+
+  void _onScrollToTopRequested() {
+    if (widget.scrollToTopNotifier?.value != true) return;
+    widget.scrollToTopNotifier!.value = false;
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
+    // Use RefreshIndicator.show() to display pull-to-refresh animation
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _refreshIndicatorKey.currentState?.show();
+    });
   }
 
   @override
   void dispose() {
     widget.refreshNotifier?.removeListener(_onRefreshRequested);
+    widget.scrollToTopNotifier?.removeListener(_onScrollToTopRequested);
     _searchController.dispose();
     _searchFocusNode.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -267,9 +295,11 @@ class _ExplorePageState extends State<ExplorePage> {
         );
       }
       return RefreshIndicator(
+        key: _refreshIndicatorKey,
         onRefresh: _handleRefresh,
         color: theme.colorScheme.primary,
         child: ListView.builder(
+          controller: _scrollController,
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           itemCount: filteredDocs.length,
@@ -382,9 +412,11 @@ class _ExplorePageState extends State<ExplorePage> {
 
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
           return RefreshIndicator(
+            key: _refreshIndicatorKey,
             onRefresh: _handleRefresh,
             color: theme.colorScheme.primary,
             child: SingleChildScrollView(
+              controller: _scrollController,
               physics: const AlwaysScrollableScrollPhysics(),
               child: SizedBox(
                 height: MediaQuery.of(context).size.height * 0.5,
@@ -433,9 +465,11 @@ class _ExplorePageState extends State<ExplorePage> {
           );
         }
         return RefreshIndicator(
+          key: _refreshIndicatorKey,
           onRefresh: _handleRefresh,
           color: theme.colorScheme.primary,
           child: ListView.builder(
+            controller: _scrollController,
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             itemCount: filteredDocs.length,
