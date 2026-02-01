@@ -40,6 +40,7 @@ class _ExplorePageState extends State<ExplorePage> {
   final FocusNode _searchFocusNode = FocusNode();
   final ScrollController _scrollController = ScrollController();
   final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey = GlobalKey<RefreshIndicatorState>();
+  final GlobalKey _searchRowKey = GlobalKey();
 
   @override
   void initState() {
@@ -359,6 +360,8 @@ class _ExplorePageState extends State<ExplorePage> {
                                 _loadData(forceRefresh: true);
                               }
                             }
+                            // Unfocus search when returning so keyboard only opens on tap
+                            if (mounted) _searchFocusNode.unfocus();
                           },
                           onBottomBarTap: () {
                             // Navigate to ProfilePage based on owner
@@ -498,6 +501,8 @@ class _ExplorePageState extends State<ExplorePage> {
                         _loadData(forceRefresh: true);
                       }
                     }
+                    // Unfocus search when returning so keyboard only opens on tap
+                    if (mounted) _searchFocusNode.unfocus();
                   },
                   onBottomBarTap: () {
                     // Navigate to ProfilePage based on owner
@@ -535,19 +540,32 @@ class _ExplorePageState extends State<ExplorePage> {
 
     return Scaffold(
       backgroundColor: scaffoldBg,
-      body: SafeArea(
-        child: Column(
-          children: [
-            const SizedBox(height: 4),
-            _buildTopRow(theme, isDark),
-            const SizedBox(height: 6),
-            Expanded(
-              child: Listener(
-                onPointerDown: (_) => FocusScope.of(context).unfocus(),
+      body: Listener(
+        onPointerDown: (PointerDownEvent event) {
+          // Unfocus search when tapping outside the search row so keyboard dismisses
+          final globalPosition = event.position;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            final searchRowBox = _searchRowKey.currentContext?.findRenderObject() as RenderBox?;
+            if (searchRowBox != null && searchRowBox.hasSize) {
+              final localPos = searchRowBox.globalToLocal(globalPosition);
+              final bounds = Offset.zero & searchRowBox.size;
+              if (bounds.contains(localPos)) return; // tap was on search row, keep focus as-is
+            }
+            _searchFocusNode.unfocus();
+          });
+        },
+        child: SafeArea(
+          child: Column(
+            children: [
+              const SizedBox(height: 4),
+              _buildTopRow(theme, isDark),
+              const SizedBox(height: 6),
+              Expanded(
                 child: _buildContent(theme, isDark),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -557,6 +575,7 @@ class _ExplorePageState extends State<ExplorePage> {
 
   Widget _buildTopRow(ThemeData theme, bool isDark) {
     return Padding(
+      key: _searchRowKey,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
