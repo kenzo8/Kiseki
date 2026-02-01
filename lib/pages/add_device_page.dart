@@ -682,6 +682,21 @@ class _AddDevicePageState extends State<AddDevicePage> {
                               child: TextField(
                                 controller: _nameController,
                                 focusNode: _deviceNameFocusNode,
+                                textInputAction: TextInputAction.next,
+                                onSubmitted: (_) {
+                                  FocusScope.of(context).requestFocus(_noteFocusNode);
+                                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                                    final ctx = _noteFieldKey.currentContext;
+                                    if (ctx != null) {
+                                      Scrollable.ensureVisible(
+                                        ctx,
+                                        duration: const Duration(milliseconds: 300),
+                                        curve: Curves.easeInOut,
+                                        alignment: 0.1,
+                                      );
+                                    }
+                                  });
+                                },
                                 style: TextStyle(color: isDark ? Colors.white : theme.colorScheme.onSurface),
                                 decoration: InputDecoration(
                                   labelText: 'Device Name',
