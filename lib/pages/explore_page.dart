@@ -623,6 +623,19 @@ class _ExplorePageState extends State<ExplorePage> {
   }
 
   Widget _buildFilterButton(ThemeData theme, bool isDark) {
+    final hasFilter = _selectedDeviceType != null;
+    String? selectedLabel;
+    Color? categoryColor;
+    if (hasFilter) {
+      for (final c in deviceCategories) {
+        if (c.deviceType == _selectedDeviceType) {
+          selectedLabel = c.label;
+          categoryColor = getCategoryColor(c.deviceType);
+          break;
+        }
+      }
+    }
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -633,14 +646,35 @@ class _ExplorePageState extends State<ExplorePage> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                'Filter',
-                style: TextStyle(
-                  color: theme.colorScheme.onSurface.withOpacity(0.65),
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
+              if (!hasFilter)
+                Text(
+                  'Filter',
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurface.withOpacity(0.65),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
-              ),
+              if (hasFilter && selectedLabel != null && categoryColor != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: categoryColor.withOpacity(0.18),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: categoryColor.withOpacity(0.5),
+                      width: 1,
+                    ),
+                  ),
+                  child: Text(
+                    selectedLabel,
+                    style: TextStyle(
+                      color: categoryColor,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
               const SizedBox(width: 2),
               Icon(
                 Icons.arrow_drop_down,
@@ -758,42 +792,44 @@ class _ExplorePageState extends State<ExplorePage> {
                 },
               ),
             ),
-            // Add "All" option at the bottom
+            // "All" option — matches grid item style
             Padding(
-              padding: const EdgeInsets.all(16),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    setState(() {
-                      _selectedDeviceType = null;
-                    });
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    setState(() => _selectedDeviceType = null);
                     Navigator.pop(context);
                     _loadData(forceRefresh: false);
                   },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _selectedDeviceType == null
-                        ? (isDark ? Colors.white : theme.colorScheme.primary).withOpacity(0.2)
-                        : (isDark ? Colors.white : Colors.black).withOpacity(0.1),
-                    foregroundColor: _selectedDeviceType == null
-                        ? (isDark ? Colors.white : theme.colorScheme.primary)
-                        : (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.7),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(12),
-                      side: BorderSide(
+                      color: _selectedDeviceType == null
+                          ? theme.colorScheme.primary.withOpacity(0.12)
+                          : (isDark ? Colors.white : Colors.black).withOpacity(0.06),
+                      border: Border.all(
                         color: _selectedDeviceType == null
-                            ? (isDark ? Colors.white : theme.colorScheme.primary).withOpacity(0.5)
-                            : Colors.transparent,
-                        width: 2,
+                            ? theme.colorScheme.primary.withOpacity(0.4)
+                            : (isDark ? Colors.white : Colors.black).withOpacity(0.08),
+                        width: 1.5,
                       ),
                     ),
-                  ),
-                  child: Text(
-                    'All',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: _selectedDeviceType == null ? FontWeight.w600 : FontWeight.w400,
+                    child: Center(
+                      child: Text(
+                        'All',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: _selectedDeviceType == null ? FontWeight.w600 : FontWeight.w500,
+                          color: _selectedDeviceType == null
+                              ? theme.colorScheme.primary
+                              : theme.colorScheme.onSurface.withOpacity(0.65),
+                        ),
+                      ),
                     ),
                   ),
                 ),
