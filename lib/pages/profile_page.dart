@@ -103,7 +103,9 @@ class _ProfilePageState extends State<ProfilePage>
       // Estimate device chips height (max 60px with scrolling)
       baseHeight += 60.0;
     }
-    return baseHeight.clamp(200.0, 400.0); // Clamp between 200 and 400
+    // Use smaller minimum when "In Use" is empty to reduce blank space
+    final minHeight = activeDevices.isEmpty ? 160.0 : 200.0;
+    return baseHeight.clamp(minHeight, 400.0);
   }
 
   void _onScrollToTopRequested() {
