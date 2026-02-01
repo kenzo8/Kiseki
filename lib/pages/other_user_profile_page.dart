@@ -88,9 +88,65 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> with Single
     return activeSekis;
   }
 
+  /// Gets gradient colors based on device types and counts (for avatar ring).
+  /// Returns a gradient with colors weighted by device count * type frequency.
+  List<Color> _getAvatarBorderGradientColors(List<Seki> sekis, ThemeData theme) {
+    if (sekis.isEmpty) {
+      return [theme.colorScheme.primary, theme.colorScheme.primary];
+    }
+
+    final deviceTypeWeights = <String, int>{};
+    for (final seki in sekis) {
+      deviceTypeWeights[seki.deviceType] = (deviceTypeWeights[seki.deviceType] ?? 0) + 1;
+    }
+
+    final sortedTypes = deviceTypeWeights.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+
+    final totalDevices = sekis.length;
+    int maxColors;
+    if (totalDevices >= 15) {
+      maxColors = sortedTypes.length > 5 ? 5 : sortedTypes.length;
+    } else if (totalDevices >= 8) {
+      maxColors = sortedTypes.length > 4 ? 4 : sortedTypes.length;
+    } else {
+      maxColors = sortedTypes.length > 3 ? 3 : sortedTypes.length;
+    }
+
+    final gradientColors = <Color>[];
+    final colorWeights = <Color, int>{};
+    for (int i = 0; i < maxColors && i < sortedTypes.length; i++) {
+      final deviceType = sortedTypes[i].key;
+      final count = sortedTypes[i].value;
+      final color = getCategoryColor(deviceType);
+      colorWeights[color] = (colorWeights[color] ?? 0) + count;
+    }
+
+    final sortedColors = colorWeights.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    for (final entry in sortedColors) {
+      gradientColors.add(entry.key);
+    }
+
+    if (gradientColors.isEmpty) {
+      return [theme.colorScheme.primary, theme.colorScheme.primary];
+    } else if (gradientColors.length == 1) {
+      return [gradientColors[0], gradientColors[0]];
+    } else if (gradientColors.length == 2) {
+      return gradientColors;
+    } else if (gradientColors.length == 3) {
+      return gradientColors;
+    } else if (gradientColors.length == 4) {
+      return [gradientColors[0], gradientColors[1], gradientColors[2], gradientColors[3]];
+    } else {
+      final midIndex = gradientColors.length ~/ 2;
+      return [gradientColors[0], gradientColors[midIndex], gradientColors[gradientColors.length - 1]];
+    }
+  }
+
   /// Calculate adaptive height based on content
   double _calculateHeaderHeight(String bio, List<Seki> activeDevices) {
-    double baseHeight = 140.0; // Base height for username and email
+    double baseHeight = 110.0; // Base height for username (no email on profile)
     if (bio.isNotEmpty) {
       // Estimate bio height (approximate 1.5 line height * font size)
       final bioLines = (bio.length / 40).ceil(); // Rough estimate: ~40 chars per line
@@ -374,7 +430,6 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> with Single
 
             final userData = userSnapshot.data!.data() as Map<String, dynamic>;
             final username = userData['username'] as String? ?? 'Unknown';
-            final email = userData['email'] as String? ?? 'Unknown';
             final bio = userData['bio'] as String? ?? '';
 
             return StreamBuilder<QuerySnapshot>(
@@ -385,9 +440,10 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> with Single
               builder: (context, sekiSnapshot) {
                 List<Seki> activeDevices = [];
                 int deviceCount = 0;
-                
+                List<Seki> sekis = [];
+
                 if (sekiSnapshot.hasData && sekiSnapshot.data!.docs.isNotEmpty) {
-                  final sekis = sekiSnapshot.data!.docs
+                  sekis = sekiSnapshot.data!.docs
                       .map((doc) => Seki.fromFirestore(doc))
                       .toList();
                   activeDevices = _getActiveDevices(sekis);
@@ -421,18 +477,23 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> with Single
                               ? wantSnapshot.data!.docs.length 
                               : 0;
 
+                    final fallbackSekis = fallbackSekiSnapshot.hasData && fallbackSekiSnapshot.data!.docs.isNotEmpty
+                        ? fallbackSekiSnapshot.data!.docs
+                            .map((doc) => Seki.fromFirestore(doc))
+                            .toList()
+                        : <Seki>[];
                     return _buildNestedScrollView(
                       context,
                       theme,
                       isDark,
                       scaffoldBg,
                       username,
-                      email,
                       bio,
                       fallbackActiveDevices,
                       fallbackDeviceCount,
                       wantCount,
                       true,
+                      fallbackSekis,
                     );
                         },
                       );
@@ -456,12 +517,12 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> with Single
                       isDark,
                       scaffoldBg,
                       username,
-                      email,
                       bio,
                       activeDevices,
                       deviceCount,
                       wantCount,
                       false,
+                      sekis,
                     );
                   },
                 );
@@ -479,14 +540,15 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> with Single
     bool isDark,
     Color scaffoldBg,
     String username,
-    String email,
     String bio,
     List<Seki> activeDevices,
     int deviceCount,
     int wantCount,
     bool useUidQuery,
+    List<Seki> sekis,
   ) {
     final headerHeight = _calculateHeaderHeight(bio, activeDevices);
+    final avatarBorderGradientColors = _getAvatarBorderGradientColors(sekis, theme);
     
     return NestedScrollView(
       headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
@@ -583,10 +645,29 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> with Single
                           children: [
                       Row(
                         children: [
-                          Icon(
-                            Icons.person,
-                            size: 24,
-                            color: theme.colorScheme.primary,
+                          Container(
+                            width: 28,
+                            height: 28,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: LinearGradient(
+                                colors: avatarBorderGradientColors,
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                            ),
+                            padding: const EdgeInsets.all(2),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: scaffoldBg,
+                              ),
+                              child: Icon(
+                                Icons.person,
+                                size: 24,
+                                color: theme.colorScheme.primary,
+                              ),
+                            ),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
@@ -604,30 +685,9 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> with Single
                           ),
                         ],
                       ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.email,
-                            size: 18,
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              email,
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ) ?? TextStyle(
-                                color: theme.colorScheme.onSurfaceVariant,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+                      const SizedBox(height: 12),
                       if (bio.isNotEmpty) ...[
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 10),
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -654,7 +714,7 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> with Single
                         ),
                       ],
                       if (activeDevices.isNotEmpty) ...[
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 12),
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [

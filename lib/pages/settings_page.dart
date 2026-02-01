@@ -269,12 +269,28 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<void> _handleLogout(BuildContext context) async {
-    // Show confirmation dialog
+    final email = FirebaseAuth.instance.currentUser?.email ?? '';
+    // Show confirmation dialog with current account email
     final shouldLogout = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout?'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Are you sure you want to logout?'),
+            if (email.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Text(
+                email,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ],
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),

@@ -91,7 +91,7 @@ class _ProfilePageState extends State<ProfilePage>
 
   /// Calculate adaptive height based on content
   double _calculateHeaderHeight(String bio, List<Seki> activeDevices) {
-    double baseHeight = 140.0; // Base height for username and email
+    double baseHeight = 110.0; // Base height for username (no email on profile)
     if (bio.isNotEmpty) {
       // Estimate bio height (approximate 1.5 line height * font size)
       final bioLines = (bio.length / 40).ceil(); // Rough estimate: ~40 chars per line
@@ -334,7 +334,6 @@ class _ProfilePageState extends State<ProfilePage>
 
             final userData = userSnapshot.data() as Map<String, dynamic>;
             final username = userData['username'] as String? ?? 'Unknown';
-            final email = userData['email'] as String? ?? widget.user?.email ?? 'Unknown';
             final bio = userData['bio'] as String? ?? '';
 
             // Get cached seki data
@@ -459,30 +458,9 @@ class _ProfilePageState extends State<ProfilePage>
                                         ),
                                       ],
                                     ),
-                                    const SizedBox(height: 16),
-                                    Row(
-                                      children: [
-                                        Icon(
-                                          Icons.email,
-                                          size: 18,
-                                          color: theme.colorScheme.onSurfaceVariant.withOpacity(0.6),
-                                        ),
-                                        const SizedBox(width: 10),
-                                        Expanded(
-                                          child: Text(
-                                            email,
-                                            style: theme.textTheme.bodySmall?.copyWith(
-                                              color: theme.colorScheme.onSurfaceVariant.withOpacity(0.6),
-                                            ) ?? TextStyle(
-                                              color: theme.colorScheme.onSurfaceVariant.withOpacity(0.6),
-                                              fontSize: 12,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
+                                    const SizedBox(height: 12),
                                     if (bio.isNotEmpty) ...[
-                                      const SizedBox(height: 12),
+                                      const SizedBox(height: 10),
                                       Row(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
@@ -509,7 +487,7 @@ class _ProfilePageState extends State<ProfilePage>
                                       ),
                                     ],
                                     if (activeDevices.isNotEmpty) ...[
-                                      const SizedBox(height: 16),
+                                      const SizedBox(height: 12),
                                       Row(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
