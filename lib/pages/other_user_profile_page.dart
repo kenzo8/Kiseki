@@ -145,9 +145,9 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> with Single
   }
 
   /// Calculate adaptive height based on content
-  double _calculateHeaderHeight(String bio, List<Seki> activeDevices, [String? handle]) {
+  double _calculateHeaderHeight(String bio, List<Seki> activeDevices, [String handle = '']) {
     double baseHeight = 120.0; // Base height for avatar + username row
-    if (handle != null && handle.isNotEmpty) baseHeight += 22.0;
+    if (handle.isNotEmpty) baseHeight += 22.0;
     if (bio.isNotEmpty) {
       // Estimate bio height (approximate 1.5 line height * font size)
       final bioLines = (bio.length / 40).ceil(); // Rough estimate: ~40 chars per line
@@ -431,7 +431,7 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> with Single
 
             final userData = userSnapshot.data!.data() as Map<String, dynamic>;
             final username = userData['username'] as String? ?? 'Unknown';
-            final handle = userData['handle'] as String?;
+            final handle = userData['handle'] as String? ?? '';
             final bio = userData['bio'] as String? ?? '';
 
             return StreamBuilder<QuerySnapshot>(
@@ -544,7 +544,7 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> with Single
     bool isDark,
     Color scaffoldBg,
     String username,
-    String? handle,
+    String handle,
     String bio,
     List<Seki> activeDevices,
     int deviceCount,
@@ -694,7 +694,7 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> with Single
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
-                                if (handle != null && handle.isNotEmpty) ...[
+                                if (handle.isNotEmpty) ...[
                                   const SizedBox(height: 4),
                                   Text(
                                     '@$handle',

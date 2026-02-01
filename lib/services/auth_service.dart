@@ -248,12 +248,12 @@ class AuthService {
     }
 
     final userDoc = await _firestore.collection('users').doc(uid).get();
-    String? handle;
+    String handle = '';
     if (userDoc.exists) {
       final data = userDoc.data();
-      handle = data is Map<String, dynamic> ? data['handle'] as String? : null;
+      handle = data is Map<String, dynamic> ? (data['handle'] as String? ?? '') : '';
     }
-    if (handle != null && handle.isNotEmpty) {
+    if (handle.isNotEmpty) {
       batch.delete(_firestore.collection('handles').doc(handle));
     }
     batch.delete(_firestore.collection('users').doc(uid));
