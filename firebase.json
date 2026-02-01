@@ -36,5 +36,9 @@
         "*.local"
       ]
     }
-  ]
+  ],
+  "hosting": {
+    "public": "public",
+    "ignore": [".git", "firebase.json", "**/.*", "**/node_modules/**"]
+  }
 }
