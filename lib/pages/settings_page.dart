@@ -318,6 +318,8 @@ class _SettingsPageState extends State<SettingsPage> {
             await prefs.setString('last_login_account', lastAccount);
           }
         }
+        // Clear profile cache (owned, wants) so next login shows fresh data
+        ProfileDataService.instance.clearCache();
         // Clear authentication tokens/sessions
         await authService.signOut();
         
