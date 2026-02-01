@@ -35,7 +35,6 @@ class _ExplorePageState extends State<ExplorePage> {
   // Cache data for each device type to avoid reloading when switching tabs
   final Map<String?, List<QueryDocumentSnapshot>> _deviceTypeCache = {};
   // Search
-  bool _showSearchBar = false;
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
@@ -539,12 +538,9 @@ class _ExplorePageState extends State<ExplorePage> {
       body: SafeArea(
         child: Column(
           children: [
-            const SizedBox(height: 8),
-            _buildSearchBar(theme, isDark),
             const SizedBox(height: 4),
-            // Filter bar
-            _buildFilterBar(theme, isDark),
-            const SizedBox(height: 8),
+            _buildTopRow(theme, isDark),
+            const SizedBox(height: 6),
             Expanded(
               child: _buildContent(theme, isDark),
             ),
@@ -554,176 +550,102 @@ class _ExplorePageState extends State<ExplorePage> {
     );
   }
 
-  Widget _buildSearchBar(ThemeData theme, bool isDark) {
+  static const Color _searchBarFillLight = Color(0xFFF8F8F8);
+
+  Widget _buildTopRow(ThemeData theme, bool isDark) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      child: TextField(
-        controller: _searchController,
-        focusNode: _searchFocusNode,
-        decoration: InputDecoration(
-          hintText: 'Search device, note, username...',
-          hintStyle: TextStyle(
-            color: theme.colorScheme.onSurface.withOpacity(0.5),
-            fontSize: 14,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            child: _buildSearchBar(theme, isDark),
           ),
-          prefixIcon: Icon(
-            Icons.search,
-            size: 20,
-            color: theme.colorScheme.onSurface.withOpacity(0.6),
-          ),
-          suffixIcon: _searchQuery.isNotEmpty
-              ? IconButton(
-                  icon: Icon(Icons.clear, size: 20, color: theme.colorScheme.onSurface.withOpacity(0.6)),
-                  onPressed: () {
-                    _searchController.clear();
-                    setState(() => _searchQuery = '');
-                  },
-                )
-              : null,
-          filled: true,
-          fillColor: (isDark ? Colors.white : Colors.black).withOpacity(0.06),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(24),
-            borderSide: BorderSide.none,
-          ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        ),
-        style: TextStyle(
-          color: theme.colorScheme.onSurface,
+          const SizedBox(width: 8),
+          _buildFilterButton(theme, isDark),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchBar(ThemeData theme, bool isDark) {
+    final fillColor = isDark ? Colors.white.withOpacity(0.06) : _searchBarFillLight;
+    final borderColor = isDark ? Colors.white.withOpacity(0.08) : const Color(0xFFE8E8E8);
+
+    return TextField(
+      controller: _searchController,
+      focusNode: _searchFocusNode,
+      decoration: InputDecoration(
+        hintText: 'Search devices, notes, people',
+        hintStyle: TextStyle(
+          color: theme.colorScheme.onSurface.withOpacity(0.45),
           fontSize: 14,
         ),
-        onChanged: (value) => setState(() => _searchQuery = value),
-      ),
-    );
-  }
-
-  Widget _buildFilterBar(ThemeData theme, bool isDark) {
-    // Show "All" and first 4 common categories, plus a "More" button
-    const int quickFiltersCount = 4;
-    final quickCategories = deviceCategories.take(quickFiltersCount).toList();
-    
-    return Container(
-      height: 50,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: [
-            // "All" option
-            _buildFilterChip(
-              theme: theme,
-              isDark: isDark,
-              label: 'All',
-              icon: null,
-              isSelected: _selectedDeviceType == null,
-              onTap: () {
-                setState(() {
-                  _selectedDeviceType = null;
-                });
-                _loadData(forceRefresh: false);
-              },
-            ),
-            const SizedBox(width: 4),
-            // Quick filter categories
-            ...quickCategories.map((category) {
-              final isSelected = _selectedDeviceType == category.deviceType;
-              return Padding(
-                padding: const EdgeInsets.only(right: 4),
-                child: _buildFilterChip(
-                  theme: theme,
-                  isDark: isDark,
-                  label: category.label,
-                  icon: category.icon,
-                  isSelected: isSelected,
-                  deviceType: category.deviceType,
-                  onTap: () {
-                    setState(() {
-                      _selectedDeviceType = category.deviceType;
-                    });
-                    _loadData(forceRefresh: false);
-                  },
-                ),
-              );
-            }),
-            // "More" button
-            Padding(
-              padding: const EdgeInsets.only(left: 4),
-              child: _buildFilterChip(
-                theme: theme,
-                isDark: isDark,
-                label: 'More',
-                icon: Icons.more_horiz,
-                isSelected: _selectedDeviceType != null && 
-                            !quickCategories.any((c) => c.deviceType == _selectedDeviceType),
-                onTap: () {
-                  _showCategoryPicker(theme, isDark);
+        prefixIcon: Icon(
+          Icons.search,
+          size: 20,
+          color: theme.colorScheme.onSurface.withOpacity(0.5),
+        ),
+        suffixIcon: _searchQuery.isNotEmpty
+            ? IconButton(
+                icon: Icon(Icons.clear, size: 18, color: theme.colorScheme.onSurface.withOpacity(0.5)),
+                onPressed: () {
+                  _searchController.clear();
+                  setState(() => _searchQuery = '');
                 },
-              ),
-            ),
-          ],
+              )
+            : null,
+        filled: true,
+        fillColor: fillColor,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: borderColor, width: 1),
         ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: borderColor, width: 1),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: theme.colorScheme.primary.withOpacity(0.4), width: 1),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       ),
+      style: TextStyle(
+        color: theme.colorScheme.onSurface,
+        fontSize: 14,
+      ),
+      onChanged: (value) => setState(() => _searchQuery = value),
     );
   }
 
-  Widget _buildFilterChip({
-    required ThemeData theme,
-    required bool isDark,
-    required String label,
-    IconData? icon,
-    required bool isSelected,
-    String? deviceType, // Optional deviceType for category color
-    required VoidCallback onTap,
-  }) {
-    // Use category color if deviceType is provided, otherwise use theme color
-    final Color? categoryColor = deviceType != null ? getCategoryColor(deviceType) : null;
-    final Color selectedBgColor = categoryColor != null
-        ? categoryColor.withOpacity(0.2)
-        : (isDark ? Colors.white : theme.colorScheme.primary).withOpacity(0.2);
-    final Color unselectedBgColor = (isDark ? Colors.white : Colors.black).withOpacity(0.1);
-    final Color selectedBorderColor = categoryColor ?? (isDark ? Colors.white : theme.colorScheme.primary).withOpacity(0.5);
-    final Color selectedTextColor = categoryColor ?? (isDark ? Colors.white : theme.colorScheme.primary);
-    final Color selectedIconColor = categoryColor ?? (isDark ? Colors.white : theme.colorScheme.primary);
-    
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: EdgeInsets.symmetric(
-          horizontal: icon != null ? 12 : 16,
-          vertical: 8,
-        ),
-        decoration: BoxDecoration(
-          color: isSelected ? selectedBgColor : unselectedBgColor,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected ? selectedBorderColor : Colors.transparent,
-            width: 2,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (icon != null) ...[
+  Widget _buildFilterButton(ThemeData theme, bool isDark) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => _showCategoryPicker(theme, isDark),
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Filter',
+                style: TextStyle(
+                  color: theme.colorScheme.onSurface.withOpacity(0.65),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(width: 2),
               Icon(
-                icon,
-                size: 18,
-                color: isSelected
-                    ? selectedIconColor
-                    : (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.7),
+                Icons.arrow_drop_down,
+                size: 20,
+                color: theme.colorScheme.onSurface.withOpacity(0.5),
               ),
-              const SizedBox(width: 6),
             ],
-            Text(
-              label,
-              style: TextStyle(
-                color: isSelected
-                    ? selectedTextColor
-                    : (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.7),
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                fontSize: 14,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
