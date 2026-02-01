@@ -542,7 +542,10 @@ class _ExplorePageState extends State<ExplorePage> {
             _buildTopRow(theme, isDark),
             const SizedBox(height: 6),
             Expanded(
-              child: _buildContent(theme, isDark),
+              child: Listener(
+                onPointerDown: (_) => FocusScope.of(context).unfocus(),
+                child: _buildContent(theme, isDark),
+              ),
             ),
           ],
         ),
@@ -652,6 +655,7 @@ class _ExplorePageState extends State<ExplorePage> {
   }
 
   void _showCategoryPicker(ThemeData theme, bool isDark) {
+    _searchFocusNode.unfocus();
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
