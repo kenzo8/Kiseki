@@ -254,7 +254,6 @@ class TimelineSekiItem extends StatelessWidget {
                               color: onSurface.withOpacity(0.7),
                               height: 1.45,
                               fontWeight: FontWeight.w400,
-                              fontStyle: FontStyle.italic,
                             ),
                             maxLines: 3,
                             overflow: TextOverflow.ellipsis,

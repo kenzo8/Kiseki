@@ -512,7 +512,6 @@ class SekiCard extends StatelessWidget {
                             style: theme.textTheme.bodyMedium?.copyWith(
                               color: theme.colorScheme.onSurface.withOpacity(0.8),
                               height: 1.45,
-                              fontStyle: FontStyle.italic,
                             ),
                             maxLines: 3,
                             overflow: TextOverflow.ellipsis,

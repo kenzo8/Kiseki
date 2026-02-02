@@ -1215,7 +1215,6 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
                       style: TextStyle(
                         color: labelColor.withOpacity(0.7),
                         fontSize: 14,
-                        fontStyle: FontStyle.italic,
                         height: 1.5,
                       ),
                     )
@@ -1239,7 +1238,6 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
                               color: theme.colorScheme.onSurface.withOpacity(0.85),
                               fontSize: 15,
                               height: 1.6,
-                              fontStyle: FontStyle.italic,
                               fontWeight: FontWeight.w400,
                             ),
                           ),
