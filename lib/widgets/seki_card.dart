@@ -439,76 +439,82 @@ class SekiCard extends StatelessWidget {
         ? theme.colorScheme.onSurface.withOpacity(0.4)
         : Colors.grey.shade400;
 
+    final categoryColor = _getIconColor();
+
     return Card(
       color: cardColor,
-      elevation: isDark ? 0 : 3,
-      shadowColor: Colors.black.withOpacity(0.08),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: isDark ? 0 : 2,
+      shadowColor: Colors.black.withOpacity(0.06),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: isDark
+            ? BorderSide(color: theme.colorScheme.outline.withOpacity(0.08), width: 1)
+            : BorderSide.none,
+      ),
       child: InkWell(
         onTap: bodyTapCallback,
         borderRadius: BorderRadius.circular(16),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(18),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Left: device icon with Hero animation and dynamic colors
                   Hero(
                     tag: 'device_icon_${seki.id}',
                     child: Container(
-                      width: 44,
-                      height: 44,
+                      width: 48,
+                      height: 48,
                       decoration: BoxDecoration(
                         color: _getIconBackgroundColor(),
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: categoryColor.withOpacity(0.25),
+                          width: 1,
+                        ),
                       ),
                       child: Icon(
                         deviceTypeToIcon(seki.deviceType),
-                        size: 24,
-                        color: _getIconColor(),
+                        size: 26,
+                        color: categoryColor,
                       ),
                     ),
                   ),
                   const SizedBox(width: 14),
-                  // Right: title, subtitle, note
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Title: device name with w600 weight and larger font
                         Text(
                           seki.deviceName,
-                          style: TextStyle(
+                          style: theme.textTheme.titleMedium?.copyWith(
                             color: theme.colorScheme.onSurface,
-                            fontSize: 19,
                             fontWeight: FontWeight.w600,
-                            height: 1.3,
+                            height: 1.25,
                           ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 4),
-                        // Subtitle: year range (secondary grey, smaller font)
+                        const SizedBox(height: 6),
                         Text(
                           _yearRangeText,
-                          style: TextStyle(
+                          style: theme.textTheme.bodySmall?.copyWith(
                             color: secondaryGreyColor,
                             fontSize: 12,
-                            fontWeight: FontWeight.w400,
                           ),
                         ),
                         if (seki.note.isNotEmpty) ...[
                           const SizedBox(height: 10),
                           Text(
                             seki.note,
-                            style: TextStyle(
-                              color: theme.colorScheme.onSurface.withOpacity(0.85),
-                              fontSize: 15,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onSurface.withOpacity(0.8),
                               height: 1.45,
                               fontStyle: FontStyle.italic,
                             ),
-                            maxLines: 4,
+                            maxLines: 3,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ],
@@ -517,30 +523,30 @@ class SekiCard extends StatelessWidget {
                   ),
                 ],
               ),
-              // Username area at bottom right
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
+              Divider(height: 1, color: theme.colorScheme.outline.withOpacity(0.08)),
+              const SizedBox(height: 10),
               Align(
                 alignment: Alignment.centerRight,
                 child: InkWell(
                   onTap: bottomBarTapCallback,
                   borderRadius: BorderRadius.circular(8),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
-                          Icons.account_circle,
+                          Icons.person_outline,
                           size: 14,
                           color: lightGreyColor,
                         ),
-                        const SizedBox(width: 4),
+                        const SizedBox(width: 5),
                         Text(
-                          'by ${seki.username}',
-                          style: TextStyle(
+                          seki.username,
+                          style: theme.textTheme.labelMedium?.copyWith(
                             color: lightGreyColor,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w400,
+                            fontSize: 12,
                           ),
                         ),
                       ],

@@ -146,31 +146,28 @@ class TimelineSekiItem extends StatelessWidget {
                   Positioned(
                     left: 8,
                     top: 0,
-                    child: Hero(
-                      tag: 'device_icon_${seki.id}',
-                      child: Container(
-                        width: 28,
-                        height: 28,
-                        decoration: BoxDecoration(
-                          color: categoryColor.withOpacity(0.12),
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: categoryColor.withOpacity(0.5),
-                            width: 2,
+                    child: Container(
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        color: categoryColor.withOpacity(0.12),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: categoryColor.withOpacity(0.5),
+                          width: 2,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: categoryColor.withOpacity(0.15),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
                           ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: categoryColor.withOpacity(0.15),
-                              blurRadius: 6,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Icon(
-                          deviceTypeToIcon(seki.deviceType),
-                          size: 15,
-                          color: categoryColor,
-                        ),
+                        ],
+                      ),
+                      child: Icon(
+                        deviceTypeToIcon(seki.deviceType),
+                        size: 15,
+                        color: categoryColor,
                       ),
                     ),
                   ),

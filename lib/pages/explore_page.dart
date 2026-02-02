@@ -298,14 +298,33 @@ class _ExplorePageState extends State<ExplorePage> {
       if (filteredDocs.isEmpty && _searchQuery.trim().isNotEmpty) {
         return Center(
           child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Text(
-              'No results for "$_searchQuery"',
-              style: TextStyle(
-                color: theme.colorScheme.onSurface.withOpacity(0.6),
-                fontSize: 16,
-              ),
-              textAlign: TextAlign.center,
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.search_off,
+                  size: 48,
+                  color: theme.colorScheme.onSurface.withOpacity(0.3),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'No results for "$_searchQuery"',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: theme.colorScheme.onSurface.withOpacity(0.7),
+                    fontWeight: FontWeight.w500,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Try a different keyword or clear the search.',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurface.withOpacity(0.5),
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
             ),
           ),
         );
@@ -317,7 +336,7 @@ class _ExplorePageState extends State<ExplorePage> {
         child: ListView.builder(
           controller: _scrollController,
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           itemCount: filteredDocs.length,
           itemBuilder: (context, index) {
             final doc = filteredDocs[index];
@@ -342,7 +361,7 @@ class _ExplorePageState extends State<ExplorePage> {
                   child: Transform.translate(
                     offset: Offset(0, _updatedItemIds.contains(doc.id) ? (1 - value) * 15 : 0),
                     child: Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
+                      padding: const EdgeInsets.only(bottom: 14),
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 300),
                         curve: Curves.easeOut,
@@ -437,16 +456,40 @@ class _ExplorePageState extends State<ExplorePage> {
               controller: _scrollController,
               physics: const AlwaysScrollableScrollPhysics(),
               child: SizedBox(
-                height: MediaQuery.of(context).size.height * 0.5,
+                height: MediaQuery.of(context).size.height * 0.55,
                 child: Center(
-                  child: Text(
-                    _selectedDeviceType == null
-                        ? 'No devices shared yet.\nBe the first to add one!'
-                        : 'No $_selectedDeviceType devices yet.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: theme.colorScheme.onSurface.withOpacity(0.6),
-                      fontSize: 16,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 32),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          _selectedDeviceType == null ? Icons.devices_other : Icons.category_outlined,
+                          size: 56,
+                          color: theme.colorScheme.onSurface.withOpacity(0.25),
+                        ),
+                        const SizedBox(height: 20),
+                        Text(
+                          _selectedDeviceType == null
+                              ? 'No devices shared yet'
+                              : 'No $_selectedDeviceType devices yet',
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            color: theme.colorScheme.onSurface.withOpacity(0.7),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          _selectedDeviceType == null
+                              ? 'Be the first to add one from your profile.'
+                              : 'Try another category or add one yourself.',
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurface.withOpacity(0.5),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -470,14 +513,33 @@ class _ExplorePageState extends State<ExplorePage> {
         if (filteredDocs.isEmpty && _searchQuery.trim().isNotEmpty) {
           return Center(
             child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Text(
-                'No results for "$_searchQuery"',
-                style: TextStyle(
-                  color: theme.colorScheme.onSurface.withOpacity(0.6),
-                  fontSize: 16,
-                ),
-                textAlign: TextAlign.center,
+              padding: const EdgeInsets.symmetric(horizontal: 32),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.search_off,
+                    size: 48,
+                    color: theme.colorScheme.onSurface.withOpacity(0.3),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No results for "$_searchQuery"',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      color: theme.colorScheme.onSurface.withOpacity(0.7),
+                      fontWeight: FontWeight.w500,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Try a different keyword or clear the search.',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurface.withOpacity(0.5),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
               ),
             ),
           );
@@ -489,7 +551,7 @@ class _ExplorePageState extends State<ExplorePage> {
           child: ListView.builder(
             controller: _scrollController,
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             itemCount: filteredDocs.length,
             itemBuilder: (context, index) {
               final doc = filteredDocs[index];
@@ -498,7 +560,7 @@ class _ExplorePageState extends State<ExplorePage> {
               final publisherId = seki.publisherId;
 
               return Padding(
-                padding: const EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.only(bottom: 14),
                 child: SekiCard(
                   seki: seki,
                   isDark: isDark,

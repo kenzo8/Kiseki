@@ -541,8 +541,6 @@ class _ProfilePageState extends State<ProfilePage>
                                                   spacing: 8,
                                                   runSpacing: 6,
                                                   children: activeDevices.map((seki) {
-                                                    // Distinct tag so same device in "In Use" chips and "Owned" list doesn't duplicate Hero tag.
-                                                    final inUseHeroTag = 'device_icon_inuse_${seki.id}';
                                                     return InkWell(
                                                       onTap: () {
                                                         Navigator.of(context).push(
@@ -550,7 +548,6 @@ class _ProfilePageState extends State<ProfilePage>
                                                             builder: (context) => DeviceDetailPage(
                                                               seki: seki,
                                                               exploreRefreshNotifier: widget.exploreRefreshNotifier,
-                                                              heroTag: inUseHeroTag,
                                                             ),
                                                           ),
                                                         );
@@ -574,13 +571,10 @@ class _ProfilePageState extends State<ProfilePage>
                                                         child: Row(
                                                           mainAxisSize: MainAxisSize.min,
                                                           children: [
-                                                            Hero(
-                                                              tag: inUseHeroTag,
-                                                              child: Icon(
-                                                                deviceTypeToIcon(seki.deviceType),
-                                                                size: 16,
-                                                                color: theme.colorScheme.primary.withOpacity(0.7),
-                                                              ),
+                                                            Icon(
+                                                              deviceTypeToIcon(seki.deviceType),
+                                                              size: 16,
+                                                              color: theme.colorScheme.primary.withOpacity(0.7),
                                                             ),
                                                             const SizedBox(width: 6),
                                                             Text(
