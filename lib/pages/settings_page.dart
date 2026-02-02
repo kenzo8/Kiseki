@@ -478,232 +478,236 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
         body: SafeArea(
           child: ListView(
-            padding: const EdgeInsets.all(16.0),
+            padding: EdgeInsets.symmetric(
+              horizontal: MediaQuery.of(context).size.width > 400 ? 24 : 20,
+              vertical: 24,
+            ),
             children: [
               Builder(
                 builder: (context) {
-                  final tileStyle = TextStyle(
-                    color: theme.colorScheme.onSurface,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
+                  final onSurface = theme.colorScheme.onSurface;
+                  final onSurfaceMuted = onSurface.withOpacity(0.65);
+                  final surfaceColor = isDark
+                      ? theme.colorScheme.surface.withOpacity(0.25)
+                      : Colors.white.withOpacity(0.92);
+                  final cardDecoration = BoxDecoration(
+                    color: surfaceColor,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: isDark ? null : [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.04),
+                        blurRadius: 12,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   );
-                  final leadingColor = theme.colorScheme.onSurface;
-                  const tilePadding = EdgeInsets.symmetric(horizontal: 16, vertical: 4);
+
+                  Widget settingsTile({
+                    required IconData icon,
+                    required String title,
+                    VoidCallback? onTap,
+                    Widget? leading,
+                    Widget? trailing,
+                    bool showDivider = true,
+                    Color? titleColor,
+                    Color? iconColor,
+                  }) {
+                    final effectiveLeading = leading ??
+                        Icon(
+                          icon,
+                          size: 22,
+                          color: iconColor ?? onSurfaceMuted,
+                        );
+                    return Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (showDivider)
+                          Divider(
+                            height: 1,
+                            thickness: 1,
+                            color: onSurface.withOpacity(0.08),
+                          ),
+                        Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: onTap,
+                            borderRadius: BorderRadius.zero,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 16,
+                              ),
+                              child: Row(
+                                children: [
+                                  effectiveLeading,
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Text(
+                                      title,
+                                      style: theme.textTheme.bodyLarge?.copyWith(
+                                        fontWeight: FontWeight.w500,
+                                        color: titleColor ?? onSurface,
+                                      ),
+                                    ),
+                                  ),
+                                  if (trailing != null) trailing,
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  }
+
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Section: Data
-                      Padding(
-                        padding: const EdgeInsets.only(left: 4, bottom: 8),
-                        child: Text(
-                          'Data',
-                          style: theme.textTheme.titleSmall?.copyWith(
-                            color: theme.colorScheme.onSurface.withOpacity(0.6),
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 1,
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: Container(
+                          decoration: cardDecoration,
+                          child: Column(
+                            children: [
+                              settingsTile(
+                                icon: Icons.upload_file_outlined,
+                                title: 'Export Data',
+                                leading: _isExporting
+                                    ? SizedBox(
+                                        width: 22,
+                                        height: 22,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor: AlwaysStoppedAnimation<Color>(onSurfaceMuted),
+                                        ),
+                                      )
+                                    : Icon(Icons.upload_file_outlined, size: 22, color: onSurfaceMuted),
+                                onTap: _isExporting ? null : _handleExport,
+                                showDivider: false,
+                              ),
+                              settingsTile(
+                                icon: Icons.download_outlined,
+                                title: 'Import Data',
+                                leading: _isImporting
+                                    ? SizedBox(
+                                        width: 22,
+                                        height: 22,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor: AlwaysStoppedAnimation<Color>(onSurfaceMuted),
+                                        ),
+                                      )
+                                    : Icon(Icons.download_outlined, size: 22, color: onSurfaceMuted),
+                                onTap: _isImporting ? null : _handleImport,
+                              ),
+                            ],
                           ),
                         ),
                       ),
-                      // Export
-                      Card(
-                        color: theme.colorScheme.surface.withOpacity(0.1),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: ListTile(
-                          contentPadding: tilePadding,
-                          leading: _isExporting
-                              ? SizedBox(
-                                  width: 24,
-                                  height: 24,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(leadingColor),
-                                  ),
-                                )
-                              : Icon(Icons.upload_file, color: leadingColor, size: 24),
-                          title: Text('Export Data', style: tileStyle),
-                          onTap: _isExporting ? null : _handleExport,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      // Import
-                      Card(
-                        color: theme.colorScheme.surface.withOpacity(0.1),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: ListTile(
-                          contentPadding: tilePadding,
-                          leading: _isImporting
-                              ? SizedBox(
-                                  width: 24,
-                                  height: 24,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(leadingColor),
-                                  ),
-                                )
-                              : Icon(Icons.download, color: leadingColor, size: 24),
-                          title: Text('Import Data', style: tileStyle),
-                          onTap: _isImporting ? null : _handleImport,
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      // Section: Safety (blocked users for Google Play UGC)
-                      Padding(
-                        padding: const EdgeInsets.only(left: 4, bottom: 8),
-                        child: Text(
-                          'Safety',
-                          style: theme.textTheme.titleSmall?.copyWith(
-                            color: theme.colorScheme.onSurface.withOpacity(0.6),
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 1,
-                          ),
-                        ),
-                      ),
-                      Card(
-                        color: theme.colorScheme.surface.withOpacity(0.1),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: ListTile(
-                          contentPadding: tilePadding,
-                          leading: Icon(Icons.block, color: leadingColor, size: 24),
-                          title: Text('Blocked users', style: tileStyle),
-                          trailing: Icon(Icons.chevron_right, color: leadingColor.withOpacity(0.6), size: 24),
-                          onTap: () {
-                            Navigator.of(context).push(
+                      const SizedBox(height: 16),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: Container(
+                          decoration: cardDecoration,
+                          child: settingsTile(
+                            icon: Icons.block_outlined,
+                            title: 'Blocked users',
+                            trailing: Icon(Icons.chevron_right, color: onSurfaceMuted, size: 20),
+                            onTap: () => Navigator.of(context).push(
                               MaterialPageRoute(
                                 builder: (context) => const BlockedUsersPage(),
                               ),
-                            );
-                          },
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      // Section: Legal & Support
-                      Padding(
-                        padding: const EdgeInsets.only(left: 4, bottom: 8),
-                        child: Text(
-                          'Legal & Support',
-                          style: theme.textTheme.titleSmall?.copyWith(
-                            color: theme.colorScheme.onSurface.withOpacity(0.6),
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 1,
+                            ),
+                            showDivider: false,
                           ),
                         ),
                       ),
-                      // Privacy Policy
-                      Card(
-                        color: theme.colorScheme.surface.withOpacity(0.1),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: ListTile(
-                          contentPadding: tilePadding,
-                          leading: Icon(Icons.privacy_tip_outlined, color: leadingColor, size: 24),
-                          title: Text('Privacy Policy', style: tileStyle),
-                          trailing: Icon(Icons.open_in_new, color: leadingColor.withOpacity(0.6), size: 20),
-                          onTap: () async {
-                            final uri = Uri.parse('https://kenzo8.github.io/kien-privacy/');
-                            if (await canLaunchUrl(uri)) {
-                              await launchUrl(uri, mode: LaunchMode.externalApplication);
-                            }
-                          },
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      // Feedback
-                      Card(
-                        color: theme.colorScheme.surface.withOpacity(0.1),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: ListTile(
-                          contentPadding: tilePadding,
-                          leading: Icon(Icons.feedback_outlined, color: leadingColor, size: 24),
-                          title: Text('Feedback', style: tileStyle),
-                          trailing: Icon(Icons.chevron_right, color: leadingColor.withOpacity(0.6), size: 24),
-                          onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => const FeedbackPage(),
+                      const SizedBox(height: 16),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: Container(
+                          decoration: cardDecoration,
+                          child: Column(
+                            children: [
+                              settingsTile(
+                                icon: Icons.privacy_tip_outlined,
+                                title: 'Privacy Policy',
+                                trailing: Icon(Icons.open_in_new, color: onSurfaceMuted, size: 18),
+                                onTap: () async {
+                                  final uri = Uri.parse('https://kenzo8.github.io/kien-privacy/');
+                                  if (await canLaunchUrl(uri)) {
+                                    await launchUrl(uri, mode: LaunchMode.externalApplication);
+                                  }
+                                },
+                                showDivider: false,
                               ),
-                            );
-                          },
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      // Section: Account
-                      Padding(
-                        padding: const EdgeInsets.only(left: 4, bottom: 8),
-                        child: Text(
-                          'Account',
-                          style: theme.textTheme.titleSmall?.copyWith(
-                            color: theme.colorScheme.onSurface.withOpacity(0.6),
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 1,
+                              settingsTile(
+                                icon: Icons.feedback_outlined,
+                                title: 'Feedback',
+                                trailing: Icon(Icons.chevron_right, color: onSurfaceMuted, size: 20),
+                                onTap: () => Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) => const FeedbackPage(),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
-                      // Logout
-                      Card(
-                        color: theme.colorScheme.surface.withOpacity(0.1),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: ListTile(
-                          contentPadding: tilePadding,
-                          leading: Icon(Icons.logout, color: leadingColor, size: 24),
-                          title: Text('Logout', style: tileStyle),
-                          onTap: () => _handleLogout(context),
+                      const SizedBox(height: 16),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: Container(
+                          decoration: cardDecoration,
+                          child: Column(
+                            children: [
+                              settingsTile(
+                                icon: Icons.logout,
+                                title: 'Logout',
+                                onTap: () => _handleLogout(context),
+                                showDivider: false,
+                              ),
+                              settingsTile(
+                                icon: Icons.person_off_outlined,
+                                title: 'Delete Account',
+                                leading: _isDeletingAccount
+                                    ? SizedBox(
+                                        width: 22,
+                                        height: 22,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor: AlwaysStoppedAnimation<Color>(
+                                            theme.colorScheme.error,
+                                          ),
+                                        ),
+                                      )
+                                    : Icon(
+                                        Icons.person_off_outlined,
+                                        size: 22,
+                                        color: theme.colorScheme.error.withOpacity(0.9),
+                                      ),
+                                titleColor: theme.colorScheme.error,
+                                onTap: _isDeletingAccount ? null : () => _handleDeleteAccount(context),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 12),
-                      // Delete Account
-                      Card(
-                        color: theme.colorScheme.surface.withOpacity(0.1),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: ListTile(
-                          contentPadding: tilePadding,
-                          leading: _isDeletingAccount
-                              ? SizedBox(
-                                  width: 24,
-                                  height: 24,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(leadingColor),
-                                  ),
-                                )
-                              : Icon(Icons.person_off, color: leadingColor, size: 24),
-                          title: Text('Delete Account', style: tileStyle),
-                          onTap: _isDeletingAccount ? null : () => _handleDeleteAccount(context),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      // About / App version
+
+                      const SizedBox(height: 40),
                       Center(
                         child: Text(
                           _packageInfo != null
                               ? '${_packageInfo!.appName} v${_packageInfo!.version} (${_packageInfo!.buildNumber})'
                               : 'Loading…',
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurface.withOpacity(0.5),
-                            fontSize: 12,
+                            color: onSurface.withOpacity(0.45),
+                            fontSize: 13,
                           ),
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 8),
                     ],
                   );
                 },
