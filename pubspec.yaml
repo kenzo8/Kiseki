@@ -60,6 +60,9 @@ dependencies:
   # App version info (for About in settings)
   package_info_plus: ^9.0.0
 
+  # Date formatting
+  intl: ^0.19.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -12,6 +12,7 @@ import '../pages/login_page.dart';
 import '../widgets/timeline_seki_item.dart';
 import '../widgets/seki_card.dart';
 import '../widgets/device_icon_selector.dart';
+import '../widgets/device_timeline_visual.dart';
 
 /// Custom delegate for pinned TabBar in NestedScrollView
 class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
@@ -723,11 +724,32 @@ class _OwnedTab extends StatefulWidget {
   State<_OwnedTab> createState() => _OwnedTabState();
 }
 
-class _OwnedTabState extends State<_OwnedTab> with AutomaticKeepAliveClientMixin {
+class _OwnedTabState extends State<_OwnedTab> 
+    with AutomaticKeepAliveClientMixin, SingleTickerProviderStateMixin {
   final ProfileDataService _dataService = ProfileDataService.instance;
+  late TabController _subTabController;
 
   @override
   bool get wantKeepAlive => true;
+
+  @override
+  void initState() {
+    super.initState();
+    _subTabController = TabController(length: 2, vsync: this);
+    _subTabController.addListener(_onSubTabChanged);
+  }
+
+  void _onSubTabChanged() {
+    if (_subTabController.indexIsChanging) return;
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _subTabController.removeListener(_onSubTabChanged);
+    _subTabController.dispose();
+    super.dispose();
+  }
 
   List<Seki> _sortSekis(List<Seki> sekis) {
     final sorted = List<Seki>.from(sekis);
@@ -763,48 +785,104 @@ class _OwnedTabState extends State<_OwnedTab> with AutomaticKeepAliveClientMixin
           return _buildEmptyState(context, widget.theme);
         }
 
-        final sortedSekis = _sortSekis(sekis);
-        
-        // Determine which items should show the year
-        final shouldShowYear = <bool>[];
-        int? previousYear;
-        
-        for (final seki in sortedSekis) {
-          final currentYear = seki.isPreciseMode && seki.startTime != null
-              ? seki.startTime!.toDate().year
-              : seki.startYear;
-          
-          final showYear = previousYear == null || previousYear != currentYear;
-          shouldShowYear.add(showYear);
-          previousYear = currentYear;
-        }
-
-        return RefreshIndicator(
-          onRefresh: () => _dataService.refresh(),
-          color: widget.theme.colorScheme.primary,
-          child: ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            itemCount: sortedSekis.length,
-            itemBuilder: (context, index) {
-              final seki = sortedSekis[index];
-              final isLast = index == sortedSekis.length - 1;
-              return TimelineSekiItem(
-                seki: seki,
-                isDark: widget.isDark,
-                isLast: isLast,
-                showYear: shouldShowYear[index],
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => DeviceDetailPage(seki: seki, exploreRefreshNotifier: widget.exploreRefreshNotifier),
-                    ),
-                  );
+        return Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+              child: SegmentedButton<int>(
+                segments: const [
+                  ButtonSegment<int>(
+                    value: 0,
+                    label: Text('List'),
+                    icon: Icon(Icons.format_list_bulleted, size: 18),
+                  ),
+                  ButtonSegment<int>(
+                    value: 1,
+                    label: Text('Categories'),
+                    icon: Icon(Icons.category_outlined, size: 18),
+                  ),
+                ],
+                selected: {_subTabController.index},
+                onSelectionChanged: (Set<int> selected) {
+                  final index = selected.first;
+                  if (index != _subTabController.index) {
+                    _subTabController.animateTo(index);
+                  }
                 },
-              );
-            },
-          ),
+                style: ButtonStyle(
+                  visualDensity: VisualDensity.compact,
+                  padding: WidgetStateProperty.resolveWith((states) {
+                    return const EdgeInsets.symmetric(horizontal: 16, vertical: 10);
+                  }),
+                ),
+              ),
+            ),
+            Expanded(
+              child: TabBarView(
+                controller: _subTabController,
+                children: [
+                  _buildTimelineView(sekis),
+                  _buildGanttView(),
+                ],
+              ),
+            ),
+          ],
         );
       },
+    );
+  }
+
+  Widget _buildTimelineView(List<Seki> sekis) {
+    final sortedSekis = _sortSekis(sekis);
+    
+    // Determine which items should show the year
+    final shouldShowYear = <bool>[];
+    int? previousYear;
+    
+    for (final seki in sortedSekis) {
+      final currentYear = seki.isPreciseMode && seki.startTime != null
+          ? seki.startTime!.toDate().year
+          : seki.startYear;
+      
+      final showYear = previousYear == null || previousYear != currentYear;
+      shouldShowYear.add(showYear);
+      previousYear = currentYear;
+    }
+
+    return RefreshIndicator(
+      onRefresh: () => _dataService.refresh(),
+      color: widget.theme.colorScheme.primary,
+      child: ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        itemCount: sortedSekis.length,
+        itemBuilder: (context, index) {
+          final seki = sortedSekis[index];
+          final isLast = index == sortedSekis.length - 1;
+          return TimelineSekiItem(
+            seki: seki,
+            isDark: widget.isDark,
+            isLast: isLast,
+            showYear: shouldShowYear[index],
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => DeviceDetailPage(seki: seki, exploreRefreshNotifier: widget.exploreRefreshNotifier),
+                ),
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildGanttView() {
+    return RefreshIndicator(
+      onRefresh: () => _dataService.refresh(),
+      color: widget.theme.colorScheme.primary,
+      child: DeviceTimelineVisual(
+        exploreRefreshNotifier: widget.exploreRefreshNotifier,
+      ),
     );
   }
 

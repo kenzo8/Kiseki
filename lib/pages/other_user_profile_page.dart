@@ -9,6 +9,7 @@ import '../services/system_ui_service.dart';
 import '../widgets/timeline_seki_item.dart';
 import '../widgets/seki_card.dart';
 import '../widgets/device_icon_selector.dart';
+import '../widgets/device_timeline_visual.dart';
 import '../pages/device_detail_page.dart';
 import 'login_page.dart';
 
@@ -968,10 +969,12 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> with Single
           );
         }
 
-        return _buildSekiList(
-          snapshot.data!.docs,
-          theme,
-          isDark,
+        final sekis = snapshot.data!.docs
+            .map((doc) => Seki.fromFirestore(doc))
+            .toList();
+        return _OtherUserOwnedContent(
+          sekis: sekis,
+          isDark: isDark,
         );
       },
     );
@@ -1132,88 +1135,136 @@ class _OtherUserProfilePageState extends State<OtherUserProfilePage> with Single
     );
   }
 
-  Widget _buildSekiList(
-    List<QueryDocumentSnapshot> docs,
-    ThemeData theme,
-    bool isDark,
-  ) {
-    // Sort by startYear/startTime in ascending order
-    docs.sort((a, b) {
-      final aData = a.data() as Map<String, dynamic>;
-      final bData = b.data() as Map<String, dynamic>;
-      
-      // Handle both old (startYear) and new (startTime) formats
-      int aStartYear;
-      int bStartYear;
-      
-      if (aData['isPreciseMode'] == true && aData['startTime'] != null) {
-        final aStartTime = aData['startTime'] as Timestamp;
-        aStartYear = aStartTime.toDate().year;
-      } else {
-        aStartYear = aData['startYear'] as int? ?? 0;
-      }
-      
-      if (bData['isPreciseMode'] == true && bData['startTime'] != null) {
-        final bStartTime = bData['startTime'] as Timestamp;
-        bStartYear = bStartTime.toDate().year;
-      } else {
-        bStartYear = bData['startYear'] as int? ?? 0;
-      }
-      
-      return aStartYear.compareTo(bStartYear); // Ascending order
+}
+
+/// Owned tab content for other user: List / Categories switch and content.
+class _OtherUserOwnedContent extends StatefulWidget {
+  final List<Seki> sekis;
+  final bool isDark;
+
+  const _OtherUserOwnedContent({
+    required this.sekis,
+    required this.isDark,
+  });
+
+  @override
+  State<_OtherUserOwnedContent> createState() => _OtherUserOwnedContentState();
+}
+
+class _OtherUserOwnedContentState extends State<_OtherUserOwnedContent> with SingleTickerProviderStateMixin {
+  late TabController _subTabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _subTabController = TabController(length: 2, vsync: this);
+    _subTabController.addListener(_onSubTabChanged);
+  }
+
+  void _onSubTabChanged() {
+    if (_subTabController.indexIsChanging) return;
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _subTabController.removeListener(_onSubTabChanged);
+    _subTabController.dispose();
+    super.dispose();
+  }
+
+  List<Seki> _sortSekis(List<Seki> sekis) {
+    final sorted = List<Seki>.from(sekis);
+    sorted.sort((a, b) {
+      final aYear = a.isPreciseMode && a.startTime != null
+          ? a.startTime!.toDate().year
+          : a.startYear;
+      final bYear = b.isPreciseMode && b.startTime != null
+          ? b.startTime!.toDate().year
+          : b.startYear;
+      return aYear.compareTo(bYear);
     });
+    return sorted;
+  }
 
-    if (docs.isEmpty) {
-      return Center(
-        child: Text(
-          'No memories yet.',
-          style: TextStyle(
-            color: theme.colorScheme.onSurface.withOpacity(0.6),
-            fontSize: 16,
-          ),
-        ),
-      );
-    }
+  @override
+  Widget build(BuildContext context) {
+    final sekis = widget.sekis;
+    final isDark = widget.isDark;
+    final sortedSekis = _sortSekis(sekis);
 
-    // Convert docs to Seki objects and determine which ones should show year
-    final sekis = docs.map((doc) => Seki.fromFirestore(doc)).toList();
-    
-    // Determine which items should show the year (first item of each year group)
     final shouldShowYear = <bool>[];
     int? previousYear;
-    
-    for (final seki in sekis) {
+    for (final seki in sortedSekis) {
       final currentYear = seki.isPreciseMode && seki.startTime != null
           ? seki.startTime!.toDate().year
           : seki.startYear;
-      
-      // Show year if this is the first item or if the year changed
-      final showYear = previousYear == null || previousYear != currentYear;
-      shouldShowYear.add(showYear);
+      shouldShowYear.add(previousYear == null || previousYear != currentYear);
       previousYear = currentYear;
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      itemCount: sekis.length,
-      itemBuilder: (context, index) {
-        final seki = sekis[index];
-        final isLast = index == sekis.length - 1;
-        return TimelineSekiItem(
-          seki: seki,
-          isDark: isDark,
-          isLast: isLast,
-          showYear: shouldShowYear[index],
-          onTap: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => DeviceDetailPage(seki: seki),
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+          child: SegmentedButton<int>(
+            segments: const [
+              ButtonSegment<int>(
+                value: 0,
+                label: Text('List'),
+                icon: Icon(Icons.format_list_bulleted, size: 18),
               ),
-            );
-          },
-        );
-      },
+              ButtonSegment<int>(
+                value: 1,
+                label: Text('Categories'),
+                icon: Icon(Icons.category_outlined, size: 18),
+              ),
+            ],
+            selected: {_subTabController.index},
+            onSelectionChanged: (Set<int> selected) {
+              final index = selected.first;
+              if (index != _subTabController.index) {
+                _subTabController.animateTo(index);
+              }
+            },
+            style: ButtonStyle(
+              visualDensity: VisualDensity.compact,
+              padding: WidgetStateProperty.resolveWith((states) {
+                return const EdgeInsets.symmetric(horizontal: 16, vertical: 10);
+              }),
+            ),
+          ),
+        ),
+        Expanded(
+          child: TabBarView(
+            controller: _subTabController,
+            children: [
+              ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                itemCount: sortedSekis.length,
+                itemBuilder: (context, index) {
+                  final seki = sortedSekis[index];
+                  final isLast = index == sortedSekis.length - 1;
+                  return TimelineSekiItem(
+                    seki: seki,
+                    isDark: isDark,
+                    isLast: isLast,
+                    showYear: shouldShowYear[index],
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => DeviceDetailPage(seki: seki),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+              DeviceTimelineVisual(sekis: sekis),
+            ],
+          ),
+        ),
+      ],
     );
   }
-
 }
