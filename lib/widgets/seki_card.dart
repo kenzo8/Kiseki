@@ -498,15 +498,15 @@ class SekiCard extends StatelessWidget {
                             fontWeight: FontWeight.w400,
                           ),
                         ),
-                        // Note: wrapped in quotation marks
                         if (seki.note.isNotEmpty) ...[
                           const SizedBox(height: 10),
                           Text(
-                            '"${seki.note}"',
+                            seki.note,
                             style: TextStyle(
                               color: theme.colorScheme.onSurface.withOpacity(0.85),
                               fontSize: 15,
                               height: 1.45,
+                              fontStyle: FontStyle.italic,
                             ),
                             maxLines: 4,
                             overflow: TextOverflow.ellipsis,

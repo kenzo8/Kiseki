@@ -4,8 +4,8 @@ import '../models/seki_model.dart';
 import 'seki_card.dart';
 import 'device_icon_selector.dart';
 
-/// Borderless timeline item for Seki entries in profile pages.
-/// Uses IntrinsicHeight to ensure proper vertical line rendering.
+/// Timeline item for Seki entries in profile List view.
+/// Uses IntrinsicHeight for vertical line alignment.
 class TimelineSekiItem extends StatelessWidget {
   final Seki seki;
   final bool isDark;
@@ -26,7 +26,7 @@ class TimelineSekiItem extends StatelessWidget {
     final now = DateTime.now();
     DateTime startDate;
     DateTime? endDate;
-    
+
     if (seki.isPreciseMode && seki.startTime != null) {
       startDate = seki.startTime!.toDate();
       endDate = seki.endTime?.toDate();
@@ -34,20 +34,19 @@ class TimelineSekiItem extends StatelessWidget {
       startDate = DateTime(seki.startYear, 1, 1);
       endDate = seki.endYear != null ? DateTime(seki.endYear!, 12, 31) : null;
     }
-    
+
     final endDateTime = endDate ?? now;
     final duration = endDateTime.difference(startDate);
     final years = duration.inDays ~/ 365;
     final months = (duration.inDays % 365) ~/ 30;
-    
+
     final isActive = endDate == null;
-    
+
     if (seki.isPreciseMode && seki.startTime != null) {
-      // Precise mode: show more detailed duration
       if (years == 0 && months == 0) {
         return isActive ? 'Using for less than a month' : 'Used for less than a month';
       } else if (years == 0) {
-        return isActive 
+        return isActive
             ? 'Using for $months ${months == 1 ? 'month' : 'months'}'
             : 'Used for $months ${months == 1 ? 'month' : 'months'}';
       } else if (months == 0) {
@@ -60,157 +59,207 @@ class TimelineSekiItem extends StatelessWidget {
             : 'Used for $years ${years == 1 ? 'year' : 'years'} $months ${months == 1 ? 'month' : 'months'}';
       }
     } else {
-      // Year mode: show years only
       final endYear = seki.endYear ?? now.year;
       final durationYears = endYear - seki.startYear;
-      
+
       if (isActive) {
-        // Still active - use "Using for X years"
-        if (durationYears == 0) {
-          return 'Using for less than a year';
-        } else if (durationYears == 1) {
-          return 'Using for 1 year';
-        } else {
-          return 'Using for $durationYears years';
-        }
+        if (durationYears == 0) return 'Using for less than a year';
+        if (durationYears == 1) return 'Using for 1 year';
+        return 'Using for $durationYears years';
       } else {
-        // Completed - use "Used for X years"
-        if (durationYears == 0) {
-          return 'Used for less than a year';
-        } else if (durationYears == 1) {
-          return 'Used for 1 year';
-        } else {
-          return 'Used for $durationYears years';
-        }
+        if (durationYears == 0) return 'Used for less than a year';
+        if (durationYears == 1) return 'Used for 1 year';
+        return 'Used for $durationYears years';
       }
     }
+  }
+
+  String get _dateLabel {
+    if (!showYear) return '';
+    if (seki.isPreciseMode && seki.startTime != null) {
+      return '${seki.startTime!.toDate().year}';
+    }
+    return '${seki.startYear}';
+  }
+
+  bool get _isActive {
+    if (seki.isPreciseMode) return seki.endTime == null;
+    return seki.endYear == null;
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final timelineColor = Colors.grey.withOpacity(0.2);
-    final yearColor = Colors.grey[500]!;
+    final onSurface = theme.colorScheme.onSurface;
+    final onSurfaceVariant = theme.colorScheme.onSurface.withOpacity(0.6);
+    final outline = theme.colorScheme.outline.withOpacity(0.2);
     final categoryColor = getCategoryColor(seki.deviceType);
-    final deviceIconColor = categoryColor;
 
     return IntrinsicHeight(
       child: Padding(
-        padding: const EdgeInsets.only(bottom: 32.0),
+        padding: const EdgeInsets.only(bottom: 24),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-              // Left side: Start Year/Date (Fixed width for 4-digit year or date)
-              SizedBox(
-                width: 50,
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 0),
-                  child: showYear
-                      ? Text(
-                          seki.isPreciseMode && seki.startTime != null
-                              ? '${seki.startTime!.toDate().year}'
-                              : '${seki.startYear}',
-                          style: TextStyle(
-                            color: yearColor,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w400,
-                            letterSpacing: 0.5,
-                          ),
-                          textAlign: TextAlign.right,
-                        )
-                      : const SizedBox.shrink(),
-                ),
+            // Left: date label
+            SizedBox(
+              width: 56,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: _dateLabel.isEmpty
+                    ? const SizedBox.shrink()
+                    : Text(
+                        _dateLabel,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: onSurfaceVariant,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: 0.3,
+                        ),
+                        textAlign: TextAlign.right,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
               ),
-              const SizedBox(width: 8),
-              // Middle: Timeline (Width 40)
-              SizedBox(
-                width: 40,
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    // Vertical line (starts below icon, continuous)
-                    Positioned(
-                      left: 19.25, // Center of 40px width (20 - 0.75)
-                      top: 24, // Start below the icon (icon height is 24)
-                      bottom: -32.0, // Extend into padding area to connect with next item
-                      child: Container(
-                        width: 1.5,
-                        color: isLast ? Colors.transparent : timelineColor,
+            ),
+            const SizedBox(width: 12),
+            // Middle: timeline node + line (line centered under 28px icon)
+            SizedBox(
+              width: 44,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  // Vertical line (center at 22px = icon center in 44px width)
+                  Positioned(
+                    left: 21,
+                    top: 28,
+                    bottom: -24,
+                    child: Container(
+                      width: 2,
+                      decoration: BoxDecoration(
+                        color: isLast ? Colors.transparent : outline,
+                        borderRadius: BorderRadius.circular(1),
                       ),
                     ),
-                    // Dot (positioned at top, centered on line)
-                    Positioned(
-                      left: 8, // (40 - 24) / 2 = 8
-                      top: 0,
-                      child: Hero(
-                        tag: 'device_icon_${seki.id}',
-                        child: Container(
-                          width: 24,
-                          height: 24,
-                          decoration: BoxDecoration(
-                            color: categoryColor.withOpacity(0.15),
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: deviceIconColor.withOpacity(0.6),
-                              width: 2,
+                  ),
+                  // Node with icon (28px, centered in 44px: left = (44-28)/2 = 8)
+                  Positioned(
+                    left: 8,
+                    top: 0,
+                    child: Hero(
+                      tag: 'device_icon_${seki.id}',
+                      child: Container(
+                        width: 28,
+                        height: 28,
+                        decoration: BoxDecoration(
+                          color: categoryColor.withOpacity(0.12),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: categoryColor.withOpacity(0.5),
+                            width: 2,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: categoryColor.withOpacity(0.15),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
                             ),
-                          ),
-                          child: Icon(
-                            deviceTypeToIcon(seki.deviceType),
-                            size: 14,
-                            color: deviceIconColor,
-                          ),
+                          ],
+                        ),
+                        child: Icon(
+                          deviceTypeToIcon(seki.deviceType),
+                          size: 15,
+                          color: categoryColor,
                         ),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 16),
-              // Right side: Content (Expanded) - Expanded hit area for tap
-              Expanded(
+            ),
+            const SizedBox(width: 14),
+            // Right: content
+            Expanded(
+              child: Material(
+                color: Colors.transparent,
                 child: InkWell(
                   onTap: onTap,
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(12),
                   child: Padding(
-                    padding: const EdgeInsets.only(top: 0),
+                    padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Usage duration text (grey, small font)
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.baseline,
+                          textBaseline: TextBaseline.alphabetic,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                seki.deviceName,
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  color: onSurface,
+                                  fontWeight: FontWeight.w600,
+                                  height: 1.25,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (_isActive) ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: Colors.green.withOpacity(0.12),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      width: 5,
+                                      height: 5,
+                                      decoration: const BoxDecoration(
+                                        color: Colors.green,
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      'Active',
+                                      style: theme.textTheme.labelSmall?.copyWith(
+                                        color: Colors.green.shade700,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                        const SizedBox(height: 4),
                         Text(
                           _usageDurationText,
-                          style: TextStyle(
-                            color: yearColor,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: onSurfaceVariant,
                             fontSize: 12,
-                            fontWeight: FontWeight.w400,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        // Device Name (bold, larger font)
-                        Text(
-                          seki.deviceName,
-                          style: TextStyle(
-                            color: theme.colorScheme.onSurface,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
                             height: 1.3,
                           ),
                         ),
-                        // Note (regular font, subtle grey)
                         if (seki.note.isNotEmpty) ...[
                           const SizedBox(height: 8),
                           Text(
                             seki.note,
-                            style: TextStyle(
-                              color: theme.colorScheme.onSurface.withOpacity(0.7),
-                              fontSize: 15,
-                              height: 1.5,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: onSurface.withOpacity(0.7),
+                              height: 1.45,
                               fontWeight: FontWeight.w400,
+                              fontStyle: FontStyle.italic,
                             ),
-                            maxLines: 4,
+                            maxLines: 3,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ],
@@ -219,9 +268,10 @@ class TimelineSekiItem extends StatelessWidget {
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
-      );
+      ),
+    );
   }
 }

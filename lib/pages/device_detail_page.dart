@@ -1239,7 +1239,7 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
                               color: theme.colorScheme.onSurface.withOpacity(0.85),
                               fontSize: 15,
                               height: 1.6,
-                              fontStyle: FontStyle.normal,
+                              fontStyle: FontStyle.italic,
                               fontWeight: FontWeight.w400,
                             ),
                           ),
