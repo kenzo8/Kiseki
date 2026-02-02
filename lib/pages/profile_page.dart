@@ -434,7 +434,7 @@ class _ProfilePageState extends State<ProfilePage>
                                               end: Alignment.bottomRight,
                                             ),
                                           ),
-                                          padding: const EdgeInsets.all(2),
+                                          padding: const EdgeInsets.all(3),
                                           child: Container(
                                             decoration: BoxDecoration(
                                               shape: BoxShape.circle,
