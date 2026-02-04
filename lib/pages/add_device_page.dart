@@ -252,19 +252,23 @@ class _AddDevicePageState extends State<AddDevicePage> {
     if (picked != null) {
       setState(() {
         _startDate = picked;
+        if (!_stillUsing) _endDate = picked;
         // Update year range for consistency
         _yearRange = RangeValues(
           picked.year.toDouble(),
           _stillUsing ? DateTime.now().year.toDouble() : (_endDate?.year.toDouble() ?? picked.year.toDouble()),
         );
       });
+      if (!_stillUsing) {
+        WidgetsBinding.instance.addPostFrameCallback((_) => _selectEndDate());
+      }
     }
   }
 
   Future<void> _selectEndDate() async {
     final now = DateTime.now();
     final start = _startDate ?? DateTime(2000);
-    final endDefault = _endDate ?? now;
+    final endDefault = _endDate ?? _startDate ?? now;
     DateTime initial = endDefault;
     if (initial.isBefore(start)) initial = start;
     if (initial.isAfter(now)) initial = now;
