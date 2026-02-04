@@ -104,6 +104,8 @@ class _AddDevicePageState extends State<AddDevicePage> {
     
     // Initialize selected icon from current deviceType
     _selectedIcon = deviceTypeToIcon(_deviceType);
+    // In edit mode, treat loaded category as manually selected so it isn't overwritten by name suggestion
+    if (isEditMode) _isManualCategorySelection = true;
     
     // Auto-focus the device name field when the page opens
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -188,6 +190,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
       initialDate: clamped,
       firstDate: DateTime(2000),
       lastDate: now,
+      initialEntryMode: DatePickerEntryMode.input,
     );
     if (picked != null) {
       setState(() {
@@ -213,6 +216,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
       initialDate: initial,
       firstDate: start,
       lastDate: now,
+      initialEntryMode: DatePickerEntryMode.input,
     );
     if (picked != null) {
       setState(() {
@@ -683,6 +687,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
                                 controller: _nameController,
                                 focusNode: _deviceNameFocusNode,
                                 textInputAction: TextInputAction.next,
+                                maxLength: 80,
                                 onSubmitted: (_) {
                                   FocusScope.of(context).requestFocus(_noteFocusNode);
                                   WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -740,6 +745,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
                                     horizontal: 16,
                                     vertical: 16,
                                   ),
+                                  counterText: '',
                                   suffixIcon: InkWell(
                                     onTap: () {
                                       setState(() => _showCategoryPicker = !_showCategoryPicker);
@@ -763,14 +769,11 @@ class _AddDevicePageState extends State<AddDevicePage> {
                                 selectedIcon: _selectedIcon,
                                 isDark: isDark,
                                 onCategorySelected: (selectedIcon) {
+                                  final deviceType = _getDeviceTypeForIcon(selectedIcon);
                                   setState(() {
                                     _isManualCategorySelection = true;
                                     _showCategoryPicker = false;
                                     _selectedIcon = selectedIcon;
-                                  });
-                                  // Convert icon to deviceType for parent
-                                  final deviceType = _getDeviceTypeForIcon(selectedIcon);
-                                  setState(() {
                                     _deviceType = deviceType;
                                   });
                                 },
@@ -1209,6 +1212,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
                                         ),
                                         maxLines: 5,
                                         minLines: 1,
+                                        maxLength: 800,
                                         decoration: InputDecoration(
                                           hintText: "What makes this device special to you?",
                                           hintMaxLines: 5,
@@ -1235,6 +1239,10 @@ class _AddDevicePageState extends State<AddDevicePage> {
                                           contentPadding: const EdgeInsets.symmetric(
                                             horizontal: 12,
                                             vertical: 12,
+                                          ),
+                                          counterStyle: TextStyle(
+                                            fontSize: 12,
+                                            color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.5),
                                           ),
                                         ),
                                       ),
