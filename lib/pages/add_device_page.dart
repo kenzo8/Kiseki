@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -178,18 +179,75 @@ class _AddDevicePageState extends State<AddDevicePage> {
     }
   }
 
+  /// Shows a slide-style date picker (3 wheels: month, day, year).
+  Future<DateTime?> _showSlideDatePicker({
+    required DateTime initialDate,
+    required DateTime firstDate,
+    required DateTime lastDate,
+  }) async {
+    DateTime picked = initialDate;
+    if (picked.isBefore(firstDate)) picked = firstDate;
+    if (picked.isAfter(lastDate)) picked = lastDate;
+    return showModalBottomSheet<DateTime>(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return SafeArea(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, picked),
+                        child: Text('OK'),
+                      ),
+                    ],
+                  ),
+                  SizedBox(
+                    height: 220,
+                    child: CupertinoTheme(
+                      data: CupertinoThemeData(
+                        brightness: Theme.of(context).brightness,
+                      ),
+                      child: CupertinoDatePicker(
+                        mode: CupertinoDatePickerMode.date,
+                        initialDateTime: picked,
+                        minimumDate: firstDate,
+                        maximumDate: lastDate,
+                        onDateTimeChanged: (DateTime value) {
+                          picked = value;
+                          setModalState(() {});
+                        },
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   Future<void> _selectStartDate() async {
     final now = DateTime.now();
     final initial = _startDate ?? now;
     final clamped = initial.isAfter(now)
         ? now
         : (initial.isBefore(DateTime(2000)) ? DateTime(2000) : initial);
-    final picked = await showDatePicker(
-      context: context,
+    final picked = await _showSlideDatePicker(
       initialDate: clamped,
       firstDate: DateTime(2000),
       lastDate: now,
-      initialEntryMode: DatePickerEntryMode.input,
     );
     if (picked != null) {
       setState(() {
@@ -210,12 +268,10 @@ class _AddDevicePageState extends State<AddDevicePage> {
     DateTime initial = endDefault;
     if (initial.isBefore(start)) initial = start;
     if (initial.isAfter(now)) initial = now;
-    final picked = await showDatePicker(
-      context: context,
+    final picked = await _showSlideDatePicker(
       initialDate: initial,
       firstDate: start,
       lastDate: now,
-      initialEntryMode: DatePickerEntryMode.input,
     );
     if (picked != null) {
       setState(() {
