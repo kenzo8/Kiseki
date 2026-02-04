@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../models/seki_model.dart';
-import 'seki_card.dart';
 import 'device_icon_selector.dart';
 
 /// Timeline item for Seki entries in profile List view.

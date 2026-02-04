@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 
 import '../models/seki_model.dart';
 import '../widgets/device_icon_selector.dart';
-import '../widgets/seki_card.dart';
 import '../services/system_ui_service.dart';
 import '../services/auth_service.dart';
 import '../services/profile_data_service.dart';

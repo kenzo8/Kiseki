@@ -7,7 +7,6 @@ import '../models/seki_model.dart';
 import '../services/profile_data_service.dart';
 import '../pages/device_detail_page.dart';
 import 'device_icon_selector.dart';
-import 'seki_card.dart';
 
 /// Visual timeline view showing device usage as interactive timeline bars.
 /// When [sekis] is provided (e.g. for other user profile), uses that list;

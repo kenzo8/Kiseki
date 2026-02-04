@@ -1,74 +1,10 @@
 import 'package:flutter/material.dart';
+
+import '../data/device_catalog.dart';
 import 'seki_card.dart';
 
-/// Device category with icon and label
-class DeviceCategory {
-  final IconData icon;
-  final String label;
-  final String deviceType;
-
-  const DeviceCategory({
-    required this.icon,
-    required this.label,
-    required this.deviceType,
-  });
-}
-
-/// All available device categories.
-/// [deviceType] equals [label] and is saved to Firestore when adding/editing a device.
-const List<DeviceCategory> deviceCategories = [
-  DeviceCategory(icon: Icons.smartphone, label: 'Mobile', deviceType: 'Mobile'),
-  DeviceCategory(icon: Icons.tablet_mac, label: 'Tablet', deviceType: 'Tablet'),
-  DeviceCategory(icon: Icons.laptop, label: 'Laptop', deviceType: 'Laptop'),
-  DeviceCategory(icon: Icons.desktop_windows, label: 'Desktop', deviceType: 'Desktop'),
-  DeviceCategory(icon: Icons.watch, label: 'Watch', deviceType: 'Watch'),
-  DeviceCategory(icon: Icons.hearing, label: 'Earbuds', deviceType: 'Earbuds'),
-  DeviceCategory(icon: Icons.headphones, label: 'Headphones', deviceType: 'Headphones'),
-  DeviceCategory(icon: Icons.photo_camera, label: 'Camera', deviceType: 'Camera'),
-  DeviceCategory(icon: Icons.videogame_asset, label: 'Gaming', deviceType: 'Gaming'),
-  DeviceCategory(icon: Icons.keyboard, label: 'Keyboard', deviceType: 'Keyboard'),
-  DeviceCategory(icon: Icons.home, label: 'SmartHome', deviceType: 'SmartHome'),
-  DeviceCategory(icon: Icons.view_in_ar, label: 'VR/AR', deviceType: 'VR/AR'),
-  DeviceCategory(icon: Icons.mouse, label: 'Mouse', deviceType: 'Mouse'),
-  DeviceCategory(icon: Icons.flight, label: 'Drone', deviceType: 'Drone'),
-  DeviceCategory(icon: Icons.menu_book, label: 'e-Reader', deviceType: 'e-Reader'),
-];
-
-/// Get the category color for a given deviceType
-Color getCategoryColor(String deviceType) {
-  switch (deviceType) {
-    case 'Mobile':
-      return Colors.blue;
-    case 'Tablet':
-      return Colors.green;
-    case 'Laptop':
-    case 'Desktop':
-      return Colors.purple;
-    case 'Watch':
-      return Colors.orange;
-    case 'Earbuds':
-    case 'Headphones':
-      return Colors.cyan;
-    case 'Camera':
-      return Colors.amber;
-    case 'Gaming':
-      return Colors.red;
-    case 'Drone':
-      return Colors.teal;
-    case 'VR/AR':
-      return Colors.indigo;
-    case 'SmartHome':
-      return Colors.brown;
-    case 'Mouse':
-      return Colors.pink;
-    case 'e-Reader':
-      return Colors.deepOrange;
-    case 'Keyboard':
-      return Colors.grey;
-    default:
-      return Colors.grey;
-  }
-}
+// Re-export so callers only need to import device_icon_selector
+export '../data/device_catalog.dart' show DeviceCategory, deviceCategories, getCategoryColor, getHintForDeviceType, deviceTypeToIcon, suggestDeviceTypeFromName;
 
 /// Widget that displays a live icon preview based on device name
 class DeviceIconPreview extends StatelessWidget {
