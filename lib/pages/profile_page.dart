@@ -241,75 +241,9 @@ class _ProfilePageState extends State<ProfilePage>
     // Set immersive status bar
     SystemUIService.setImmersiveStatusBar(context, backgroundColor: scaffoldBg);
 
-    // If user is not logged in, show login prompt (don't auto-navigate if it's a main page)
+    // If user is not logged in, display the full login page in profile
     if (widget.user == null) {
-      // Check if this is a main page (in IndexedStack)
-      final isMainPage = _isMainPage(context);
-      
-      if (!isMainPage) {
-        // If navigated to from elsewhere, show login page
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted && Navigator.canPop(context)) {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(
-                builder: (context) => const LoginPage(),
-              ),
-            );
-          }
-        });
-        return Scaffold(
-          backgroundColor: scaffoldBg,
-          body: const Center(
-            child: CircularProgressIndicator(),
-          ),
-        );
-      }
-      
-      // If it's a main page, show login prompt instead
-      return Scaffold(
-        backgroundColor: scaffoldBg,
-        body: SafeArea(
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.person_outline,
-                    size: 72,
-                    color: theme.colorScheme.onSurface.withOpacity(0.3),
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    'Log in to view your profile',
-                    style: TextStyle(
-                      color: theme.colorScheme.onSurface.withOpacity(0.7),
-                      fontSize: 18,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 32),
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => const LoginPage(),
-                        ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                    ),
-                    child: const Text('Log In'),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      );
+      return const LoginPage();
     }
 
     // Ensure service is initialized every time build is called
