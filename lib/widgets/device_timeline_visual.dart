@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -94,20 +96,19 @@ class DeviceTimelineVisual extends StatelessWidget {
       return aStart.compareTo(bStart);
     });
 
-    // Calculate global time range
+    // Calculate global time range: left from data, right end = today so "Present" bars reach the end
     final now = DateTime.now();
     DateTime minDate = _getStartDate(data.first);
-    DateTime maxDate = now;
     for (final seki in data) {
       final start = _getStartDate(seki);
-      final end = _getEndDate(seki, now);
       if (start.isBefore(minDate)) minDate = start;
-      if (end.isAfter(maxDate)) maxDate = end;
     }
-    final totalDays = maxDate.difference(minDate).inDays;
-    final paddingDays = (totalDays * 0.1).round();
+    // Right end is always today so active (present) device bars can reach the right end
+    final DateTime maxDate = now;
+    final rawDays = maxDate.difference(minDate).inDays;
+    final totalDays = rawDays < 1 ? 1 : rawDays; // avoid zero for safe division
+    final paddingDays = (totalDays * 0.1).round().clamp(0, 365);
     minDate = minDate.subtract(Duration(days: paddingDays));
-    maxDate = maxDate.add(Duration(days: paddingDays));
 
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -143,14 +144,6 @@ class DeviceTimelineVisual extends StatelessWidget {
     }
     return DateTime(seki.startYear, 1, 1);
   }
-
-  static DateTime _getEndDate(Seki seki, DateTime now) {
-    if (seki.isPreciseMode && seki.endTime != null) {
-      return seki.endTime!.toDate();
-    }
-    if (seki.endYear != null) return DateTime(seki.endYear!, 12, 31);
-    return now;
-  }
 }
 
 /// One card per device type (category), with all devices of that type inside.
@@ -174,13 +167,13 @@ class _TimelineCategoryCard extends StatelessWidget {
   });
 
   String _formatDate(DateTime date) {
-    return DateFormat('MMM yyyy').format(date);
+    return DateFormat('yyyy').format(date);
   }
 
   @override
   Widget build(BuildContext context) {
     final categoryColor = getCategoryColor(deviceType);
-    final totalDays = maxDate.difference(minDate).inDays;
+    final totalDays = max(1, maxDate.difference(minDate).inDays);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
