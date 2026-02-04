@@ -188,48 +188,94 @@ class _AddDevicePageState extends State<AddDevicePage> {
     DateTime picked = initialDate;
     if (picked.isBefore(firstDate)) picked = firstDate;
     if (picked.isAfter(lastDate)) picked = lastDate;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return showModalBottomSheet<DateTime>(
       context: context,
       isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setModalState) {
-            return SafeArea(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: Text('Cancel'),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, picked),
-                        child: Text('OK'),
-                      ),
-                    ],
-                  ),
-                  SizedBox(
-                    height: 220,
-                    child: CupertinoTheme(
-                      data: CupertinoThemeData(
-                        brightness: Theme.of(context).brightness,
-                      ),
-                      child: CupertinoDatePicker(
-                        mode: CupertinoDatePickerMode.date,
-                        initialDateTime: picked,
-                        minimumDate: firstDate,
-                        maximumDate: lastDate,
-                        onDateTimeChanged: (DateTime value) {
-                          picked = value;
-                          setModalState(() {});
-                        },
-                      ),
-                    ),
+            return Container(
+              decoration: BoxDecoration(
+                color: isDark ? theme.colorScheme.surface : Colors.white,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.15),
+                    blurRadius: 20,
+                    offset: const Offset(0, -4),
                   ),
                 ],
+              ),
+              child: SafeArea(
+                top: false,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const SizedBox(height: 12),
+                    Center(
+                      child: Container(
+                        width: 36,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: Text(
+                              'Cancel',
+                              style: TextStyle(
+                                color: isDark ? Colors.white70 : theme.colorScheme.onSurfaceVariant,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, picked),
+                            style: TextButton.styleFrom(
+                              backgroundColor: theme.colorScheme.primary,
+                              foregroundColor: theme.colorScheme.onPrimary,
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                            ),
+                            child: const Text('OK'),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(
+                      height: 220,
+                      child: CupertinoTheme(
+                        data: CupertinoThemeData(
+                          brightness: theme.brightness,
+                        ),
+                        child: CupertinoDatePicker(
+                          mode: CupertinoDatePickerMode.date,
+                          initialDateTime: picked,
+                          minimumDate: firstDate,
+                          maximumDate: lastDate,
+                          onDateTimeChanged: (DateTime value) {
+                            picked = value;
+                            setModalState(() {});
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             );
           },
@@ -581,19 +627,37 @@ class _AddDevicePageState extends State<AddDevicePage> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  // Drag handle
+                  Padding(
+                    padding: const EdgeInsets.only(top: 10, bottom: 4),
+                    child: Center(
+                      child: Container(
+                        width: 36,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.25),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                  ),
                   // Top Header
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
                     child: Row(
                       children: [
                         // Cancel button
                         TextButton(
                           onPressed: () => Navigator.pop(context),
+                          style: TextButton.styleFrom(
+                            foregroundColor: (isDark ? Colors.white70 : theme.colorScheme.onSurfaceVariant),
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          ),
                           child: Text(
                             'Cancel',
                             style: TextStyle(
-                              color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.7),
                               fontSize: 16,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
                         ),
@@ -606,26 +670,41 @@ class _AddDevicePageState extends State<AddDevicePage> {
                             children: [
                               Center(
                                 child: Text(
-                                  isEditMode ? 'Edit Device' : 'Add New Device',
-                                  style: TextStyle(
+                                  isEditMode ? 'Edit Device' : 'Add Device',
+                                  style: theme.textTheme.titleLarge?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: -0.3,
+                                  ) ?? TextStyle(
                                     color: isDark ? Colors.white : theme.colorScheme.onSurface,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w700,
                                   ),
                                 ),
                               ),
                               if (!isEditMode)
                                 Padding(
-                                  padding: const EdgeInsets.only(top: 2),
+                                  padding: const EdgeInsets.only(top: 4),
                                   child: Center(
-                                    child: Text(
-                                      'Visible to everyone on Explore',
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        color: Colors.grey,
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w400,
-                                      ),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.public_outlined,
+                                          size: 12,
+                                          color: (isDark ? Colors.white54 : theme.colorScheme.onSurfaceVariant).withOpacity(0.9),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          'Visible on Explore',
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            color: (isDark ? Colors.white54 : theme.colorScheme.onSurfaceVariant).withOpacity(0.9),
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w400,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ),
@@ -634,17 +713,20 @@ class _AddDevicePageState extends State<AddDevicePage> {
                         ),
                         // Submit button
                         TextButton(
-                          onPressed: !_isLoading ? _handleSubmit : null,
-                          style: isButtonEnabled
-                              ? TextButton.styleFrom(
-                                  backgroundColor: const Color(0xFF1A1A1B),
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                )
-                              : null,
+                          onPressed: !_isLoading && isButtonEnabled ? _handleSubmit : null,
+                          style: TextButton.styleFrom(
+                            backgroundColor: isButtonEnabled
+                                ? (isDark ? Colors.white : theme.colorScheme.primary)
+                                : (isDark ? Colors.white12 : theme.colorScheme.surfaceContainerHighest),
+                            foregroundColor: isButtonEnabled
+                                ? (isDark ? theme.colorScheme.onPrimary : Colors.white)
+                                : (isDark ? Colors.white38 : theme.colorScheme.onSurfaceVariant.withOpacity(0.5)),
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                            elevation: isButtonEnabled ? 0 : null,
+                          ),
                           child: _isLoading
                               ? SizedBox(
                                   width: 20,
@@ -652,33 +734,33 @@ class _AddDevicePageState extends State<AddDevicePage> {
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
                                     valueColor: AlwaysStoppedAnimation<Color>(
-                                      isDark ? Colors.white : theme.colorScheme.primary,
+                                      isButtonEnabled
+                                          ? (isDark ? theme.colorScheme.onPrimary : Colors.white)
+                                          : (isDark ? Colors.white38 : theme.colorScheme.onSurfaceVariant),
                                     ),
                                   ),
                                 )
                               : Text(
                                   isEditMode ? 'Save' : 'Create',
                                   style: TextStyle(
-                                    color: isButtonEnabled
-                                        ? Colors.white
-                                        : (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.3),
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
+                                    letterSpacing: 0.2,
                                   ),
                                 ),
                         ),
                       ],
                     ),
                   ),
-                  // Divider
+                  // Subtle divider
                   Divider(
                     height: 1,
                     thickness: 1,
-                    color: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
+                    color: (isDark ? Colors.white : Colors.black).withOpacity(0.06),
                   ),
                   // Content
                   Padding(
-                    padding: const EdgeInsets.all(24),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       mainAxisSize: MainAxisSize.min,
@@ -690,7 +772,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
                           children: [
                             Container(
                               decoration: BoxDecoration(
-                                color: isDark 
+                                color: isDark
                                     ? theme.colorScheme.surface.withOpacity(0.4)
                                     : Colors.white,
                                 borderRadius: BorderRadius.circular(16),
@@ -775,7 +857,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
                                     child: Padding(
                                       padding: const EdgeInsets.all(12),
                                       child: Icon(
-                                        Icons.arrow_drop_down,
+                                        Icons.arrow_drop_down_rounded,
                                         size: 24,
                                         color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.6),
                                       ),
@@ -785,7 +867,21 @@ class _AddDevicePageState extends State<AddDevicePage> {
                               ),
                             ),
                             if (_showCategoryPicker) ...[
-                              const SizedBox(height: 12),
+                              const SizedBox(height: 14),
+                              Row(
+                                children: [
+                                  Text(
+                                    'Category',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: (isDark ? Colors.white70 : theme.colorScheme.onSurfaceVariant).withOpacity(0.9),
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 10),
                               _CategoryPickerStrip(
                                 selectedIcon: _selectedIcon,
                                 isDark: isDark,
@@ -806,62 +902,94 @@ class _AddDevicePageState extends State<AddDevicePage> {
                         // Construction Time Section
                         Container(
                           decoration: BoxDecoration(
-                            color: isDark 
-                                ? theme.colorScheme.surface.withOpacity(0.4)
+                            color: isDark
+                                ? theme.colorScheme.surface.withOpacity(0.5)
                                 : Colors.white,
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: (isDark ? Colors.white : Colors.black).withOpacity(0.06),
+                              width: 1,
+                            ),
                             boxShadow: isDark
                                 ? null
                                 : [
                                     BoxShadow(
-                                      color: Colors.black.withOpacity(0.05),
-                                      blurRadius: 10,
+                                      color: _categoryColor.withOpacity(0.05),
+                                      blurRadius: 12,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.04),
+                                      blurRadius: 8,
                                       offset: const Offset(0, 2),
                                     ),
                                   ],
                           ),
-                          child: Stack(
-                            children: [
-                              // Clock icon background - subtle
-                              Positioned(
-                                top: 12,
-                                right: 12,
-                                child: Icon(
-                                  Icons.access_time,
-                                  size: 40,
-                                  color: _categoryColor.withOpacity(0.08),
-                                ),
-                              ),
-                              // Content
-                              Padding(
-                                padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    // Label
-                                    Row(
-                                      children: [
-                                        Icon(
-                                          Icons.schedule_outlined,
-                                          size: 16,
-                                          color: isDark
-                                              ? theme.colorScheme.onSurface.withOpacity(0.5)
-                                              : Colors.grey.shade600,
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          'TIME',
-                                          style: TextStyle(
-                                            color: isDark
-                                                ? theme.colorScheme.onSurface.withOpacity(0.5)
-                                                : Colors.grey.shade600,
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w600,
-                                            letterSpacing: 1.2,
-                                          ),
-                                        ),
-                                      ],
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(20),
+                            child: Stack(
+                              children: [
+                                // Left accent strip
+                                Positioned(
+                                  left: 0,
+                                  top: 0,
+                                  bottom: 0,
+                                  child: Container(
+                                    width: 4,
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        begin: Alignment.topCenter,
+                                        end: Alignment.bottomCenter,
+                                        colors: [
+                                          _categoryColor.withOpacity(0.5),
+                                          _categoryColor.withOpacity(0.15),
+                                        ],
+                                      ),
+                                      borderRadius: const BorderRadius.horizontal(right: Radius.circular(2)),
                                     ),
+                                  ),
+                                ),
+                                // Clock icon background - subtle
+                                Positioned(
+                                  top: 12,
+                                  right: 12,
+                                  child: Icon(
+                                    Icons.schedule_rounded,
+                                    size: 40,
+                                    color: _categoryColor.withOpacity(0.08),
+                                  ),
+                                ),
+                                // Content
+                                Padding(
+                                  padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      // Label
+                                      Row(
+                                        children: [
+                                          Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                Icons.schedule_rounded,
+                                                size: 14,
+                                                color: (isDark ? Colors.white70 : theme.colorScheme.onSurfaceVariant).withOpacity(0.9),
+                                              ),
+                                              const SizedBox(width: 6),
+                                              Text(
+                                                'TIME',
+                                                style: TextStyle(
+                                                  color: (isDark ? Colors.white70 : theme.colorScheme.onSurfaceVariant).withOpacity(0.95),
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w700,
+                                                  letterSpacing: 1,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
                                     const SizedBox(height: 14),
                                     // Animated transition between Year Range Slider and Date Range UI
                                     AnimatedCrossFade(
@@ -1234,7 +1362,8 @@ class _AddDevicePageState extends State<AddDevicePage> {
                             ],
                           ),
                         ),
-                        const SizedBox(height: 20),
+                        ),
+                        const SizedBox(height: 22),
                         // Note
                         GestureDetector(
                           onTap: () {
@@ -1242,62 +1371,94 @@ class _AddDevicePageState extends State<AddDevicePage> {
                           },
                           child: Container(
                             decoration: BoxDecoration(
-                              color: isDark 
-                                  ? theme.colorScheme.surface.withOpacity(0.4)
+                              color: isDark
+                                  ? theme.colorScheme.surface.withOpacity(0.5)
                                   : Colors.white,
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: (isDark ? Colors.white : Colors.black).withOpacity(0.06),
+                                width: 1,
+                              ),
                               boxShadow: isDark
                                   ? null
                                   : [
                                       BoxShadow(
-                                        color: Colors.black.withOpacity(0.05),
-                                        blurRadius: 10,
+                                        color: _categoryColor.withOpacity(0.05),
+                                        blurRadius: 12,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.04),
+                                        blurRadius: 8,
                                         offset: const Offset(0, 2),
                                       ),
                                     ],
                             ),
-                            child: Stack(
-                              children: [
-                                // Quote icon background - subtle
-                                Positioned(
-                                  top: 12,
-                                  right: 12,
-                                  child: Icon(
-                                    Icons.format_quote,
-                                    size: 40,
-                                    color: _categoryColor.withOpacity(0.08),
-                                  ),
-                                ),
-                                // Content
-                                Padding(
-                                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      // Label
-                                      Row(
-                                        children: [
-                                          Icon(
-                                            Icons.comment_outlined,
-                                            size: 16,
-                                            color: isDark
-                                                ? theme.colorScheme.onSurface.withOpacity(0.5)
-                                                : Colors.grey.shade600,
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Text(
-                                            'IMPRESSION',
-                                            style: TextStyle(
-                                              color: isDark
-                                                  ? theme.colorScheme.onSurface.withOpacity(0.5)
-                                                  : Colors.grey.shade600,
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w600,
-                                              letterSpacing: 1.2,
-                                            ),
-                                          ),
-                                        ],
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(20),
+                              child: Stack(
+                                children: [
+                                  // Left accent strip
+                                  Positioned(
+                                    left: 0,
+                                    top: 0,
+                                    bottom: 0,
+                                    child: Container(
+                                      width: 4,
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          begin: Alignment.topCenter,
+                                          end: Alignment.bottomCenter,
+                                          colors: [
+                                            _categoryColor.withOpacity(0.5),
+                                            _categoryColor.withOpacity(0.15),
+                                          ],
+                                        ),
+                                        borderRadius: const BorderRadius.horizontal(right: Radius.circular(2)),
                                       ),
+                                    ),
+                                  ),
+                                  // Quote icon background - subtle
+                                  Positioned(
+                                    top: 12,
+                                    right: 12,
+                                    child: Icon(
+                                      Icons.format_quote_rounded,
+                                      size: 40,
+                                      color: _categoryColor.withOpacity(0.08),
+                                    ),
+                                  ),
+                                  // Content
+                                  Padding(
+                                    padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        // Label
+                                        Row(
+                                          children: [
+                                            Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Icon(
+                                                  Icons.rate_review_rounded,
+                                                  size: 14,
+                                                  color: (isDark ? Colors.white70 : theme.colorScheme.onSurfaceVariant).withOpacity(0.9),
+                                                ),
+                                                const SizedBox(width: 6),
+                                                Text(
+                                                  'IMPRESSION',
+                                                  style: TextStyle(
+                                                    color: (isDark ? Colors.white70 : theme.colorScheme.onSurfaceVariant).withOpacity(0.95),
+                                                    fontSize: 11,
+                                                    fontWeight: FontWeight.w700,
+                                                    letterSpacing: 1,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
                                       const SizedBox(height: 12),
                                       // TextField
                                       TextField(
@@ -1354,6 +1515,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
                               ],
                             ),
                           ),
+                        ),
                         ),
                       ],
                     ),
