@@ -35,7 +35,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
   late String _deviceType;
   late RangeValues _yearRange;
   late bool _stillUsing;
-  bool _isPreciseMode = false;
+  bool _isPreciseMode = true;
   DateTime? _startDate;
   DateTime? _endDate;
   bool _isLoading = false;
@@ -863,74 +863,6 @@ class _AddDevicePageState extends State<AddDevicePage> {
                                       ],
                                     ),
                                     const SizedBox(height: 14),
-                                    // Exact Date Toggle
-                                    InkWell(
-                                      onTap: () {
-                                        setState(() {
-                                          _isPreciseMode = !_isPreciseMode;
-                                          if (_isPreciseMode) {
-                                            _startDate ??= DateTime(_yearRange.start.toInt(), 1, 1);
-                                            if (!_stillUsing && _endDate == null) {
-                                              _endDate = DateTime(_yearRange.end.toInt(), 12, 31);
-                                            }
-                                          } else {
-                                            if (_startDate != null) {
-                                              _yearRange = RangeValues(
-                                                _startDate!.year.toDouble(),
-                                                _stillUsing ? DateTime.now().year.toDouble() : (_endDate?.year.toDouble() ?? DateTime.now().year.toDouble()),
-                                              );
-                                            }
-                                          }
-                                        });
-                                      },
-                                      borderRadius: BorderRadius.circular(8),
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(vertical: 4),
-                                        child: Row(
-                                          children: [
-                                            Expanded(
-                                              child: Text(
-                                                'Exact Date',
-                                                style: TextStyle(
-                                                  color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.9),
-                                                  fontSize: 16,
-                                                ),
-                                              ),
-                                            ),
-                                            Checkbox(
-                                              value: _isPreciseMode,
-                                              onChanged: (value) {
-                                                setState(() {
-                                                  _isPreciseMode = value ?? false;
-                                                  if (_isPreciseMode) {
-                                                    _startDate ??= DateTime(_yearRange.start.toInt(), 1, 1);
-                                                    if (!_stillUsing && _endDate == null) {
-                                                      _endDate = DateTime(_yearRange.end.toInt(), 12, 31);
-                                                    }
-                                                  } else {
-                                                    if (_startDate != null) {
-                                                      _yearRange = RangeValues(
-                                                        _startDate!.year.toDouble(),
-                                                        _stillUsing ? DateTime.now().year.toDouble() : (_endDate?.year.toDouble() ?? DateTime.now().year.toDouble()),
-                                                      );
-                                                    }
-                                                  }
-                                                });
-                                              },
-                                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                              activeColor: isDark ? Colors.white70 : theme.colorScheme.primary,
-                                              fillColor: WidgetStateProperty.resolveWith<Color>((states) {
-                                                if (states.contains(WidgetState.selected)) {
-                                                  return (isDark ? Colors.white70 : theme.colorScheme.primary).withOpacity(0.2);
-                                                }
-                                                return Colors.transparent;
-                                              }),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 14),
                                     // Animated transition between Year Range Slider and Date Range UI
                                     AnimatedCrossFade(
                                       duration: const Duration(milliseconds: 300),
@@ -942,7 +874,6 @@ class _AddDevicePageState extends State<AddDevicePage> {
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           Row(
-                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                             children: [
                                               Text(
                                                 'Period',
@@ -952,13 +883,75 @@ class _AddDevicePageState extends State<AddDevicePage> {
                                                   fontWeight: FontWeight.w500,
                                                 ),
                                               ),
-                                              Text(
-                                                _stillUsing
-                                                    ? '${_yearRange.start.toInt()} - Present'
-                                                    : '${_yearRange.start.toInt()} - ${_yearRange.end.toInt()}',
-                                                style: TextStyle(
-                                                  color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.7),
-                                                  fontSize: 14,
+                                              const Spacer(),
+                                              InkWell(
+                                                onTap: () {
+                                                  setState(() {
+                                                    _isPreciseMode = !_isPreciseMode;
+                                                    if (_isPreciseMode) {
+                                                      _startDate ??= DateTime(_yearRange.start.toInt(), 1, 1);
+                                                      if (!_stillUsing && _endDate == null) {
+                                                        _endDate = DateTime(_yearRange.end.toInt(), 12, 31);
+                                                      }
+                                                    } else {
+                                                      if (_startDate != null) {
+                                                        _yearRange = RangeValues(
+                                                          _startDate!.year.toDouble(),
+                                                          _stillUsing ? DateTime.now().year.toDouble() : (_endDate?.year.toDouble() ?? DateTime.now().year.toDouble()),
+                                                        );
+                                                      }
+                                                    }
+                                                  });
+                                                },
+                                                borderRadius: BorderRadius.circular(6),
+                                                child: Padding(
+                                                  padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
+                                                  child: Row(
+                                                    mainAxisSize: MainAxisSize.min,
+                                                    children: [
+                                                      Text(
+                                                        'Years Only',
+                                                        style: TextStyle(
+                                                          color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.8),
+                                                          fontSize: 13,
+                                                        ),
+                                                      ),
+                                                      const SizedBox(width: 2),
+                                                      SizedBox(
+                                                        width: 20,
+                                                        height: 20,
+                                                        child: Checkbox(
+                                                          value: !_isPreciseMode,
+                                                          onChanged: (value) {
+                                                            setState(() {
+                                                              _isPreciseMode = !(value ?? false);
+                                                              if (_isPreciseMode) {
+                                                                _startDate ??= DateTime(_yearRange.start.toInt(), 1, 1);
+                                                                if (!_stillUsing && _endDate == null) {
+                                                                  _endDate = DateTime(_yearRange.end.toInt(), 12, 31);
+                                                                }
+                                                              } else {
+                                                                if (_startDate != null) {
+                                                                  _yearRange = RangeValues(
+                                                                    _startDate!.year.toDouble(),
+                                                                    _stillUsing ? DateTime.now().year.toDouble() : (_endDate?.year.toDouble() ?? DateTime.now().year.toDouble()),
+                                                                  );
+                                                                }
+                                                              }
+                                                            });
+                                                          },
+                                                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                                          activeColor: isDark ? Colors.white70 : theme.colorScheme.primary,
+                                                          fillColor: WidgetStateProperty.resolveWith<Color>((states) {
+                                                            if (states.contains(WidgetState.selected)) {
+                                                              return (isDark ? Colors.white70 : theme.colorScheme.primary).withOpacity(0.2);
+                                                            }
+                                                            return Colors.transparent;
+                                                          }),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
                                                 ),
                                               ),
                                             ],
@@ -989,19 +982,107 @@ class _AddDevicePageState extends State<AddDevicePage> {
                                                     });
                                                   },
                                           ),
+                                          const SizedBox(height: 4),
+                                          Align(
+                                            alignment: Alignment.centerRight,
+                                            child: Text(
+                                              _stillUsing
+                                                  ? '${_yearRange.start.toInt()} - Present'
+                                                  : '${_yearRange.start.toInt()} - ${_yearRange.end.toInt()}',
+                                              style: TextStyle(
+                                                color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.7),
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                          ),
                                         ],
                                       ),
                                       secondChild: // Date Range UI (Period)
                                       Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          Text(
-                                            'Period',
-                                            style: TextStyle(
-                                              color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.9),
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w500,
-                                            ),
+                                          Row(
+                                            children: [
+                                              Text(
+                                                'Period',
+                                                style: TextStyle(
+                                                  color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.9),
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                              const Spacer(),
+                                              InkWell(
+                                                onTap: () {
+                                                  setState(() {
+                                                    _isPreciseMode = !_isPreciseMode;
+                                                    if (_isPreciseMode) {
+                                                      _startDate ??= DateTime(_yearRange.start.toInt(), 1, 1);
+                                                      if (!_stillUsing && _endDate == null) {
+                                                        _endDate = DateTime(_yearRange.end.toInt(), 12, 31);
+                                                      }
+                                                    } else {
+                                                      if (_startDate != null) {
+                                                        _yearRange = RangeValues(
+                                                          _startDate!.year.toDouble(),
+                                                          _stillUsing ? DateTime.now().year.toDouble() : (_endDate?.year.toDouble() ?? DateTime.now().year.toDouble()),
+                                                        );
+                                                      }
+                                                    }
+                                                  });
+                                                },
+                                                borderRadius: BorderRadius.circular(6),
+                                                child: Padding(
+                                                  padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
+                                                  child: Row(
+                                                    mainAxisSize: MainAxisSize.min,
+                                                    children: [
+                                                      Text(
+                                                        'Years Only',
+                                                        style: TextStyle(
+                                                          color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.8),
+                                                          fontSize: 13,
+                                                        ),
+                                                      ),
+                                                      const SizedBox(width: 2),
+                                                      SizedBox(
+                                                        width: 20,
+                                                        height: 20,
+                                                        child: Checkbox(
+                                                          value: !_isPreciseMode,
+                                                          onChanged: (value) {
+                                                            setState(() {
+                                                              _isPreciseMode = !(value ?? false);
+                                                              if (_isPreciseMode) {
+                                                                _startDate ??= DateTime(_yearRange.start.toInt(), 1, 1);
+                                                                if (!_stillUsing && _endDate == null) {
+                                                                  _endDate = DateTime(_yearRange.end.toInt(), 12, 31);
+                                                                }
+                                                              } else {
+                                                                if (_startDate != null) {
+                                                                  _yearRange = RangeValues(
+                                                                    _startDate!.year.toDouble(),
+                                                                    _stillUsing ? DateTime.now().year.toDouble() : (_endDate?.year.toDouble() ?? DateTime.now().year.toDouble()),
+                                                                  );
+                                                                }
+                                                              }
+                                                            });
+                                                          },
+                                                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                                          activeColor: isDark ? Colors.white70 : theme.colorScheme.primary,
+                                                          fillColor: WidgetStateProperty.resolveWith<Color>((states) {
+                                                            if (states.contains(WidgetState.selected)) {
+                                                              return (isDark ? Colors.white70 : theme.colorScheme.primary).withOpacity(0.2);
+                                                            }
+                                                            return Colors.transparent;
+                                                          }),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                           const SizedBox(height: 8),
                                           Container(
