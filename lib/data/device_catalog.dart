@@ -39,13 +39,32 @@ class DeviceCategoryDefinition {
       );
 }
 
+// Curated palette: related types share hue families; each color distinct and readable on light/dark.
+const Color _cMobile = Color(0xFF2196F3);      // Blue
+const Color _cTablet = Color(0xFF4CAF50);     // Green
+const Color _cLaptop = Color(0xFF673AB7);     // Deep purple (computing)
+const Color _cDesktop = Color(0xFF673AB7);     // Same as Laptop
+const Color _cWatch = Color(0xFFFF7043);      // Warm orange
+const Color _cAudio = Color(0xFF00BCD4);      // Cyan (Earbuds, Headphones)
+const Color _cMonitor = Color(0xFF5C6BC0);    // Indigo (display)
+const Color _cMouse = Color(0xFFE91E63);      // Pink (peripheral)
+const Color _cKeyboard = Color(0xFF607D8B);    // Blue grey (vintage/neutral)
+const Color _cCamera = Color(0xFFFF9800);      // Amber
+const Color _cGaming = Color(0xFFE53935);     // Red
+const Color _cNAS = Color(0xFF455A64);        // Blue grey dark (storage)
+const Color _cPowerbank = Color(0xFF8BC34A);   // Light green (energy)
+const Color _cSmartHome = Color(0xFF795548);  // Brown (home)
+const Color _cVR = Color(0xFF7E57C2);         // Purple (immersive)
+const Color _cDrone = Color(0xFF009688);      // Teal (sky)
+const Color _cEReader = Color(0xFFFF5722);    // Deep orange (reading)
+
 /// Single source of truth for device types. To add a type: add one entry here.
 const List<DeviceCategoryDefinition> deviceCategoryDefinitions = [
   DeviceCategoryDefinition(
     icon: Icons.smartphone,
     label: 'Mobile',
     deviceType: 'Mobile',
-    color: Colors.blue,
+    color: _cMobile,
     hintExample: 'e.g., iPhone 15 Pro',
     nameKeywords: ['iphone', 'pixel', 'galaxy', 'phone', 'android'],
   ),
@@ -53,7 +72,7 @@ const List<DeviceCategoryDefinition> deviceCategoryDefinitions = [
     icon: Icons.tablet_mac,
     label: 'Tablet',
     deviceType: 'Tablet',
-    color: Colors.green,
+    color: _cTablet,
     hintExample: 'e.g., iPad Pro 12.9"',
     nameKeywords: ['ipad', 'tab', 'surface pro', 'tablet'],
   ),
@@ -61,7 +80,7 @@ const List<DeviceCategoryDefinition> deviceCategoryDefinitions = [
     icon: Icons.laptop,
     label: 'Laptop',
     deviceType: 'Laptop',
-    color: Colors.purple,
+    color: _cLaptop,
     hintExample: 'e.g., MacBook Pro M1',
     nameKeywords: ['macbook', 'laptop', 'thinkpad', 'xps', 'zenbook'],
   ),
@@ -69,7 +88,7 @@ const List<DeviceCategoryDefinition> deviceCategoryDefinitions = [
     icon: Icons.desktop_windows,
     label: 'Desktop',
     deviceType: 'Desktop',
-    color: Colors.purple,
+    color: _cDesktop,
     hintExample: 'e.g., iMac 24"',
     nameKeywords: ['imac', 'studio', 'desktop', 'pc', 'mac pro', 'mac mini'],
   ),
@@ -77,7 +96,7 @@ const List<DeviceCategoryDefinition> deviceCategoryDefinitions = [
     icon: Icons.watch,
     label: 'Watch',
     deviceType: 'Watch',
-    color: Colors.orange,
+    color: _cWatch,
     hintExample: 'e.g., Apple Watch Series 9',
     nameKeywords: ['watch', 'garmin', 'fitbit'],
   ),
@@ -85,31 +104,86 @@ const List<DeviceCategoryDefinition> deviceCategoryDefinitions = [
     icon: Icons.hearing,
     label: 'Earbuds',
     deviceType: 'Earbuds',
-    color: Colors.cyan,
+    color: _cAudio,
     hintExample: 'e.g., AirPods Pro 2',
     nameKeywords: ['airpods', 'buds', 'ear ', 'earbud'],
   ),
+  // --- First 6 unchanged above; below reordered: audio → display → peripherals → camera/gaming → storage/power → smart/VR → rest ---
   DeviceCategoryDefinition(
     icon: Icons.headphones,
     label: 'Headphones',
     deviceType: 'Headphones',
-    color: Colors.cyan,
+    color: _cAudio,
     hintExample: 'e.g., Sony WH-1000XM5',
     nameKeywords: ['headphone', 'wh-1000', 'sony', 'bose', 'over-ear'],
+  ),
+  DeviceCategoryDefinition(
+    icon: Icons.monitor,
+    label: 'Monitor',
+    deviceType: 'Monitor',
+    color: _cMonitor,
+    hintExample: 'e.g., LG UltraWide 34"',
+    nameKeywords: ['monitor', 'display', 'screen', 'lg ', 'dell ', 'benq', 'ultrawide'],
+  ),
+  DeviceCategoryDefinition(
+    icon: Icons.mouse,
+    label: 'Mouse',
+    deviceType: 'Mouse',
+    color: _cMouse,
+    hintExample: 'e.g., Logitech MX Master 3',
+    nameKeywords: [
+      'mouse', 'keyboard', 'hhkb', 'mechanical', 'gaming mouse',
+      'gaming keyboard', 'mx master', 'magic keyboard',
+    ],
+  ),
+  DeviceCategoryDefinition(
+    icon: Icons.keyboard,
+    label: 'Keyboard',
+    deviceType: 'Keyboard',
+    color: _cKeyboard,
+    hintExample: 'e.g., Magic Keyboard',
+    nameKeywords: ['vintage', 'old', 'retro'],
   ),
   DeviceCategoryDefinition(
     icon: Icons.photo_camera,
     label: 'Camera',
     deviceType: 'Camera',
-    color: Colors.amber,
+    color: _cCamera,
     hintExample: 'e.g., Canon EOS R5',
     nameKeywords: ['camera', 'eos', 'canon', 'nikon', 'sony a7', 'mirrorless', 'dslr'],
+  ),
+  DeviceCategoryDefinition(
+    icon: Icons.videogame_asset,
+    label: 'Gaming',
+    deviceType: 'Gaming',
+    color: _cGaming,
+    hintExample: 'e.g., PlayStation 5',
+    nameKeywords: ['playstation', 'xbox', 'nintendo', 'switch', 'steam deck', 'gaming console', 'ps5'],
+  ),
+  DeviceCategoryDefinition(
+    icon: Icons.storage,
+    label: 'NAS',
+    deviceType: 'NAS',
+    color: _cNAS,
+    hintExample: 'e.g., Synology DS920+',
+    nameKeywords: ['nas', 'synology', 'qnap', 'storage', 'server'],
+  ),
+  DeviceCategoryDefinition(
+    icon: Icons.battery_charging_full,
+    label: 'Powerbank',
+    deviceType: 'Powerbank',
+    color: _cPowerbank,
+    hintExample: 'e.g., Anker PowerCore 20000',
+    nameKeywords: [
+      'powerbank', 'power bank', 'power pack', 'battery pack',
+      'portable charger', 'anker', 'magsafe battery',
+    ],
   ),
   DeviceCategoryDefinition(
     icon: Icons.home,
     label: 'SmartHome',
     deviceType: 'SmartHome',
-    color: Colors.brown,
+    color: _cSmartHome,
     hintExample: 'e.g., HomePod mini',
     nameKeywords: [
       'nest', 'echo', 'alexa', 'homepod', 'smart home', 'smarthome',
@@ -120,7 +194,7 @@ const List<DeviceCategoryDefinition> deviceCategoryDefinitions = [
     icon: Icons.view_in_ar,
     label: 'VR/AR',
     deviceType: 'VR/AR',
-    color: Colors.indigo,
+    color: _cVR,
     hintExample: 'e.g., Apple Vision Pro',
     nameKeywords: [
       'quest', 'vision pro', 'vr ', ' vr', 'metaverse', 'pico',
@@ -128,29 +202,10 @@ const List<DeviceCategoryDefinition> deviceCategoryDefinitions = [
     ],
   ),
   DeviceCategoryDefinition(
-    icon: Icons.mouse,
-    label: 'Mouse',
-    deviceType: 'Mouse',
-    color: Colors.pink,
-    hintExample: 'e.g., Logitech MX Master 3',
-    nameKeywords: [
-      'mouse', 'keyboard', 'hhkb', 'mechanical', 'gaming mouse',
-      'gaming keyboard', 'mx master', 'magic keyboard',
-    ],
-  ),
-  DeviceCategoryDefinition(
-    icon: Icons.videogame_asset,
-    label: 'Gaming',
-    deviceType: 'Gaming',
-    color: Colors.red,
-    hintExample: 'e.g., PlayStation 5',
-    nameKeywords: ['playstation', 'xbox', 'nintendo', 'switch', 'steam deck', 'gaming console', 'ps5'],
-  ),
-  DeviceCategoryDefinition(
     icon: Icons.flight,
     label: 'Drone',
     deviceType: 'Drone',
-    color: Colors.teal,
+    color: _cDrone,
     hintExample: 'e.g., DJI Mavic 3',
     nameKeywords: ['drone', 'dji', 'mavic', 'phantom', 'mini 2', 'mini 3'],
   ),
@@ -158,44 +213,9 @@ const List<DeviceCategoryDefinition> deviceCategoryDefinitions = [
     icon: Icons.menu_book,
     label: 'e-Reader',
     deviceType: 'e-Reader',
-    color: Colors.deepOrange,
+    color: _cEReader,
     hintExample: 'e.g., Kindle Paperwhite',
     nameKeywords: ['kindle', 'kobo', 'ereader', 'e-reader', 'nook', 'remarkable', 'boox'],
-  ),
-  DeviceCategoryDefinition(
-    icon: Icons.storage,
-    label: 'NAS',
-    deviceType: 'NAS',
-    color: Colors.blueGrey,
-    hintExample: 'e.g., Synology DS920+',
-    nameKeywords: ['nas', 'synology', 'qnap', 'storage', 'server'],
-  ),
-  DeviceCategoryDefinition(
-    icon: Icons.monitor,
-    label: 'Monitor',
-    deviceType: 'Monitor',
-    color: Colors.deepPurple,
-    hintExample: 'e.g., LG UltraWide 34"',
-    nameKeywords: ['monitor', 'display', 'screen', 'lg ', 'dell ', 'benq', 'ultrawide'],
-  ),
-  DeviceCategoryDefinition(
-    icon: Icons.battery_charging_full,
-    label: 'Powerbank',
-    deviceType: 'Powerbank',
-    color: Colors.lime,
-    hintExample: 'e.g., Anker PowerCore 20000',
-    nameKeywords: [
-      'powerbank', 'power bank', 'power pack', 'battery pack',
-      'portable charger', 'anker', 'magsafe battery',
-    ],
-  ),
-  DeviceCategoryDefinition(
-    icon: Icons.keyboard,
-    label: 'Keyboard',
-    deviceType: 'Keyboard',
-    color: Colors.grey,
-    hintExample: 'e.g., Magic Keyboard',
-    nameKeywords: ['vintage', 'old', 'retro'],
   ),
 ];
 
