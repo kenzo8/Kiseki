@@ -559,6 +559,9 @@ class _AddDevicePageState extends State<AddDevicePage> {
 
       await FirebaseFirestore.instance.collection('seki').doc(widget.seki!.id).update(updateData);
       
+      // Save the selected device type for next time
+      await _saveLastDeviceType(_deviceType);
+      
       if (mounted) {
         setState(() {
           _isLoading = false;
