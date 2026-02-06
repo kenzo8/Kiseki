@@ -187,9 +187,10 @@ class _SettingsPageState extends State<SettingsPage> {
 
     try {
       // Pick file (CSV or XLSX)
+      // Use FileType.any to ensure CSV files are selectable on all platforms (especially Android/Google Drive)
+      // We'll validate the extension after selection
       final result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['csv', 'xlsx'],
+        type: FileType.any,
       );
 
       if (result == null || result.files.single.path == null) {
@@ -202,6 +203,23 @@ class _SettingsPageState extends State<SettingsPage> {
       }
 
       final filePath = result.files.single.path!;
+      
+      // Validate file extension
+      final extension = filePath.split('.').last.toLowerCase();
+      if (extension != 'csv' && extension != 'xlsx') {
+        if (mounted) {
+          setState(() {
+            _isImporting = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Please select a CSV or XLSX file'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
       
       // Import from file (auto-detect format)
       final importResult = await ImportExportService.importFromFile(filePath);

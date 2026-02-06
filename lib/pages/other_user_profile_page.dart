@@ -1176,13 +1176,25 @@ class _OtherUserOwnedContentState extends State<_OtherUserOwnedContent> with Sin
   List<Seki> _sortSekis(List<Seki> sekis) {
     final sorted = List<Seki>.from(sekis);
     sorted.sort((a, b) {
-      final aYear = a.isPreciseMode && a.startTime != null
-          ? a.startTime!.toDate().year
-          : a.startYear;
-      final bYear = b.isPreciseMode && b.startTime != null
-          ? b.startTime!.toDate().year
-          : b.startYear;
-      return aYear.compareTo(bYear);
+      DateTime aDate;
+      DateTime bDate;
+      
+      if (a.isPreciseMode && a.startTime != null) {
+        aDate = a.startTime!.toDate();
+      } else {
+        // For non-precise mode, use January 1st of the year
+        aDate = DateTime(a.startYear, 1, 1);
+      }
+      
+      if (b.isPreciseMode && b.startTime != null) {
+        bDate = b.startTime!.toDate();
+      } else {
+        // For non-precise mode, use January 1st of the year
+        bDate = DateTime(b.startYear, 1, 1);
+      }
+      
+      // Compare by full date (year, month, day)
+      return aDate.compareTo(bDate);
     });
     return sorted;
   }
