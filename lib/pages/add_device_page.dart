@@ -184,6 +184,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
     required DateTime initialDate,
     required DateTime firstDate,
     required DateTime lastDate,
+    String? title,
   }) async {
     DateTime picked = initialDate;
     if (picked.isBefore(firstDate)) picked = firstDate;
@@ -231,16 +232,22 @@ class _AddDevicePageState extends State<AddDevicePage> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: Text(
-                              'Cancel',
-                              style: TextStyle(
-                                color: isDark ? Colors.white70 : theme.colorScheme.onSurfaceVariant,
-                                fontWeight: FontWeight.w500,
+                          if (title != null)
+                            Expanded(
+                              child: Text(
+                                title,
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark ? Colors.white : theme.colorScheme.onSurface,
+                                ) ?? TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark ? Colors.white : theme.colorScheme.onSurface,
+                                ),
                               ),
-                            ),
-                          ),
+                            )
+                          else
+                            const Spacer(),
                           TextButton(
                             onPressed: () => Navigator.pop(context, picked),
                             style: TextButton.styleFrom(
@@ -294,6 +301,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
       initialDate: clamped,
       firstDate: DateTime(2000),
       lastDate: now,
+      title: 'Start Date',
     );
     if (picked != null) {
       setState(() {
@@ -322,6 +330,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
       initialDate: initial,
       firstDate: start,
       lastDate: now,
+      title: 'End Date',
     );
     if (picked != null) {
       setState(() {
