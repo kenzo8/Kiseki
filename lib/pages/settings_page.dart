@@ -653,8 +653,14 @@ class _SettingsPageState extends State<SettingsPage> {
                                 trailing: Icon(Icons.open_in_new, color: onSurfaceMuted, size: 18),
                                 onTap: () async {
                                   final uri = Uri.parse('https://kenzo8.github.io/kien-privacy/');
-                                  if (await canLaunchUrl(uri)) {
+                                  try {
                                     await launchUrl(uri, mode: LaunchMode.externalApplication);
+                                  } catch (_) {
+                                    if (mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text('Could not open Privacy Policy')),
+                                      );
+                                    }
                                   }
                                 },
                                 showDivider: false,
