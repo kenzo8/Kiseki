@@ -33,20 +33,7 @@ Kien is a social platform that helps you keep track of all the devices you've ow
 
 ## Screenshots
 
-### Explore Page
-![Explore](assets/screenshots/explore.png)
-
-### Add Device
-![Add Device](assets/screenshots/add.png)
-
-### Profile Page
-![Profile](assets/screenshots/profile.png)
-
-### Device Categories
-![Categories](assets/screenshots/cate.png)
-
-### Device Detail
-![Device Detail](assets/screenshots/detail.png)
+![Explore](assets/screenshots/explore.png) ![Add Device](assets/screenshots/add.png) ![Profile](assets/screenshots/profile.png) ![Categories](assets/screenshots/cate.png) ![Device Detail](assets/screenshots/detail.png)
 
 ## How to Use
 
