@@ -1,0 +1,108 @@
+{
+  "@@locale": "zh",
+  "appTitle": "kien",
+  "cancel": "取消",
+  "ok": "确定",
+  "save": "保存",
+  "create": "创建",
+  "explore": "探索",
+  "profile": "个人资料",
+  "addDevice": "添加设备",
+  "editDevice": "编辑设备",
+  "deviceName": "设备名称",
+  "category": "类别",
+  "period": "时间段",
+  "startDate": "开始日期",
+  "endDate": "结束日期",
+  "inUse": "使用中",
+  "present": "至今",
+  "yearsOnly": "仅年份",
+  "publicOnExplore": "在探索中公开",
+  "deviceNameHint": "这个设备对你有什么特别之处？",
+  "pleaseEnterDeviceName": "请输入设备名称",
+  "pleaseAddNote": "请添加简短备注",
+  "deviceAddedSuccessfully": "设备添加成功！",
+  "deviceUpdatedSuccessfully": "设备更新成功！",
+  "failedToAddDevice": "添加设备失败：{error}",
+  "@failedToAddDevice": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToUpdateDevice": "更新设备失败：{error}",
+  "@failedToUpdateDevice": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "time": "时间",
+  "impression": "印象",
+  "settings": "设置",
+  "language": "语言",
+  "selectLanguage": "选择语言",
+  "systemDefault": "系统默认",
+  "exportData": "导出数据",
+  "importData": "导入数据",
+  "blockedUsers": "已屏蔽用户",
+  "privacyPolicy": "隐私政策",
+  "feedback": "反馈",
+  "logout": "退出登录",
+  "deleteAccount": "删除账户",
+  "exportDataTitle": "导出数据",
+  "account": "账户",
+  "chooseExportFormat": "选择导出格式：",
+  "noDataToExport": "没有可导出的数据",
+  "exportFailed": "导出失败",
+  "exportError": "导出错误：{error}",
+  "@exportError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "importDataTitle": "导入数据",
+  "importDataMessage": "导入数据将为您的账户添加新设备。支持的格式：CSV、XLSX。\n\n注意：只会读取前100行数据。如果您的文件有更多行，请分批导入。",
+  "import": "导入",
+  "pleaseSelectCsvOrXlsx": "请选择CSV或XLSX文件",
+  "importComplete": "导入完成",
+  "importFailed": "导入失败",
+  "errorDetails": "错误详情：",
+  "importError": "导入错误：{error}",
+  "@importError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "logoutTitle": "退出登录",
+  "areYouSureLogout": "您确定要退出登录吗？",
+  "deleteAccountTitle": "删除账户",
+  "deleteAccountMessage": "删除后，您的账户以及所有设备和愿望清单数据将被永久删除且无法恢复。",
+  "yourAccount": "您的账户：",
+  "typeEmailToConfirm": "输入您的邮箱以确认",
+  "pleaseLoginFirst": "请先登录",
+  "pleaseLogInFirst": "请先登录",
+  "failedToSignOut": "退出登录失败：{error}",
+  "@failedToSignOut": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToDeleteAccount": "删除账户失败：{error}",
+  "@failedToDeleteAccount": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "couldNotOpenPrivacyPolicy": "无法打开隐私政策"
+}

@@ -2,6 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'firebase_options.dart';
 import 'pages/explore_page.dart';
@@ -9,9 +10,13 @@ import 'pages/profile_page.dart';
 import 'pages/add_device_page.dart';
 import 'pages/login_page.dart';
 import 'services/system_ui_service.dart';
+import 'services/locale_preference_service.dart';
+import 'l10n/app_localizations.dart';
 
 // Global theme state
 late final ValueNotifier<ThemeMode> themeModeNotifier;
+// Global locale state
+late final ValueNotifier<Locale?> localeNotifier;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,6 +29,12 @@ Future<void> main() async {
   // Always use light mode
   themeModeNotifier = ValueNotifier<ThemeMode>(ThemeMode.light);
   
+  // Load saved locale preference
+  final savedLocale = await LocalePreferenceService.loadLocalePreference();
+  localeNotifier = ValueNotifier<Locale?>(
+    savedLocale != null && savedLocale.isNotEmpty ? Locale(savedLocale) : null,
+  );
+  
   runApp(const KienApp());
 }
 
@@ -35,19 +46,34 @@ class KienApp extends StatelessWidget {
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: themeModeNotifier,
       builder: (context, themeMode, child) {
-        // Set initial status bar style based on theme
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          final isDark = themeMode == ThemeMode.dark;
-          if (isDark) {
-            SystemUIService.setDarkStatusBar();
-          } else {
-            SystemUIService.setLightStatusBar();
-          }
-        });
-        
-        return MaterialApp(
-          title: 'kien',
-          debugShowCheckedModeBanner: false,
+        return ValueListenableBuilder<Locale?>(
+          valueListenable: localeNotifier,
+          builder: (context, locale, _) {
+            // Set initial status bar style based on theme
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              final isDark = themeMode == ThemeMode.dark;
+              if (isDark) {
+                SystemUIService.setDarkStatusBar();
+              } else {
+                SystemUIService.setLightStatusBar();
+              }
+            });
+            
+            return MaterialApp(
+              title: 'kien',
+              debugShowCheckedModeBanner: false,
+              localizationsDelegates: const [
+                AppLocalizations.delegate,
+                GlobalMaterialLocalizations.delegate,
+                GlobalWidgetsLocalizations.delegate,
+                GlobalCupertinoLocalizations.delegate,
+              ],
+              supportedLocales: const [
+                Locale('en'), // English
+                Locale('zh'), // Chinese
+                Locale('ja'), // Japanese
+              ],
+              locale: locale, // Use saved locale or null for system default
           theme: ThemeData(
             useMaterial3: true,
             colorScheme: ColorScheme.fromSeed(
@@ -69,7 +95,9 @@ class KienApp extends StatelessWidget {
               child: child!,
             );
           },
-          home: const MainNavigationScreen(),
+              home: const MainNavigationScreen(),
+            );
+          },
         );
       },
     );
@@ -187,7 +215,7 @@ class _MainNavigationContentState extends State<_MainNavigationContent> {
             _buildNavItem(
               icon: Icons.explore,
               iconOutlined: Icons.explore_outlined,
-              label: 'Explore',
+              label: AppLocalizations.of(context)?.explore ?? 'Explore',
               index: 0,
               isSelected: _currentIndex == 0,
               theme: theme,
@@ -204,7 +232,7 @@ class _MainNavigationContentState extends State<_MainNavigationContent> {
             _buildNavItem(
               icon: Icons.person,
               iconOutlined: Icons.person_outline,
-              label: 'Profile',
+              label: AppLocalizations.of(context)?.profile ?? 'Profile',
               index: 1,
               isSelected: _currentIndex == 1,
               theme: theme,

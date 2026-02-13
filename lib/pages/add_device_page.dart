@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../l10n/app_localizations.dart';
 
 import '../models/seki_model.dart';
 import '../widgets/device_icon_selector.dart';
@@ -258,7 +259,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
                                 borderRadius: BorderRadius.circular(20),
                               ),
                             ),
-                            child: const Text('OK'),
+                            child: Text(AppLocalizations.of(context)?.ok ?? 'OK'),
                           ),
                         ],
                       ),
@@ -301,7 +302,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
       initialDate: clamped,
       firstDate: DateTime(2000),
       lastDate: now,
-      title: 'Start Date',
+      title: AppLocalizations.of(context)?.startDate ?? 'Start Date',
     );
     if (picked != null) {
       setState(() {
@@ -330,7 +331,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
       initialDate: initial,
       firstDate: start,
       lastDate: now,
-      title: 'End Date',
+      title: AppLocalizations.of(context)?.endDate ?? 'End Date',
     );
     if (picked != null) {
       setState(() {
@@ -369,7 +370,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
     // Smart validation with focus management
     if (_nameController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a device name')),
+        SnackBar(content: Text(AppLocalizations.of(context)?.pleaseEnterDeviceName ?? 'Please enter a device name')),
       );
       _deviceNameFocusNode.requestFocus();
       return;
@@ -377,7 +378,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
     
     if (_noteController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please add a short note')),
+        SnackBar(content: Text(AppLocalizations.of(context)?.pleaseAddNote ?? 'Please add a short note')),
       );
       // Focus and scroll to note field
       _noteFocusNode.requestFocus();
@@ -504,8 +505,8 @@ class _AddDevicePageState extends State<AddDevicePage> {
         });
         Navigator.pop(context, true); // Return true to indicate success
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Device added successfully!'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)?.deviceAddedSuccessfully ?? 'Device added successfully!'),
             backgroundColor: Colors.green,
             duration: Duration(seconds: 2),
           ),
@@ -518,7 +519,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to add device: $e'),
+            content: Text(AppLocalizations.of(context)?.failedToAddDevice(e.toString()) ?? 'Failed to add device: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -577,8 +578,8 @@ class _AddDevicePageState extends State<AddDevicePage> {
         });
         Navigator.pop(context, true); // Return true to indicate success
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Device updated successfully!'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)?.deviceUpdatedSuccessfully ?? 'Device updated successfully!'),
             backgroundColor: Colors.green,
             duration: Duration(seconds: 2),
           ),
@@ -591,7 +592,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to update device: $e'),
+            content: Text(AppLocalizations.of(context)?.failedToUpdateDevice(e.toString()) ?? 'Failed to update device: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -666,7 +667,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                           ),
                           child: Text(
-                            'Cancel',
+                            AppLocalizations.of(context)?.cancel ?? 'Cancel',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w500,
@@ -682,7 +683,9 @@ class _AddDevicePageState extends State<AddDevicePage> {
                             children: [
                               Center(
                                 child: Text(
-                                  isEditMode ? 'Edit Device' : 'Add Device',
+                                  isEditMode 
+                                    ? (AppLocalizations.of(context)?.editDevice ?? 'Edit Device')
+                                    : (AppLocalizations.of(context)?.addDevice ?? 'Add Device'),
                                   style: theme.textTheme.titleLarge?.copyWith(
                                     fontWeight: FontWeight.w700,
                                     letterSpacing: -0.3,
@@ -708,7 +711,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
                                         ),
                                         const SizedBox(width: 4),
                                         Text(
-                                          'Public on Explore',
+                                          AppLocalizations.of(context)?.publicOnExplore ?? 'Public on Explore',
                                           textAlign: TextAlign.center,
                                           style: TextStyle(
                                             color: (isDark ? Colors.white54 : theme.colorScheme.onSurfaceVariant).withOpacity(0.9),
@@ -753,7 +756,9 @@ class _AddDevicePageState extends State<AddDevicePage> {
                                   ),
                                 )
                               : Text(
-                                  isEditMode ? 'Save' : 'Create',
+                                  isEditMode 
+                                    ? (AppLocalizations.of(context)?.save ?? 'Save')
+                                    : (AppLocalizations.of(context)?.create ?? 'Create'),
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
@@ -819,7 +824,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
                                 },
                                 style: TextStyle(color: isDark ? Colors.white : theme.colorScheme.onSurface),
                                 decoration: InputDecoration(
-                                  labelText: 'Device Name',
+                                  labelText: AppLocalizations.of(context)?.deviceName ?? 'Device Name',
                                   labelStyle: TextStyle(
                                     color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.7),
                                   ),
@@ -883,7 +888,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
                               Row(
                                 children: [
                                   Text(
-                                    'Category',
+                                    AppLocalizations.of(context)?.category ?? 'Category',
                                     style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
@@ -990,7 +995,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
                                               ),
                                               const SizedBox(width: 6),
                                               Text(
-                                                'TIME',
+                                                AppLocalizations.of(context)?.time ?? 'TIME',
                                                 style: TextStyle(
                                                   color: (isDark ? Colors.white70 : theme.colorScheme.onSurfaceVariant).withOpacity(0.95),
                                                   fontSize: 11,
@@ -1016,7 +1021,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
                                           Row(
                                             children: [
                                               Text(
-                                                'Period',
+                                                AppLocalizations.of(context)?.period ?? 'Period',
                                                 style: TextStyle(
                                                   color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.9),
                                                   fontSize: 16,
@@ -1053,7 +1058,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
                                                       mainAxisSize: MainAxisSize.min,
                                                       children: [
                                                         Text(
-                                                          'Years Only',
+                                                          AppLocalizations.of(context)?.yearsOnly ?? 'Years Only',
                                                           style: TextStyle(
                                                             color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.8),
                                                             fontSize: 13,
@@ -1109,7 +1114,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
                                             labels: RangeLabels(
                                               _yearRange.start.toInt().toString(),
                                               _stillUsing
-                                                  ? 'Present'
+                                                  ? (AppLocalizations.of(context)?.present ?? 'Present')
                                                   : _yearRange.end.toInt().toString(),
                                             ),
                                             activeColor: isDark ? Colors.white : theme.colorScheme.primary,
@@ -1131,7 +1136,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
                                             alignment: Alignment.center,
                                             child: Text(
                                               _stillUsing
-                                                  ? '${_yearRange.start.toInt()} - Present'
+                                                  ? '${_yearRange.start.toInt()} - ${AppLocalizations.of(context)?.present ?? 'Present'}'
                                                   : '${_yearRange.start.toInt()} - ${_yearRange.end.toInt()}',
                                               style: TextStyle(
                                                 color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.7),
@@ -1148,7 +1153,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
                                           Row(
                                             children: [
                                               Text(
-                                                'Period',
+                                                AppLocalizations.of(context)?.period ?? 'Period',
                                                 style: TextStyle(
                                                   color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.9),
                                                   fontSize: 16,
@@ -1185,7 +1190,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
                                                       mainAxisSize: MainAxisSize.min,
                                                       children: [
                                                         Text(
-                                                          'Years Only',
+                                                          AppLocalizations.of(context)?.yearsOnly ?? 'Years Only',
                                                           style: TextStyle(
                                                             color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.8),
                                                             fontSize: 13,
@@ -1268,7 +1273,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
                                                         child: Text(
                                                           _startDate != null
                                                               ? '${_startDate!.year}/${_startDate!.month}/${_startDate!.day}'
-                                                              : 'Start Date',
+                                                              : (AppLocalizations.of(context)?.startDate ?? 'Start Date'),
                                                           style: TextStyle(
                                                             color: (isDark ? Colors.white : theme.colorScheme.onSurface),
                                                             fontSize: 14,
@@ -1311,10 +1316,10 @@ class _AddDevicePageState extends State<AddDevicePage> {
                                                         ),
                                                         child: Text(
                                                           _stillUsing
-                                                              ? 'Present'
+                                                              ? (AppLocalizations.of(context)?.present ?? 'Present')
                                                               : (_endDate != null
                                                                   ? '${_endDate!.year}/${_endDate!.month}/${_endDate!.day}'
-                                                                  : 'End Date'),
+                                                                  : (AppLocalizations.of(context)?.endDate ?? 'End Date')),
                                                           style: TextStyle(
                                                             color: _stillUsing
                                                                 ? (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.5)
@@ -1358,7 +1363,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
                                           children: [
                                             Expanded(
                                               child: Text(
-                                                'In Use',
+                                                AppLocalizations.of(context)?.inUse ?? 'In Use',
                                                 style: TextStyle(
                                                   color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.9),
                                                   fontSize: 16,
@@ -1497,7 +1502,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
                                                 ),
                                                 const SizedBox(width: 6),
                                                 Text(
-                                                  'IMPRESSION',
+                                                  AppLocalizations.of(context)?.impression ?? 'IMPRESSION',
                                                   style: TextStyle(
                                                     color: (isDark ? Colors.white70 : theme.colorScheme.onSurfaceVariant).withOpacity(0.95),
                                                     fontSize: 11,
@@ -1527,7 +1532,7 @@ class _AddDevicePageState extends State<AddDevicePage> {
                                         minLines: 1,
                                         maxLength: 800,
                                         decoration: InputDecoration(
-                                          hintText: "What makes this device special to you?",
+                                          hintText: AppLocalizations.of(context)?.deviceNameHint ?? "What makes this device special to you?",
                                           hintMaxLines: 5,
                                           hintStyle: TextStyle(
                                             color: (isDark ? Colors.white : theme.colorScheme.onSurface).withOpacity(0.5),

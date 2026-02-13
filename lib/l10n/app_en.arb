@@ -1,0 +1,285 @@
+{
+  "@@locale": "en",
+  "appTitle": "kien",
+  "@appTitle": {
+    "description": "The application title"
+  },
+  "cancel": "Cancel",
+  "@cancel": {
+    "description": "Cancel button text"
+  },
+  "ok": "OK",
+  "@ok": {
+    "description": "OK button text"
+  },
+  "save": "Save",
+  "@save": {
+    "description": "Save button text"
+  },
+  "create": "Create",
+  "@create": {
+    "description": "Create button text"
+  },
+  "explore": "Explore",
+  "@explore": {
+    "description": "Explore tab label"
+  },
+  "profile": "Profile",
+  "@profile": {
+    "description": "Profile tab label"
+  },
+  "addDevice": "Add Device",
+  "@addDevice": {
+    "description": "Add device page title"
+  },
+  "editDevice": "Edit Device",
+  "@editDevice": {
+    "description": "Edit device page title"
+  },
+  "deviceName": "Device Name",
+  "@deviceName": {
+    "description": "Device name field label"
+  },
+  "category": "Category",
+  "@category": {
+    "description": "Category label"
+  },
+  "period": "Period",
+  "@period": {
+    "description": "Period label"
+  },
+  "startDate": "Start Date",
+  "@startDate": {
+    "description": "Start date label"
+  },
+  "endDate": "End Date",
+  "@endDate": {
+    "description": "End date label"
+  },
+  "inUse": "In Use",
+  "@inUse": {
+    "description": "In use toggle label"
+  },
+  "present": "Present",
+  "@present": {
+    "description": "Present time indicator"
+  },
+  "yearsOnly": "Years Only",
+  "@yearsOnly": {
+    "description": "Years only mode label"
+  },
+  "publicOnExplore": "Public on Explore",
+  "@publicOnExplore": {
+    "description": "Public on explore indicator"
+  },
+  "deviceNameHint": "What makes this device special to you?",
+  "@deviceNameHint": {
+    "description": "Device name hint text"
+  },
+  "pleaseEnterDeviceName": "Please enter a device name",
+  "@pleaseEnterDeviceName": {
+    "description": "Device name validation message"
+  },
+  "pleaseAddNote": "Please add a short note",
+  "@pleaseAddNote": {
+    "description": "Note validation message"
+  },
+  "deviceAddedSuccessfully": "Device added successfully!",
+  "@deviceAddedSuccessfully": {
+    "description": "Success message when device is added"
+  },
+  "deviceUpdatedSuccessfully": "Device updated successfully!",
+  "@deviceUpdatedSuccessfully": {
+    "description": "Success message when device is updated"
+  },
+  "failedToAddDevice": "Failed to add device: {error}",
+  "@failedToAddDevice": {
+    "description": "Error message when device add fails",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToUpdateDevice": "Failed to update device: {error}",
+  "@failedToUpdateDevice": {
+    "description": "Error message when device update fails",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "time": "TIME",
+  "@time": {
+    "description": "Time section label"
+  },
+  "impression": "IMPRESSION",
+  "@impression": {
+    "description": "Impression section label"
+  },
+  "settings": "Settings",
+  "@settings": {
+    "description": "Settings page title"
+  },
+  "language": "Language",
+  "@language": {
+    "description": "Language setting label"
+  },
+  "selectLanguage": "Select Language",
+  "@selectLanguage": {
+    "description": "Language selection dialog title"
+  },
+  "systemDefault": "System Default",
+  "@systemDefault": {
+    "description": "System default language option"
+  },
+  "exportData": "Export Data",
+  "@exportData": {
+    "description": "Export data setting label"
+  },
+  "importData": "Import Data",
+  "@importData": {
+    "description": "Import data setting label"
+  },
+  "blockedUsers": "Blocked users",
+  "@blockedUsers": {
+    "description": "Blocked users setting label"
+  },
+  "privacyPolicy": "Privacy Policy",
+  "@privacyPolicy": {
+    "description": "Privacy policy setting label"
+  },
+  "feedback": "Feedback",
+  "@feedback": {
+    "description": "Feedback setting label"
+  },
+  "logout": "Logout",
+  "@logout": {
+    "description": "Logout setting label"
+  },
+  "deleteAccount": "Delete Account",
+  "@deleteAccount": {
+    "description": "Delete account setting label"
+  },
+  "exportDataTitle": "Export Data",
+  "@exportDataTitle": {
+    "description": "Export data dialog title"
+  },
+  "account": "Account",
+  "@account": {
+    "description": "Account label"
+  },
+  "chooseExportFormat": "Choose export format:",
+  "@chooseExportFormat": {
+    "description": "Choose export format label"
+  },
+  "noDataToExport": "No data to export",
+  "@noDataToExport": {
+    "description": "No data to export message"
+  },
+  "exportFailed": "Export failed",
+  "@exportFailed": {
+    "description": "Export failed message"
+  },
+  "exportError": "Export error: {error}",
+  "@exportError": {
+    "description": "Export error message",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "importDataTitle": "Import Data",
+  "@importDataTitle": {
+    "description": "Import data dialog title"
+  },
+  "importDataMessage": "Importing data will add new devices to your account. Supported formats: CSV, XLSX.\n\nNote: Only the first 100 data rows will be read. If your file has more rows, split it or import in batches.",
+  "@importDataMessage": {
+    "description": "Import data dialog message"
+  },
+  "import": "Import",
+  "@import": {
+    "description": "Import button text"
+  },
+  "pleaseSelectCsvOrXlsx": "Please select a CSV or XLSX file",
+  "@pleaseSelectCsvOrXlsx": {
+    "description": "Please select CSV or XLSX file message"
+  },
+  "importComplete": "Import Complete",
+  "@importComplete": {
+    "description": "Import complete dialog title"
+  },
+  "importFailed": "Import Failed",
+  "@importFailed": {
+    "description": "Import failed dialog title"
+  },
+  "errorDetails": "Error Details:",
+  "@errorDetails": {
+    "description": "Error details label"
+  },
+  "importError": "Import error: {error}",
+  "@importError": {
+    "description": "Import error message",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "logoutTitle": "Logout",
+  "@logoutTitle": {
+    "description": "Logout dialog title"
+  },
+  "areYouSureLogout": "Are you sure you want to logout?",
+  "@areYouSureLogout": {
+    "description": "Logout confirmation message"
+  },
+  "deleteAccountTitle": "Delete Account",
+  "@deleteAccountTitle": {
+    "description": "Delete account dialog title"
+  },
+  "deleteAccountMessage": "After deletion, your account and all device and wishlist data will be permanently removed and cannot be recovered.",
+  "@deleteAccountMessage": {
+    "description": "Delete account warning message"
+  },
+  "yourAccount": "Your account:",
+  "@yourAccount": {
+    "description": "Your account label"
+  },
+  "typeEmailToConfirm": "Type your email to confirm",
+  "@typeEmailToConfirm": {
+    "description": "Type email to confirm label"
+  },
+  "pleaseLoginFirst": "Please login first",
+  "@pleaseLoginFirst": {
+    "description": "Please login first message"
+  },
+  "pleaseLogInFirst": "Please log in first",
+  "@pleaseLogInFirst": {
+    "description": "Please log in first message"
+  },
+  "failedToSignOut": "Failed to sign out: {error}",
+  "@failedToSignOut": {
+    "description": "Failed to sign out message",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToDeleteAccount": "Failed to delete account: {error}",
+  "@failedToDeleteAccount": {
+    "description": "Failed to delete account message",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "couldNotOpenPrivacyPolicy": "Could not open Privacy Policy",
+  "@couldNotOpenPrivacyPolicy": {
+    "description": "Could not open privacy policy message"
+  }
+}

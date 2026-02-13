@@ -1,0 +1,108 @@
+{
+  "@@locale": "ja",
+  "appTitle": "kien",
+  "cancel": "キャンセル",
+  "ok": "OK",
+  "save": "保存",
+  "create": "作成",
+  "explore": "探索",
+  "profile": "プロフィール",
+  "addDevice": "デバイスを追加",
+  "editDevice": "デバイスを編集",
+  "deviceName": "デバイス名",
+  "category": "カテゴリ",
+  "period": "期間",
+  "startDate": "開始日",
+  "endDate": "終了日",
+  "inUse": "使用中",
+  "present": "現在",
+  "yearsOnly": "年のみ",
+  "publicOnExplore": "探索で公開",
+  "deviceNameHint": "このデバイスの特別な点は何ですか？",
+  "pleaseEnterDeviceName": "デバイス名を入力してください",
+  "pleaseAddNote": "短いメモを追加してください",
+  "deviceAddedSuccessfully": "デバイスが正常に追加されました！",
+  "deviceUpdatedSuccessfully": "デバイスが正常に更新されました！",
+  "failedToAddDevice": "デバイスの追加に失敗しました：{error}",
+  "@failedToAddDevice": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToUpdateDevice": "デバイスの更新に失敗しました：{error}",
+  "@failedToUpdateDevice": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "time": "時間",
+  "impression": "印象",
+  "settings": "設定",
+  "language": "言語",
+  "selectLanguage": "言語を選択",
+  "systemDefault": "システムデフォルト",
+  "exportData": "データをエクスポート",
+  "importData": "データをインポート",
+  "blockedUsers": "ブロック済みユーザー",
+  "privacyPolicy": "プライバシーポリシー",
+  "feedback": "フィードバック",
+  "logout": "ログアウト",
+  "deleteAccount": "アカウントを削除",
+  "exportDataTitle": "データをエクスポート",
+  "account": "アカウント",
+  "chooseExportFormat": "エクスポート形式を選択：",
+  "noDataToExport": "エクスポートするデータがありません",
+  "exportFailed": "エクスポートに失敗しました",
+  "exportError": "エクスポートエラー：{error}",
+  "@exportError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "importDataTitle": "データをインポート",
+  "importDataMessage": "データをインポートすると、アカウントに新しいデバイスが追加されます。サポート形式：CSV、XLSX。\n\n注意：最初の100行のデータのみが読み込まれます。ファイルにそれ以上の行がある場合は、分割してインポートしてください。",
+  "import": "インポート",
+  "pleaseSelectCsvOrXlsx": "CSVまたはXLSXファイルを選択してください",
+  "importComplete": "インポート完了",
+  "importFailed": "インポートに失敗しました",
+  "errorDetails": "エラー詳細：",
+  "importError": "インポートエラー：{error}",
+  "@importError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "logoutTitle": "ログアウト",
+  "areYouSureLogout": "ログアウトしてもよろしいですか？",
+  "deleteAccountTitle": "アカウントを削除",
+  "deleteAccountMessage": "削除後、アカウントおよびすべてのデバイスとウィッシュリストデータは永久に削除され、復元できません。",
+  "yourAccount": "アカウント：",
+  "typeEmailToConfirm": "確認のためメールアドレスを入力してください",
+  "pleaseLoginFirst": "まずログインしてください",
+  "pleaseLogInFirst": "まずログインしてください",
+  "failedToSignOut": "ログアウトに失敗しました：{error}",
+  "@failedToSignOut": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToDeleteAccount": "アカウントの削除に失敗しました：{error}",
+  "@failedToDeleteAccount": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "couldNotOpenPrivacyPolicy": "プライバシーポリシーを開けませんでした"
+}

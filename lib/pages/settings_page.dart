@@ -9,10 +9,12 @@ import '../services/auth_service.dart';
 import '../services/system_ui_service.dart';
 import '../services/import_export_service.dart' show ImportExportService, ExportFormat;
 import '../services/profile_data_service.dart';
+import '../services/locale_preference_service.dart';
 import '../main.dart';
 import 'login_page.dart';
 import 'feedback_page.dart';
 import 'blocked_users_page.dart';
+import '../l10n/app_localizations.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key, this.exploreRefreshNotifier});
@@ -29,6 +31,7 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _isImporting = false;
   bool _isDeletingAccount = false;
   PackageInfo? _packageInfo;
+  String? _currentLocale;
 
   @override
   void initState() {
@@ -36,6 +39,96 @@ class _SettingsPageState extends State<SettingsPage> {
     PackageInfo.fromPlatform().then((info) {
       if (mounted) setState(() => _packageInfo = info);
     });
+    _loadCurrentLocale();
+    // Listen to locale changes to refresh the page
+    localeNotifier.addListener(_onLocaleChanged);
+  }
+
+  @override
+  void dispose() {
+    localeNotifier.removeListener(_onLocaleChanged);
+    super.dispose();
+  }
+
+  void _onLocaleChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  Future<void> _loadCurrentLocale() async {
+    final locale = await LocalePreferenceService.loadLocalePreference();
+    if (mounted) {
+      setState(() {
+        _currentLocale = locale;
+      });
+    }
+  }
+
+  Future<void> _showLanguageSelector() async {
+    if (!mounted) return;
+    final currentLocale = await LocalePreferenceService.loadLocalePreference();
+    if (!mounted) return;
+    
+    final selectedLocale = await showDialog<String?>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(AppLocalizations.of(context)?.selectLanguage ?? 'Select Language'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            RadioListTile<String?>(
+              title: Text(AppLocalizations.of(context)?.systemDefault ?? 'System Default'),
+              value: null,
+              groupValue: currentLocale,
+              onChanged: (value) => Navigator.of(context).pop(value),
+            ),
+            RadioListTile<String?>(
+              title: Text(LocalePreferenceService.getLocaleDisplayName(LocalePreferenceService.localeEnglish)),
+              value: LocalePreferenceService.localeEnglish,
+              groupValue: currentLocale,
+              onChanged: (value) => Navigator.of(context).pop(value),
+            ),
+            RadioListTile<String?>(
+              title: Text(LocalePreferenceService.getLocaleDisplayName(LocalePreferenceService.localeChinese)),
+              value: LocalePreferenceService.localeChinese,
+              groupValue: currentLocale,
+              onChanged: (value) => Navigator.of(context).pop(value),
+            ),
+            RadioListTile<String?>(
+              title: Text(LocalePreferenceService.getLocaleDisplayName(LocalePreferenceService.localeJapanese)),
+              value: LocalePreferenceService.localeJapanese,
+              groupValue: currentLocale,
+              onChanged: (value) => Navigator.of(context).pop(value),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(AppLocalizations.of(context)?.cancel ?? 'Cancel'),
+          ),
+        ],
+      ),
+    );
+
+    if (selectedLocale != currentLocale) {
+      if (selectedLocale == null) {
+        // Clear preference to use system default
+        await LocalePreferenceService.saveLocalePreference('');
+      } else {
+        await LocalePreferenceService.saveLocalePreference(selectedLocale);
+      }
+      
+      // Update the locale notifier to trigger app rebuild
+      localeNotifier.value = selectedLocale != null && selectedLocale.isNotEmpty ? Locale(selectedLocale) : null;
+      
+      if (mounted) {
+        setState(() {
+          _currentLocale = selectedLocale;
+        });
+      }
+    }
   }
 
   Future<void> _handleExport() async {
@@ -56,20 +149,20 @@ class _SettingsPageState extends State<SettingsPage> {
     final format = await showDialog<ExportFormat>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Export Data'),
+        title: Text(AppLocalizations.of(context)?.exportDataTitle ?? 'Export Data'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Account: $userLabel'),
+            Text('${AppLocalizations.of(context)?.account ?? 'Account'}: $userLabel'),
             const SizedBox(height: 12),
-            const Text('Choose export format:'),
+            Text(AppLocalizations.of(context)?.chooseExportFormat ?? 'Choose export format:'),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)?.cancel ?? 'Cancel'),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(ExportFormat.csv),
@@ -95,8 +188,8 @@ class _SettingsPageState extends State<SettingsPage> {
       if (dataService.cachedSekis == null || dataService.cachedSekis!.isEmpty) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('No data to export'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context)?.noDataToExport ?? 'No data to export'),
               backgroundColor: Colors.orange,
             ),
           );
@@ -118,8 +211,8 @@ class _SettingsPageState extends State<SettingsPage> {
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Export failed'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context)?.exportFailed ?? 'Export failed'),
               backgroundColor: Colors.red,
             ),
           );
@@ -129,7 +222,7 @@ class _SettingsPageState extends State<SettingsPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Export error: $e'),
+            content: Text(AppLocalizations.of(context)?.exportError(e.toString()) ?? 'Export error: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -148,8 +241,8 @@ class _SettingsPageState extends State<SettingsPage> {
     if (currentUser == null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please login first'),
+          SnackBar(
+              content: Text(AppLocalizations.of(context)?.pleaseLoginFirst ?? 'Please login first'),
             backgroundColor: Colors.red,
           ),
         );
@@ -161,19 +254,20 @@ class _SettingsPageState extends State<SettingsPage> {
     final shouldImport = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Import Data'),
-        content: const Text(
+        title: Text(AppLocalizations.of(context)?.importDataTitle ?? 'Import Data'),
+        content: Text(
+          AppLocalizations.of(context)?.importDataMessage ?? 
           'Importing data will add new devices to your account. Supported formats: CSV, XLSX.\n\n'
           'Note: Only the first 100 data rows will be read. If your file has more rows, split it or import in batches.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)?.cancel ?? 'Cancel'),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Import'),
+            child: Text(AppLocalizations.of(context)?.import ?? 'Import'),
           ),
         ],
       ),
@@ -212,8 +306,8 @@ class _SettingsPageState extends State<SettingsPage> {
             _isImporting = false;
           });
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Please select a CSV or XLSX file'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context)?.pleaseSelectCsvOrXlsx ?? 'Please select a CSV or XLSX file'),
               backgroundColor: Colors.red,
             ),
           );
@@ -232,7 +326,9 @@ class _SettingsPageState extends State<SettingsPage> {
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
-            title: Text(importResult.success ? 'Import Complete' : 'Import Failed'),
+            title: Text(importResult.success 
+              ? (AppLocalizations.of(context)?.importComplete ?? 'Import Complete')
+              : (AppLocalizations.of(context)?.importFailed ?? 'Import Failed')),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -241,9 +337,9 @@ class _SettingsPageState extends State<SettingsPage> {
                   Text(importResult.message),
                   if (importResult.errors.isNotEmpty) ...[
                     const SizedBox(height: 16),
-                    const Text(
-                      'Error Details:',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                    Text(
+                      AppLocalizations.of(context)?.errorDetails ?? 'Error Details:',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 8),
                     ...importResult.errors.take(10).map((error) => Padding(
@@ -272,7 +368,7 @@ class _SettingsPageState extends State<SettingsPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Import error: $e'),
+            content: Text(AppLocalizations.of(context)?.importError(e.toString()) ?? 'Import error: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -292,12 +388,12 @@ class _SettingsPageState extends State<SettingsPage> {
     final shouldLogout = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Logout'),
+        title: Text(AppLocalizations.of(context)?.logoutTitle ?? 'Logout'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Are you sure you want to logout?'),
+            Text(AppLocalizations.of(context)?.areYouSureLogout ?? 'Are you sure you want to logout?'),
             if (email.isNotEmpty) ...[
               const SizedBox(height: 12),
               Text(
@@ -312,11 +408,11 @@ class _SettingsPageState extends State<SettingsPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)?.cancel ?? 'Cancel'),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Logout'),
+            child: Text(AppLocalizations.of(context)?.logout ?? 'Logout'),
           ),
         ],
       ),
@@ -357,7 +453,7 @@ class _SettingsPageState extends State<SettingsPage> {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Failed to sign out: $e'),
+              content: Text(AppLocalizations.of(context)?.failedToSignOut(e.toString()) ?? 'Failed to sign out: $e'),
               backgroundColor: Colors.red,
             ),
           );
@@ -371,8 +467,8 @@ class _SettingsPageState extends State<SettingsPage> {
     if (currentUser == null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please log in first'),
+          SnackBar(
+              content: Text(AppLocalizations.of(context)?.pleaseLogInFirst ?? 'Please log in first'),
             backgroundColor: Colors.red,
           ),
         );
@@ -421,7 +517,7 @@ class _SettingsPageState extends State<SettingsPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to delete account: $e'),
+            content: Text(AppLocalizations.of(context)?.failedToDeleteAccount(e.toString()) ?? 'Failed to delete account: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -485,7 +581,7 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           centerTitle: true,
           title: Text(
-            'Settings',
+            AppLocalizations.of(context)?.settings ?? 'Settings',
             style: TextStyle(
               color: theme.colorScheme.onSurface,
               fontSize: 18,
@@ -589,7 +685,7 @@ class _SettingsPageState extends State<SettingsPage> {
                             children: [
                               settingsTile(
                                 icon: Icons.upload_file_outlined,
-                                title: 'Export Data',
+                                title: AppLocalizations.of(context)?.exportData ?? 'Export Data',
                                 leading: _isExporting
                                     ? SizedBox(
                                         width: 22,
@@ -605,7 +701,7 @@ class _SettingsPageState extends State<SettingsPage> {
                               ),
                               settingsTile(
                                 icon: Icons.download_outlined,
-                                title: 'Import Data',
+                                title: AppLocalizations.of(context)?.importData ?? 'Import Data',
                                 leading: _isImporting
                                     ? SizedBox(
                                         width: 22,
@@ -627,16 +723,41 @@ class _SettingsPageState extends State<SettingsPage> {
                         borderRadius: BorderRadius.circular(16),
                         child: Container(
                           decoration: cardDecoration,
-                          child: settingsTile(
-                            icon: Icons.block_outlined,
-                            title: 'Blocked users',
-                            trailing: Icon(Icons.chevron_right, color: onSurfaceMuted, size: 20),
-                            onTap: () => Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => const BlockedUsersPage(),
+                          child: Column(
+                            children: [
+                              settingsTile(
+                                icon: Icons.language_outlined,
+                                title: AppLocalizations.of(context)?.language ?? 'Language',
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      _currentLocale == null
+                                          ? (AppLocalizations.of(context)?.systemDefault ?? 'System Default')
+                                          : LocalePreferenceService.getLocaleDisplayName(_currentLocale!),
+                                      style: theme.textTheme.bodyMedium?.copyWith(
+                                        color: onSurfaceMuted,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Icon(Icons.chevron_right, color: onSurfaceMuted, size: 20),
+                                  ],
+                                ),
+                                onTap: _showLanguageSelector,
+                                showDivider: false,
                               ),
-                            ),
-                            showDivider: false,
+                              settingsTile(
+                                icon: Icons.block_outlined,
+                                title: AppLocalizations.of(context)?.blockedUsers ?? 'Blocked users',
+                                trailing: Icon(Icons.chevron_right, color: onSurfaceMuted, size: 20),
+                                onTap: () => Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) => const BlockedUsersPage(),
+                                  ),
+                                ),
+                                showDivider: true,
+                              ),
+                            ],
                           ),
                         ),
                       ),
@@ -649,7 +770,7 @@ class _SettingsPageState extends State<SettingsPage> {
                             children: [
                               settingsTile(
                                 icon: Icons.privacy_tip_outlined,
-                                title: 'Privacy Policy',
+                                title: AppLocalizations.of(context)?.privacyPolicy ?? 'Privacy Policy',
                                 trailing: Icon(Icons.open_in_new, color: onSurfaceMuted, size: 18),
                                 onTap: () async {
                                   final uri = Uri.parse('https://kenzo8.github.io/kien-privacy/');
@@ -658,7 +779,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                   } catch (_) {
                                     if (mounted) {
                                       ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(content: Text('Could not open Privacy Policy')),
+                                        SnackBar(content: Text(AppLocalizations.of(context)?.couldNotOpenPrivacyPolicy ?? 'Could not open Privacy Policy')),
                                       );
                                     }
                                   }
@@ -667,7 +788,7 @@ class _SettingsPageState extends State<SettingsPage> {
                               ),
                               settingsTile(
                                 icon: Icons.feedback_outlined,
-                                title: 'Feedback',
+                                title: AppLocalizations.of(context)?.feedback ?? 'Feedback',
                                 trailing: Icon(Icons.chevron_right, color: onSurfaceMuted, size: 20),
                                 onTap: () => Navigator.of(context).push(
                                   MaterialPageRoute(
@@ -688,13 +809,13 @@ class _SettingsPageState extends State<SettingsPage> {
                             children: [
                               settingsTile(
                                 icon: Icons.logout,
-                                title: 'Logout',
+                                title: AppLocalizations.of(context)?.logout ?? 'Logout',
                                 onTap: () => _handleLogout(context),
                                 showDivider: false,
                               ),
                               settingsTile(
                                 icon: Icons.person_off_outlined,
-                                title: 'Delete Account',
+                                title: AppLocalizations.of(context)?.deleteAccount ?? 'Delete Account',
                                 leading: _isDeletingAccount
                                     ? SizedBox(
                                         width: 22,
@@ -774,25 +895,26 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
   Widget build(BuildContext context) {
     final email = widget.email;
     return AlertDialog(
-      title: const Text('Delete Account'),
+      title: Text(AppLocalizations.of(context)?.deleteAccountTitle ?? 'Delete Account'),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
+              AppLocalizations.of(context)?.deleteAccountMessage ?? 
               'After deletion, your account and all device and wishlist data will be permanently removed and cannot be recovered.',
             ),
             const SizedBox(height: 16),
             Text(
-              'Your account: $email',
+              '${AppLocalizations.of(context)?.yourAccount ?? 'Your account'}: $email',
               style: const TextStyle(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: _controller,
               decoration: InputDecoration(
-                labelText: 'Type your email to confirm',
+                labelText: AppLocalizations.of(context)?.typeEmailToConfirm ?? 'Type your email to confirm',
                 hintText: email,
                 border: const OutlineInputBorder(),
               ),
@@ -810,7 +932,7 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
           onPressed: _controller.text.trim() == email
               ? () => Navigator.of(context).pop(true)
               : null,
-          child: const Text('Delete Account'),
+            child: Text(AppLocalizations.of(context)?.deleteAccount ?? 'Delete Account'),
         ),
       ],
     );
