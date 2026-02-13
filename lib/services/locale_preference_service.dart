@@ -9,16 +9,24 @@ class LocalePreferenceService {
   static const String localeJapanese = 'ja';
   
   /// Save the selected locale preference
-  static Future<void> saveLocalePreference(String localeCode) async {
+  /// Pass empty string or null to clear preference and use system default
+  static Future<void> saveLocalePreference(String? localeCode) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_localeKey, localeCode);
+    if (localeCode == null || localeCode.isEmpty) {
+      // Remove the preference to use system default
+      await prefs.remove(_localeKey);
+    } else {
+      await prefs.setString(_localeKey, localeCode);
+    }
   }
   
   /// Load the saved locale preference
   /// Returns the saved locale code, or null if not set (will use system default)
   static Future<String?> loadLocalePreference() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_localeKey);
+    final locale = prefs.getString(_localeKey);
+    // Return null if empty string (shouldn't happen, but handle it)
+    return locale != null && locale.isNotEmpty ? locale : null;
   }
   
   /// Get locale display name

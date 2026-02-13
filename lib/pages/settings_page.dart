@@ -113,12 +113,8 @@ class _SettingsPageState extends State<SettingsPage> {
     );
 
     if (selectedLocale != currentLocale) {
-      if (selectedLocale == null) {
-        // Clear preference to use system default
-        await LocalePreferenceService.saveLocalePreference('');
-      } else {
-        await LocalePreferenceService.saveLocalePreference(selectedLocale);
-      }
+      // Clear preference to use system default if null, otherwise save the selected locale
+      await LocalePreferenceService.saveLocalePreference(selectedLocale);
       
       // Update the locale notifier to trigger app rebuild
       localeNotifier.value = selectedLocale != null && selectedLocale.isNotEmpty ? Locale(selectedLocale) : null;

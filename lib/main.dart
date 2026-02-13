@@ -74,6 +74,20 @@ class KienApp extends StatelessWidget {
                 Locale('ja'), // Japanese
               ],
               locale: locale, // Use saved locale or null for system default
+              localeResolutionCallback: (deviceLocale, supportedLocales) {
+                // If locale is explicitly set (not null), use it
+                if (locale != null) {
+                  return locale;
+                }
+                // Otherwise, find the best match from device locale
+                for (var supportedLocale in supportedLocales) {
+                  if (supportedLocale.languageCode == deviceLocale?.languageCode) {
+                    return supportedLocale;
+                  }
+                }
+                // Fallback to English if no match
+                return const Locale('en');
+              },
           theme: ThemeData(
             useMaterial3: true,
             colorScheme: ColorScheme.fromSeed(
