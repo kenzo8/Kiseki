@@ -73,20 +73,33 @@ class KienApp extends StatelessWidget {
                 Locale('zh'), // Chinese
                 Locale('ja'), // Japanese
               ],
-              locale: locale, // Use saved locale or null for system default
+              // Only set locale if explicitly chosen, otherwise omit it to use system default
+              locale: locale,
               localeResolutionCallback: (deviceLocale, supportedLocales) {
-                // If locale is explicitly set (not null), use it
-                if (locale != null) {
-                  return locale;
-                }
-                // Otherwise, find the best match from device locale
-                for (var supportedLocale in supportedLocales) {
-                  if (supportedLocale.languageCode == deviceLocale?.languageCode) {
-                    return supportedLocale;
+                try {
+                  // If locale is explicitly set (not null), use it directly
+                  if (locale != null) {
+                    return locale;
                   }
+                  
+                  // When locale is null, use deviceLocale (system language) to find best match
+                  if (deviceLocale != null) {
+                    // Try exact match first
+                    for (var supportedLocale in supportedLocales) {
+                      if (supportedLocale.languageCode == deviceLocale.languageCode) {
+                        return supportedLocale;
+                      }
+                    }
+                  }
+                  
+                  // Return null to let Flutter use its default resolution algorithm
+                  // This will use the first supported locale (en) as fallback
+                  return null;
+                } catch (e) {
+                  // If any error occurs, return null to use Flutter's default
+                  debugPrint('Error in localeResolutionCallback: $e');
+                  return null;
                 }
-                // Fallback to English if no match
-                return const Locale('en');
               },
           theme: ThemeData(
             useMaterial3: true,
