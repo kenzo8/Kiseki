@@ -1,3 +1,5 @@
+import 'dart:ui' show PlatformDispatcher;
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -11,12 +13,15 @@ import 'pages/add_device_page.dart';
 import 'pages/login_page.dart';
 import 'services/system_ui_service.dart';
 import 'services/locale_preference_service.dart';
+import 'services/system_locale_service.dart';
 import 'l10n/app_localizations.dart';
 
 // Global theme state
 late final ValueNotifier<ThemeMode> themeModeNotifier;
 // Global locale state
 late final ValueNotifier<Locale?> localeNotifier;
+/// System-wide preferred language order (from Android Settings → Language). Null on non-Android or if not available.
+List<Locale>? systemLocaleList;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,7 +39,9 @@ Future<void> main() async {
   localeNotifier = ValueNotifier<Locale?>(
     savedLocale != null && savedLocale.isNotEmpty ? Locale(savedLocale) : null,
   );
-  
+  // Load system language order (Android: Settings → Language; avoids per-app override)
+  systemLocaleList = await SystemLocaleService.getSystemLocaleList();
+
   runApp(const KienApp());
 }
 
@@ -81,22 +88,28 @@ class KienApp extends StatelessWidget {
                   if (locale != null) {
                     return locale;
                   }
-                  
-                  // When locale is null, use deviceLocale (system language) to find best match
+                  // Prefer system-wide language order (Android Settings → Language) over app locale list.
+                  final preferredOrder = systemLocaleList?.isNotEmpty == true
+                      ? systemLocaleList!
+                      : PlatformDispatcher.instance.locales;
+                  if (preferredOrder.isNotEmpty) {
+                    for (var preferred in preferredOrder) {
+                      for (var supported in supportedLocales) {
+                        if (supported.languageCode == preferred.languageCode) {
+                          return supported;
+                        }
+                      }
+                    }
+                  }
                   if (deviceLocale != null) {
-                    // Try exact match first
                     for (var supportedLocale in supportedLocales) {
                       if (supportedLocale.languageCode == deviceLocale.languageCode) {
                         return supportedLocale;
                       }
                     }
                   }
-                  
-                  // Return null to let Flutter use its default resolution algorithm
-                  // This will use the first supported locale (en) as fallback
                   return null;
                 } catch (e) {
-                  // If any error occurs, return null to use Flutter's default
                   debugPrint('Error in localeResolutionCallback: $e');
                   return null;
                 }
