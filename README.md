@@ -2,6 +2,8 @@
 
 Track your device ownership history and discover amazing devices from the community.
 
+[![Get it on Google Play](https://img.shields.io/badge/Get%20it%20on-Google%20Play-414141?style=for-the-badge&logo=google-play&logoColor=white)](https://play.google.com/store/apps/details?id=com.kenzo.kien)
+
 Kien is a social platform that helps you keep track of all the devices you've owned, create wishlists for devices you want, and explore what others in the community are using. Whether you're a tech enthusiast documenting your journey or someone looking for device recommendations, Kien makes it easy to organize and share your device collection.
 
 ## Features
@@ -40,6 +42,12 @@ Kien is a social platform that helps you keep track of all the devices you've ow
   <img src="assets/screenshots/cate.png" width="18%" alt="Categories">
   <img src="assets/screenshots/detail.png" width="18%" alt="Device Detail">
 </p>
+
+## Download
+
+Kien is available on Google Play:
+
+- **[Install from Google Play](https://play.google.com/store/apps/details?id=com.kenzo.kien)** — Record, organize, and reflect on the devices you've owned, used, or want, all in one clean and visual timeline.
 
 ## How to Use
 
